@@ -24,7 +24,7 @@ declare(strict_types=1);
 interface ilMDRepository
 {
     /**
-     * Follows all trails of markers from the passed root element,
+     * Follows a trail of markers from the root element,
      * and creates MD elements in place of every marked scaffold
      * along the trail. Data on markers is transferred to the created
      * elements.
@@ -45,15 +45,15 @@ interface ilMDRepository
     public function getMD(): ilMDRootElement;
 
     /**
-     * Follows all trails of markers from the passed root element,
+     * Follows the trail of markers from the root element,
      * and updates the data of MD elements which have data markers on them.
      */
     public function updateMDElements(ilMDRootElement $root): void;
 
     /**
-     * Follows all trails of markers from the passed root element,
-     * and deletes the respective last element of the trails, as well as all of
-     * their nested subelements.
+     * Follows the trail of markers from the passed root element,
+     * and deletes the last element of the trail, as well as all of
+     * its nested subelements.
      */
     public function deleteMDElements(ilMDRootElement $root): void;
 

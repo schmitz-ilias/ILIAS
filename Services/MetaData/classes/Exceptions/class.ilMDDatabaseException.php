@@ -21,31 +21,6 @@ declare(strict_types=1);
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDVocabulary
+class ilMDDatabaseException extends ilException
 {
-    protected string $source;
-
-    /**
-     * @var string[]
-     */
-    protected array $values;
-
-    public function __construct(string $source, array $values)
-    {
-        $this->source = $source;
-        $this->values = $values;
-    }
-
-    public function getSource(): string
-    {
-        return $this->source;
-    }
-
-    /**
-     * @return string[]
-     */
-    public function getValues(): array
-    {
-        return $this->values;
-    }
 }

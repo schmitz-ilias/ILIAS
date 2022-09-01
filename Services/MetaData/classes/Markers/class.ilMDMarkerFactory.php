@@ -18,39 +18,34 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-use ILIAS\Refinery\Constraint;
-
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDData
+class ilMDMarkerFactory
 {
-    protected string $type;
-    protected string $value;
-    protected Constraint $constraint;
-
-    public function __construct(
-        string $type,
-        string $value,
-        Constraint $constraint
-    ) {
-        $this->type = $type;
-        $this->value = $value;
-        $this->constraint = $constraint;
+    public function getNeutralMarker(): ilMDMarker
+    {
+        return new ilMDMarker();
     }
 
-    public function getType(): string
+    public function getDataMarker(ilMDData $data): ilMDDataMarker
     {
-        return $this->type;
+        return new ilMDDataMarker($data);
     }
 
-    public function getValue(): string
+    /**
+     * TODO update this when implementing database markers
+     */
+    public function getDatabaseMarker(): ilMDDatabaseMarker
     {
-        return $this->value;
+        return new ilMDDatabaseMarker();
     }
 
-    public function getError(): ?string
+    /**
+     * TODO update this when implementing the GUI markers
+     */
+    public function getGUIMarker(): ilMDGUIMarker
     {
-        return $this->constraint->problemWith($this->value);
+        return new ilMDGUIMarker();
     }
 }

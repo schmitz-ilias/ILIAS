@@ -21,31 +21,10 @@ declare(strict_types=1);
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDVocabulary
+interface ilMDDictionary
 {
-    protected string $source;
-
     /**
-     * @var string[]
+     * Returns a structure in read mode, decorated with markers.
      */
-    protected array $values;
-
-    public function __construct(string $source, array $values)
-    {
-        $this->source = $source;
-        $this->values = $values;
-    }
-
-    public function getSource(): string
-    {
-        return $this->source;
-    }
-
-    /**
-     * @return string[]
-     */
-    public function getValues(): array
-    {
-        return $this->values;
-    }
+    public function getStructureWithMarkers(): ilMDStructure;
 }

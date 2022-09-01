@@ -107,4 +107,18 @@ class ilMDBuildingBlocksTest extends TestCase
         $this->assertNull($low1->getMarker());
         $this->assertNull($lowest->getMarker());
     }
+
+    public function testLeaveMarkerTrailException(): void
+    {
+        $low1 = new ilMDScaffoldElement('low1', true, []);
+        $low2 = new ilMDElement('low2', false, [], 13);
+        $root = new ilMDRootElement(1, 2, 'type', 'root', [$low1, $low2]);
+
+        $marker1 = new ilMDMarker();
+        $low2->leaveMarkerTrail($marker1);
+        $marker2 = new ilMDMarker();
+
+        $this->expectException(ilMDBuildingBlocksException::class);
+        $low1->leaveMarkerTrail($marker2);
+    }
 }

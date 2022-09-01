@@ -18,39 +18,20 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-use ILIAS\Refinery\Constraint;
-
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDData
+class ilMDDataMarker extends ilMDMarker
 {
-    protected string $type;
-    protected string $value;
-    protected Constraint $constraint;
+    protected ilMDData $data;
 
-    public function __construct(
-        string $type,
-        string $value,
-        Constraint $constraint
-    ) {
-        $this->type = $type;
-        $this->value = $value;
-        $this->constraint = $constraint;
+    public function __construct(ilMDData $data)
+    {
+        $this->data = $data;
     }
 
-    public function getType(): string
+    public function getData(): ilMDData
     {
-        return $this->type;
-    }
-
-    public function getValue(): string
-    {
-        return $this->value;
-    }
-
-    public function getError(): ?string
-    {
-        return $this->constraint->problemWith($this->value);
+        return $this->data;
     }
 }

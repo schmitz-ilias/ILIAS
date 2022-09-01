@@ -139,7 +139,12 @@ abstract class ilMDBaseElement
     {
         $this->marker = $marker;
         $curr_element = $this->getSuperElement();
-        while (isset($curr_element) && $curr_element->getMarker() === null) {
+        while (isset($curr_element)) {
+            if ($curr_element->getMarker() !== null) {
+                throw new ilMDBuildingBlocksException(
+                    "There already is a marker trail on this MD set."
+                );
+            }
             $curr_element->setMarker(new ilMDMarker());
             $curr_element = $curr_element->getSuperElement();
         }
