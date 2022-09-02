@@ -26,6 +26,7 @@ use ILIAS\Refinery\Constraint;
 class ilMDLOMDatabaseRepository implements ilMDRepository
 {
     protected ilDBInterface $db;
+    protected ilMDStructure $structure;
 
     /**
      * object id (NOT ref_id!) of rbac object (e.g for page objects the obj_id
@@ -52,6 +53,10 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
         global $DIC;
 
         $this->db = $DIC->database();
+        $this->structure = (new ilMDLOMDatabaseDictionary(
+            new ilMDMarkerFactory(),
+            $this->db
+        ))->getStructureWithMarkers();
 
         $this->rbac_id = $rbac_id;
         $this->obj_id = $obj_id;
@@ -68,7 +73,32 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
      */
     public function getScaffoldForElement(ilMDBaseElement $element): array
     {
-        // TODO: Implement getScaffoldForElement() method.
+        //navigate to element
+        $name_path = [];
+        while (!($element instanceof ilMDRootElement)) {
+            array_unshift($name_path, $element->getName());
+            $element = $element->getSuperElement();
+        }
+        $this->structure->movePointerToRoot();
+        foreach ($name_path as $name) {
+            $this->structure->movePointerToSubElement($name);
+        }
+
+        //get the sub-elements as scaffolds
+        $sub_elements = $this->structure->getSubElementsAtPointer();
+        $scaffolds = [];
+        foreach ($sub_elements as $sub_element) {
+            $this->structure->movePointerToSubElement($sub_element);
+            $scaffolds[] = new ilMDScaffoldElement(
+                $sub_element,
+                $this->structure->isUniqueAtPointer(),
+                []
+            );
+            $this->structure->movePointerToSuperElement();
+        }
+        //move pointer back, just to be safe
+        $this->structure->movePointerToRoot();
+        return $scaffolds;
     }
 
     public function getMD(): ilMDRootElement

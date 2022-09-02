@@ -88,6 +88,32 @@ class ilMDBuildingBlocksTest extends TestCase
         $root->low();
     }
 
+    public function testAddScaffoldToSubElements(): void
+    {
+        $root = new ilMDElement('root', true, []);
+        $scaffold = new ilMDScaffoldElement('scaffold', false, []);
+        $root->addScaffoldToSubElements($scaffold);
+
+        $this->assertSame(
+            [$scaffold],
+            $root->getSubElements()
+        );
+        $this->assertSame(
+            $root,
+            $scaffold->getSuperElement()
+        );
+    }
+
+    public function testAddScaffoldToSubElementsException(): void
+    {
+        $root = new ilMDElement('root', true, []);
+        $scaffold = new ilMDScaffoldElement('scaffold', false, []);
+        $root->addScaffoldToSubElements($scaffold);
+
+        $this->expectException(ilMDBuildingBlocksException::class);
+        $root->addScaffoldToSubElements($scaffold);
+    }
+
     public function testLeaveMarkerTrail(): void
     {
         $lowest = new ilMDElement('lowest', true, []);

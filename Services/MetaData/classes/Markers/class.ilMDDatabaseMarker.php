@@ -23,5 +23,66 @@ declare(strict_types=1);
  */
 class ilMDDatabaseMarker extends ilMDMarker
 {
-    //TODO implement this
+    protected ilDBStatement $create;
+    protected ilDBStatement $read;
+
+    /**
+     * Some MD elements can not be updated, since they don't carry data.
+     */
+    protected ?ilDBStatement $update;
+    protected ilDBStatement $delete;
+
+    /**
+     * @var string[]
+     */
+    protected array $expected_params;
+
+    /**
+     * @param ilDBStatement      $create
+     * @param ilDBStatement      $read
+     * @param ilDBStatement|null $update
+     * @param ilDBStatement      $delete
+     * @param string[]           $expected_params
+     */
+    public function __construct(
+        ilDBStatement $create,
+        ilDBStatement $read,
+        ?ilDBStatement $update,
+        ilDBStatement $delete,
+        array $expected_params = []
+    ) {
+        $this->create = $create;
+        $this->read = $read;
+        $this->update = $update;
+        $this->delete = $delete;
+        $this->expected_params = $expected_params;
+    }
+
+    public function getCreate(): ilDBStatement
+    {
+        return $this->create;
+    }
+
+    public function getRead(): ilDBStatement
+    {
+        return $this->read;
+    }
+
+    public function getUpdate(): ?ilDBStatement
+    {
+        return $this->update;
+    }
+
+    public function getDelete(): ilDBStatement
+    {
+        return $this->delete;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getExpectedParams(): array
+    {
+        return $this->expected_params;
+    }
 }

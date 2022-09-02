@@ -34,11 +34,27 @@ class ilMDMarkerFactory
     }
 
     /**
-     * TODO update this when implementing database markers
+     * @param ilDBStatement      $create
+     * @param ilDBStatement      $read
+     * @param ilDBStatement|null $update
+     * @param ilDBStatement      $delete
+     * @param string[]           $expected_params
+     * @return ilMDDatabaseMarker
      */
-    public function getDatabaseMarker(): ilMDDatabaseMarker
-    {
-        return new ilMDDatabaseMarker();
+    public function getDatabaseMarker(
+        ilDBStatement $create,
+        ilDBStatement $read,
+        ?ilDBStatement $update,
+        ilDBStatement $delete,
+        array $expected_params = []
+    ): ilMDDatabaseMarker {
+        return new ilMDDatabaseMarker(
+            $create,
+            $read,
+            $update,
+            $delete,
+            $expected_params
+        );
     }
 
     /**
