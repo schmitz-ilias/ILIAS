@@ -34,18 +34,20 @@ class ilMDMarkerFactory
     }
 
     /**
-     * @param ilDBStatement      $create
+     * @param ilDBStatement|null $create
      * @param ilDBStatement      $read
      * @param ilDBStatement|null $update
-     * @param ilDBStatement      $delete
+     * @param ilDBStatement|null $delete
+     * @param string             $table
      * @param string[]           $expected_params
      * @return ilMDDatabaseMarker
      */
     public function getDatabaseMarker(
-        ilDBStatement $create,
+        ?ilDBStatement $create,
         ilDBStatement $read,
         ?ilDBStatement $update,
-        ilDBStatement $delete,
+        ?ilDBStatement $delete,
+        string $table,
         array $expected_params = []
     ): ilMDDatabaseMarker {
         return new ilMDDatabaseMarker(
@@ -53,6 +55,7 @@ class ilMDMarkerFactory
             $read,
             $update,
             $delete,
+            $table,
             $expected_params
         );
     }

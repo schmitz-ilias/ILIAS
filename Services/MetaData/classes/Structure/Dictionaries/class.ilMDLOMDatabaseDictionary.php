@@ -26,6 +26,12 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
     public const EXP_MD_ID = 'md_id';
     public const EXP_PARENT_MD_ID = 'parent_md_id';
 
+    /**
+     * Entries in the expected params with this value should
+     * be ignored when reading or deleting.
+     */
+    public const EXP_DATA = 'md_data';
+
     public const TABLES = [
         'annotation' => 'il_meta_annotation',
         'classification' => 'il_meta_classification',
@@ -94,18 +100,330 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
     public function getStructureWithMarkers(): ilMDLOMStructure
     {
         $structure = new ilMDLOMStructure();
-        $this->setMarkersForGeneral($structure);
-        return $structure->switchToReadMode();
+        $structure = $this->setMarkersForGeneral($structure);
+        $structure = $this->setMarkersForLifecycle($structure);
+        //TODO continue with meta-metadata (and maybe streamline this mess a bit?)
+        return $structure->switchToReadMode()
+                         ->movePointerToRoot();
     }
 
     protected function setMarkersForGeneral(
         ilMDLOMStructure $structure
     ): ilMDLOMStructure {
-        $structure->movePointerToRoot()
-                  ->movePointerToSubElement('general')
-                  ->setMarkerAtPointer(
-                      $this->getMarkerForTableContainer('general')
-                  )->movePointerToSubElement('identifier');
+        $structure = $structure
+            ->movePointerToRoot()
+            ->movePointerToSubElement('general')
+            ->setMarkerAtPointer(
+                $this->getMarkerForTableContainer('general')
+                     ->withIsParent(true)
+            )
+            ->movePointerToSubElement('identifier')
+            ->setMarkerAtPointer(
+                $this->getMarkerForTableContainerWithParent(
+                    'identifier',
+                    'meta_general'
+                )
+            )
+            ->movePointerToSubElement('catalog')
+            ->setMarkerAtPointer(
+                $this->getMarkerForDataWithParent(
+                    'identifier',
+                    'catalog',
+                    'meta_general'
+                )
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('entry')
+            ->setMarkerAtPointer(
+                $this->getMarkerForDataWithParent(
+                    'identifier',
+                    'entry',
+                    'meta_general'
+                )
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('title')
+            ->setMarkerAtPointer(
+                $this->getMarkerForNonTableContainer(
+                    'general',
+                    ['title', 'title_language']
+                )
+            );
+        $structure = $this
+            ->setMarkersForLangString(
+                $structure,
+                'general',
+                'title',
+                'title_language'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('language')
+            ->setMarkerAtPointer(
+                $this->getMarkerForTableDataWithParent(
+                    'language',
+                    'language',
+                    'meta_general'
+                )
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('description')
+            ->setMarkerAtPointer(
+                $this->getMarkerForTableContainerWithParent(
+                    'description',
+                    'meta_general'
+                )
+            );
+        $structure = $this
+            ->setMarkersForLangString(
+                $structure,
+                'description',
+                'description',
+                'description_language',
+                'meta_general'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('keyword')
+            ->setMarkerAtPointer(
+                $this->getMarkerForTableContainerWithParent(
+                    'keyword',
+                    'meta_general'
+                )
+            );
+        $structure = $this
+            ->setMarkersForLangString(
+                $structure,
+                'keyword',
+                'keyword',
+                'keyword_language',
+                'meta_general'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('coverage')
+            ->setMarkerAtPointer(
+                $this->getMarkerForNonTableContainer(
+                    'general',
+                    ['coverage', 'coverage_language']
+                )
+            );
+        $structure = $this
+            ->setMarkersForLangString(
+                $structure,
+                'general',
+                'coverage',
+                'coverage_language'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('structure')
+            ->setMarkerAtPointer(
+                $this->getMarkerForNonTableContainer(
+                    'general',
+                    ['general_structure']
+                )
+            );
+        $structure = $this
+            ->setMarkersForVocab(
+                $structure,
+                'general',
+                'general_structure'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('aggregationLevel')
+            ->setMarkerAtPointer(
+                $this->getMarkerForNonTableContainer(
+                    'general',
+                    ['general_aggl']
+                )
+            );
+        $structure = $this
+            ->setMarkersForVocab(
+                $structure,
+                'general',
+                'general_aggl'
+            );
+        return $structure->movePointerToRoot();
+    }
+
+    protected function setMarkersForLifeCycle(
+        ilMDLOMStructure $structure
+    ): ilMDLOMStructure {
+        $structure = $structure
+            ->movePointerToRoot()
+            ->movePointerToSubElement('lifeCycle')
+            ->setMarkerAtPointer(
+                $this->getMarkerForTableContainer('lifecycle')
+                     ->withIsParent(true)
+            )
+            ->movePointerToSubElement('version')
+            ->setMarkerAtPointer(
+                $this->getMarkerForNonTableContainer(
+                    'lifecycle',
+                    ['meta_version', 'version_language']
+                )
+            );
+        $structure = $this
+            ->setMarkersForLangString(
+                $structure,
+                'lifecycle',
+                'meta_version',
+                'version_language'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('status')
+            ->setMarkerAtPointer(
+                $this->getMarkerForNonTableContainer(
+                    'lifecycle',
+                    ['lifecycle_status']
+                )
+            );
+        $structure = $this
+            ->setMarkersForVocab(
+                $structure,
+                'lifecycle',
+                'lifecycle_status'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('contribute')
+            ->setMarkerAtPointer(
+                $this->getMarkerForTableContainerWithParent(
+                    'contribute',
+                    'meta_lifecycle'
+                )->withIsParent(true)
+            )
+            ->movePointerToSubElement('role')
+            ->setMarkerAtPointer(
+                $this->getMarkerForNonTableContainerWithParent(
+                    'contribute',
+                    ['role'],
+                    'meta_lifecycle'
+                )
+            );
+        $structure = $this
+            ->setMarkersForVocab(
+                $structure,
+                'contribute',
+                'role',
+                'meta_lifecycle'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('entity')
+            ->setMarkerAtPointer(
+                $this->getMarkerForTableDataWithParent(
+                    'entity',
+                    'entity',
+                    'meta_contribute'
+                )
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('date')
+            ->setMarkerAtPointer(
+                $this->getMarkerForNonTableContainerWithParent(
+                    'contribute',
+                    ['c_date', 'c_date_descr', 'descr_lang'],
+                    'meta_lifecycle'
+                )
+            )
+            ->movePointerToSubElement('dateTime')
+            ->setMarkerAtPointer(
+                $this->getMarkerForDataWithParent(
+                    'contribute',
+                    'c_date',
+                    'meta_lifecycle'
+                )
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('description')
+            ->setMarkerAtPointer(
+                $this->getMarkerForNonTableContainerWithParent(
+                    'contribute',
+                    ['c_date_descr', 'descr_lang'],
+                    'meta_lifecycle'
+                )
+            );
+        $structure = $this
+            ->setMarkersForLangString(
+                $structure,
+                'contribute',
+                'c_date_descr',
+                'descr_lang',
+                'meta_lifecycle'
+            );
+        return $structure->movePointerToRoot();
+    }
+
+    protected function setMarkersForLangString(
+        ilMDLOMStructure $structure,
+        string $table,
+        string $field_string,
+        string $field_lang,
+        string $parent_type = ''
+    ): ilMDLOMStructure {
+        if ($parent_type) {
+            $marker_string = $this->getMarkerForDataWithParent(
+                $table,
+                $field_string,
+                $parent_type
+            );
+            $marker_lang = $this->getMarkerForDataWithParent(
+                $table,
+                $field_lang,
+                $parent_type
+            );
+        } else {
+            $marker_string = $this->getMarkerForData(
+                $table,
+                $field_string
+            );
+            $marker_lang = $this->getMarkerForData(
+                $table,
+                $field_lang
+            );
+        }
+        $structure = $structure
+            ->movePointerToSubElement('string')
+            ->setMarkerAtPointer($marker_string)
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('language')
+            ->setMarkerAtPointer($marker_lang)
+            ->movePointerToSuperElement();
+
+        return $structure;
+    }
+
+    protected function setMarkersForVocab(
+        ilMDLOMStructure $structure,
+        string $table,
+        string $field_value,
+        string $parent_type = ''
+    ): ilMDLOMStructure {
+        if ($parent_type) {
+            $marker_value = $this->getMarkerForDataWithParent(
+                $table,
+                $field_value,
+                $parent_type
+            );
+        } else {
+            $marker_value = $this->getMarkerForData(
+                $table,
+                $field_value
+            );
+        }
+        $structure = $structure
+            ->movePointerToSubElement('value')
+            ->setMarkerAtPointer($marker_value)
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('source')
+            ->setMarkerAtPointer(
+                $this->factory->getDatabaseMarker(
+                    null,
+                    $this->db->prepare("SELECT 'LOMv1.0' as data;"),
+                    null,
+                    null,
+                    ''
+                )
+            )
+           ->movePointerToSuperElement();
+
         return $structure;
     }
 
@@ -121,16 +439,16 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
         $create = $this->db->prepareManip(
             'INSERT INTO ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
             ' (' . $this->db->quoteIdentifier(self::ID_NAME[$table]) .
-            ', rbac_id, obj_id, obj_type) VALUES (' .
-            $this->db->nextId(self::TABLES[$table]) . ', ?, ?, ?);',
+            ', rbac_id, obj_id, obj_type) VALUES (?, ?, ?, ?);',
             [
+                ilDBConstants::T_INTEGER,
                 ilDBConstants::T_INTEGER,
                 ilDBConstants::T_INTEGER,
                 ilDBConstants::T_TEXT
             ]
         );
         $read = $this->db->prepare(
-            'SELECT COUNT(*) FROM ' . $this->db->quoteIdentifier(self::TABLES['general']) .
+            'SELECT COUNT(*) FROM ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
             ' WHERE ' . $this->db->quoteIdentifier(self::ID_NAME[$table]) . ' = ?' .
             ' AND rbac_id = ? AND obj_id = ? AND obj_type = ?;',
             [
@@ -141,7 +459,7 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             ]
         );
         $delete = $this->db->prepareManip(
-            'DELETE FROM ' . $this->db->quoteIdentifier(self::TABLES['general']) .
+            'DELETE FROM ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
             ' WHERE ' . $this->db->quoteIdentifier(self::ID_NAME[$table]) . ' = ?' .
             ' AND rbac_id = ? AND obj_id = ? AND obj_type = ?;',
             [
@@ -157,36 +475,29 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             $read,
             null,
             $delete,
+            self::TABLES[$table],
             [self::EXP_MD_ID]
         );
     }
 
     /**
      * Returns the appropriate database marker for a container element
-     * with its own table.
+     * with its own table, but which has a parent element.
      */
     protected function getMarkerForTableContainerWithParent(
         string $table,
-        string $parent_type,
-        string $parent_table
+        string $parent_type
     ): ilMDDatabaseMarker {
         $this->checkTable($table);
-        $this->checkTable($parent_table);
-
-        //TODO Do this by joining the tables instead, so that the expected params don't have to be doubled
-        $parent_id_query = '(SELECT ' . $this->db->quoteIdentifier(self::ID_NAME[$parent_table]) .
-            ' FROM ' . $this->db->quoteIdentifier(self::TABLES[$parent_table]) .
-            ' WHERE ' . $this->db->quoteIdentifier(self::ID_NAME[$parent_table]) . ' = ?' .
-            ' AND rbac_id = ? AND obj_id = ? AND obj_type = ?)';
 
         $create = $this->db->prepareManip(
             'INSERT INTO ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
             ' (' . $this->db->quoteIdentifier(self::ID_NAME[$table]) .
-            ',parent_type, parent_id, rbac_id, obj_id, obj_type) VALUES (' .
-            $this->db->nextId(self::TABLES[$table]) . ', ' .
+            ', parent_type, parent_id, rbac_id, obj_id, obj_type) VALUES (?, ' .
             $this->db->quote($parent_type, ilDBConstants::T_TEXT) . ', ' .
-            $parent_id_query . ' ?, ?, ?);',
+            '?, ?, ?, ?);',
             [
+                ilDBConstants::T_INTEGER,
                 ilDBConstants::T_INTEGER,
                 ilDBConstants::T_INTEGER,
                 ilDBConstants::T_INTEGER,
@@ -194,10 +505,12 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             ]
         );
         $read = $this->db->prepare(
-            'SELECT COUNT(*) FROM ' . $this->db->quoteIdentifier(self::TABLES['general']) .
+            'SELECT COUNT(*) FROM ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
             ' WHERE ' . $this->db->quoteIdentifier(self::ID_NAME[$table]) . ' = ?' .
-            ' AND rbac_id = ? AND obj_id = ? AND obj_type = ?;',
+            ' AND parent_type = ' . $this->db->quote($parent_type, ilDBConstants::T_TEXT) .
+            ' AND parent_id = ? AND rbac_id = ? AND obj_id = ? AND obj_type = ?;',
             [
+                ilDBConstants::T_INTEGER,
                 ilDBConstants::T_INTEGER,
                 ilDBConstants::T_INTEGER,
                 ilDBConstants::T_INTEGER,
@@ -205,10 +518,12 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             ]
         );
         $delete = $this->db->prepareManip(
-            'DELETE FROM ' . $this->db->quoteIdentifier(self::TABLES['general']) .
+            'DELETE FROM ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
             ' WHERE ' . $this->db->quoteIdentifier(self::ID_NAME[$table]) . ' = ?' .
-            ' AND rbac_id = ? AND obj_id = ? AND obj_type = ?;',
+            ' AND parent_type = ' . $this->db->quote($parent_type, ilDBConstants::T_TEXT) .
+            ' AND parent_id = ? AND rbac_id = ? AND obj_id = ? AND obj_type = ?;',
             [
+                ilDBConstants::T_INTEGER,
                 ilDBConstants::T_INTEGER,
                 ilDBConstants::T_INTEGER,
                 ilDBConstants::T_INTEGER,
@@ -221,7 +536,324 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             $read,
             null,
             $delete,
+            self::TABLES[$table],
+            [self::EXP_MD_ID, self::EXP_PARENT_MD_ID]
+        );
+    }
+
+    /**
+     * Returns the appropriate database marker for a container element
+     * without its own table.
+     * @param string    $table
+     * @param string[]  $fields
+     * @return ilMDDatabaseMarker
+     */
+    protected function getMarkerForNonTableContainer(
+        string $table,
+        array $fields
+    ): ilMDDatabaseMarker {
+        $this->checkTable($table);
+        if (empty($fields)) {
+            throw new ilMDDatabaseException(
+                'A container element can not be empty.'
+            );
+        }
+        $read_fields = '';
+        foreach ($fields as $field) {
+            $read_fields .= 'CHAR_LENGTH(' . $this->db->quoteIdentifier($field) .
+                ') > 0 ';
+        }
+        $read = $this->db->prepare(
+            'SELECT COUNT(*) FROM ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
+            ' WHERE ' . $read_fields . 'AND ' .
+            $this->db->quoteIdentifier(self::ID_NAME[$table]) . ' = ?' .
+            ' AND rbac_id = ? AND obj_id = ? AND obj_type = ?;',
+            [
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_TEXT
+            ]
+        );
+        $delete_fields = '';
+        foreach ($fields as $field) {
+            $delete_fields .= $this->db->quoteIdentifier($field) . " = '', ";
+        }
+        $delete = $this->db->prepareManip(
+            'UPDATE ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
+            ' SET ' . $delete_fields .
+            'WHERE ' . $this->db->quoteIdentifier(self::ID_NAME[$table]) . ' = ?' .
+            ' AND rbac_id = ? AND obj_id = ? AND obj_type = ?;',
+            [
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_TEXT
+            ]
+        );
+
+        return $this->factory->getDatabaseMarker(
+            null,
+            $read,
+            null,
+            $delete,
+            self::TABLES[$table],
             [self::EXP_MD_ID]
+        );
+    }
+
+    /**
+     * Returns the appropriate database marker for a container element
+     * without its own table, but with a parent.
+     * @param string    $table
+     * @param string[]  $fields
+     * @param string    $parent_type
+     * @return ilMDDatabaseMarker
+     */
+    protected function getMarkerForNonTableContainerWithParent(
+        string $table,
+        array $fields,
+        string $parent_type
+    ): ilMDDatabaseMarker {
+        $this->checkTable($table);
+        if (empty($fields)) {
+            throw new ilMDDatabaseException(
+                'A container element can not be empty.'
+            );
+        }
+        $read_fields = '';
+        foreach ($fields as $field) {
+            $read_fields .= 'CHAR_LENGTH(' . $this->db->quoteIdentifier($field) .
+                ') > 0 ';
+        }
+        $read = $this->db->prepare(
+            'SELECT COUNT(*) FROM ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
+            ' WHERE ' . $read_fields . 'AND ' .
+            $this->db->quoteIdentifier(self::ID_NAME[$table]) . ' = ?' .
+            ' AND parent_type = ' . $this->db->quote($parent_type, ilDBConstants::T_TEXT) .
+            ' AND parent_id = ? AND rbac_id = ? AND obj_id = ? AND obj_type = ?;',
+            [
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_TEXT
+            ]
+        );
+        $delete_fields = '';
+        foreach ($fields as $field) {
+            $delete_fields .= $this->db->quoteIdentifier($field) . " = '', ";
+        }
+        $delete = $this->db->prepareManip(
+            'UPDATE ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
+            ' SET ' . $delete_fields .
+            'WHERE ' . $this->db->quoteIdentifier(self::ID_NAME[$table]) . ' = ?' .
+            ' AND parent_type = ' . $this->db->quote($parent_type, ilDBConstants::T_TEXT) .
+            ' AND parent_id = ? AND rbac_id = ? AND obj_id = ? AND obj_type = ?;',
+            [
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_TEXT
+            ]
+        );
+
+        return $this->factory->getDatabaseMarker(
+            null,
+            $read,
+            null,
+            $delete,
+            self::TABLES[$table],
+            [self::EXP_MD_ID, self::EXP_PARENT_MD_ID]
+        );
+    }
+
+    /**
+     * Returns the appropriate database marker for a data element
+     * without its own table, but where a parent has to be given.
+     */
+    protected function getMarkerForDataWithParent(
+        string $table,
+        string $field,
+        string $parent_type
+    ): ilMDDatabaseMarker {
+        $this->checkTable($table);
+
+        $create_and_update = $this->db->prepareManip(
+            'UPDATE ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
+            ' SET ' . $this->db->quoteIdentifier($field) . ' = ?' .
+            ' WHERE ' . $this->db->quoteIdentifier(self::ID_NAME[$table]) . ' = ?' .
+            ' AND parent_type = ' . $this->db->quote($parent_type, ilDBConstants::T_TEXT) .
+            ' AND parent_id = ? AND rbac_id = ? AND obj_id = ? AND obj_type = ?;',
+            [
+                ilDBConstants::T_TEXT,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_TEXT
+            ]
+        );
+        $read = $this->db->prepare(
+            'SELECT ' . $this->db->quoteIdentifier($field) . 'AS data' .
+            ' FROM ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
+            ' WHERE ' . $this->db->quoteIdentifier(self::ID_NAME[$table]) . ' = ?' .
+            ' AND parent_type = ' . $this->db->quote($parent_type, ilDBConstants::T_TEXT) .
+            ' AND parent_id = ? AND rbac_id = ? AND obj_id = ? AND obj_type = ?;',
+            [
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_TEXT
+            ]
+        );
+        $delete = $this->db->prepareManip(
+            'UPDATE ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
+            ' SET ' . $this->db->quoteIdentifier($field) . " = ''" .
+            ' WHERE ' . $this->db->quoteIdentifier(self::ID_NAME[$table]) . ' = ?' .
+            ' AND parent_type = ' . $this->db->quote($parent_type, ilDBConstants::T_TEXT) .
+            ' AND parent_id = ? AND rbac_id = ? AND obj_id = ? AND obj_type = ?;',
+            [
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_TEXT
+            ]
+        );
+
+        return $this->factory->getDatabaseMarker(
+            $create_and_update,
+            $read,
+            $create_and_update,
+            $delete,
+            self::TABLES[$table],
+            [self::EXP_DATA, self::EXP_MD_ID, self::EXP_PARENT_MD_ID]
+        );
+    }
+
+    /**
+     * Returns the appropriate database marker for a data element
+     * with its own table, and which has a parent element.
+     */
+    protected function getMarkerForTableDataWithParent(
+        string $table,
+        string $field,
+        string $parent_type
+    ): ilMDDatabaseMarker {
+        $this->checkTable($table);
+
+        $create = $this->db->prepareManip(
+            'INSERT INTO ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
+            ' (' . $this->db->quoteIdentifier($field) . ', ' .
+            $this->db->quoteIdentifier(self::ID_NAME[$table]) .
+            ', parent_type, parent_id, rbac_id, obj_id, obj_type) VALUES (?, ? ' .
+            $this->db->quote($parent_type, ilDBConstants::T_TEXT) . ', ' .
+            '?, ?, ?, ?);',
+            [
+                ilDBConstants::T_TEXT,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_TEXT
+            ]
+        );
+        $read = $this->db->prepare(
+            'SELECT ' . $this->db->quoteIdentifier($field) . 'AS data' .
+            ' FROM ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
+            ' WHERE ' . $this->db->quoteIdentifier(self::ID_NAME[$table]) . ' = ?' .
+            ' AND parent_type = ' . $this->db->quote($parent_type, ilDBConstants::T_TEXT) .
+            ' AND parent_id = ? AND rbac_id = ? AND obj_id = ? AND obj_type = ?;',
+            [
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_TEXT
+            ]
+        );
+        $delete = $this->db->prepareManip(
+            'DELETE FROM ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
+            ' WHERE ' . $this->db->quoteIdentifier(self::ID_NAME[$table]) . ' = ?' .
+            ' AND parent_type = ' . $this->db->quote($parent_type, ilDBConstants::T_TEXT) .
+            ' AND parent_id = ? AND rbac_id = ? AND obj_id = ? AND obj_type = ?;',
+            [
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_TEXT
+            ]
+        );
+
+        return $this->factory->getDatabaseMarker(
+            $create,
+            $read,
+            null,
+            $delete,
+            self::TABLES[$table],
+            [self::EXP_DATA, self::EXP_MD_ID, self::EXP_PARENT_MD_ID]
+        );
+    }
+
+    /**
+     * Returns the appropriate database marker for a data element
+     * without its own table.
+     */
+    protected function getMarkerForData(
+        string $table,
+        string $field
+    ): ilMDDatabaseMarker {
+        $this->checkTable($table);
+
+        $create_and_update = $this->db->prepareManip(
+            'UPDATE ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
+            ' SET ' . $this->db->quoteIdentifier($field) . ' = ?' .
+            ' WHERE ' . $this->db->quoteIdentifier(self::ID_NAME[$table]) . ' = ?' .
+            ' AND rbac_id = ? AND obj_id = ? AND obj_type = ?;',
+            [
+                ilDBConstants::T_TEXT,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_TEXT
+            ]
+        );
+        $read = $this->db->prepare(
+            'SELECT ' . $this->db->quoteIdentifier($field) . 'AS data' .
+            ' FROM ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
+            ' WHERE ' . $this->db->quoteIdentifier(self::ID_NAME[$table]) . ' = ?' .
+            ' AND rbac_id = ? AND obj_id = ? AND obj_type = ?;',
+            [
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_TEXT
+            ]
+        );
+        $delete = $this->db->prepareManip(
+            'UPDATE ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
+            ' SET ' . $this->db->quoteIdentifier($field) . " = ''" .
+            ' WHERE ' . $this->db->quoteIdentifier(self::ID_NAME[$table]) . ' = ?' .
+            ' AND rbac_id = ? AND obj_id = ? AND obj_type = ?;',
+            [
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_INTEGER,
+                ilDBConstants::T_TEXT
+            ]
+        );
+
+        return $this->factory->getDatabaseMarker(
+            $create_and_update,
+            $read,
+            $create_and_update,
+            $delete,
+            self::TABLES[$table],
+            [self::EXP_DATA, self::EXP_MD_ID]
         );
     }
 

@@ -23,14 +23,32 @@ declare(strict_types=1);
  */
 class ilMDDatabaseMarker extends ilMDMarker
 {
-    protected ilDBStatement $create;
+    /**
+     * Some MD elements are containers without their own tables,
+     * and can not really be created on their own.
+     */
+    protected ?ilDBStatement $create;
     protected ilDBStatement $read;
 
     /**
      * Some MD elements can not be updated, since they don't carry data.
      */
     protected ?ilDBStatement $update;
-    protected ilDBStatement $delete;
+
+    /**
+     * Sources of vocabularies can not be deleted, since they are
+     * all equal to LOMv1.0.
+     */
+    protected ?ilDBStatement $delete;
+
+    protected string $table;
+
+    /**
+     * Marks elements which act as 'parents' for subordinate elements
+     * in the db structure, and whose id is needed to access those
+     * sub-elements (until the next parent in the hierarchy comes up).
+     */
+    protected bool $is_parent = false;
 
     /**
      * @var string[]
@@ -38,27 +56,30 @@ class ilMDDatabaseMarker extends ilMDMarker
     protected array $expected_params;
 
     /**
-     * @param ilDBStatement      $create
+     * @param ilDBStatement|null $create
      * @param ilDBStatement      $read
      * @param ilDBStatement|null $update
-     * @param ilDBStatement      $delete
+     * @param ilDBStatement|null $delete
+     * @param string             $table
      * @param string[]           $expected_params
      */
     public function __construct(
-        ilDBStatement $create,
+        ?ilDBStatement $create,
         ilDBStatement $read,
         ?ilDBStatement $update,
-        ilDBStatement $delete,
+        ?ilDBStatement $delete,
+        string $table,
         array $expected_params = []
     ) {
         $this->create = $create;
         $this->read = $read;
         $this->update = $update;
         $this->delete = $delete;
+        $this->table = $table;
         $this->expected_params = $expected_params;
     }
 
-    public function getCreate(): ilDBStatement
+    public function getCreate(): ?ilDBStatement
     {
         return $this->create;
     }
@@ -73,9 +94,25 @@ class ilMDDatabaseMarker extends ilMDMarker
         return $this->update;
     }
 
-    public function getDelete(): ilDBStatement
+    public function getDelete(): ?ilDBStatement
     {
         return $this->delete;
+    }
+
+    public function getTable(): string
+    {
+        return $this->table;
+    }
+
+    public function isParent(): bool
+    {
+        return $this->is_parent;
+    }
+
+    public function withIsParent(bool $is_parent): ilMDDatabaseMarker
+    {
+        $this->is_parent = $is_parent;
+        return $this;
     }
 
     /**
