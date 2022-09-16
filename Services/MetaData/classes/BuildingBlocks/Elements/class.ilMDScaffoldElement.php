@@ -24,4 +24,8 @@ declare(strict_types=1);
  */
 class ilMDScaffoldElement extends ilMDBaseElement
 {
+    public function isScaffold(): bool
+    {
+        return true;
+    }
 }

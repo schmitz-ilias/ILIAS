@@ -67,17 +67,17 @@ abstract class ilMDBaseElement
     }
 
     /**
-     * This magic method can be used to access specific sub-elements quicker.
+     * This method can be used to access specific sub-elements quicker.
      * Call the name of the sub-element as a method. When the element is not
      * unique, pass its ID as an argument. Note that this can not be used to
      * access scaffold elements.
      */
-    public function __call(string $name, array $arguments): ?ilMDElement
+    public function getSubElement(string $name, ?int $md_id = null): ?ilMDElement
     {
         $res = [];
         foreach ($this->getSubElements() as $sub_element) {
             if (
-                $sub_element instanceof ilMDElement &&
+                !$sub_element->isScaffold() &&
                 $sub_element->getName() === $name
             ) {
                 $res[] = $sub_element;
@@ -87,17 +87,18 @@ abstract class ilMDBaseElement
             return null;
         }
         //if a unique element was found, return it
-        if (count($res) === 1 && $res[0]->unique) {
+        if (count($res) === 1 && $res[0]->isUnique()) {
             return $res[0];
         }
         //else check for an id as argument
-        if (!isset($arguments[0]) || !is_int($arguments[0])) {
+        if (!isset($md_id)) {
             throw new ilMDBuildingBlocksException(
-                "To access non-unique sub-elements, pass their ID as an argument."
+                "To access the non-unique sub-element ' . $name .
+                 ', pass its ID as an argument."
             );
         }
         foreach ($res as $sub_element) {
-            if ($sub_element->getMDID() === $arguments[0]) {
+            if ($sub_element->getMDID() === $md_id) {
                 return $sub_element;
             }
         }
@@ -130,22 +131,32 @@ abstract class ilMDBaseElement
         return $this->name;
     }
 
-    /**
-     * Leaves a trail of blank markers up to the root element, or
-     * the first super-element that already has a marker. Places
-     * the marker passed as an argument on this element.
-     */
-    public function leaveMarkerTrail(ilMDMarker $marker): void
+    public function isRoot(): bool
     {
-        $this->marker = $marker;
+        return false;
+    }
+
+    public function isScaffold(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Leaves a trail of markers from this element up to the root element.
+     * Places the first marker on this element, stops when it reaches an
+     * element that already has a marker.
+     */
+    public function leaveMarkerTrail(
+        ilMDMarker $first_marker,
+        ilMDMarker $trail_marker
+    ): void {
+        $this->setMarker($first_marker);
         $curr_element = $this->getSuperElement();
         while (isset($curr_element)) {
             if ($curr_element->getMarker() !== null) {
-                throw new ilMDBuildingBlocksException(
-                    "There already is a marker trail on this MD set."
-                );
+                return;
             }
-            $curr_element->setMarker(new ilMDMarker());
+            $curr_element->setMarker($trail_marker);
             $curr_element = $curr_element->getSuperElement();
         }
     }

@@ -97,22 +97,30 @@ class ilMDLOMDataFactory
         );
     }
 
+    public function MDNullData(): ilMDData
+    {
+        return $this->MDData(self::TYPE_NONE, '');
+    }
+
     protected function getConstraintForType(
         string $type,
         ?ilMDVocabulary $vocabulary = null
     ): Constraint {
         switch ($type) {
             case(self::TYPE_NONE):
-                throw new ilMDBuildingBlocksException(
-                    'Can not create data of type none.'
+                return $this->factory->custom()->constraint(
+                    function (string $arg) {
+                        return $arg === '';
+                    },
+                    'There should not be any data here.'
                 );
 
             case(self::TYPE_STRING):
                 return $this->factory->custom()->constraint(
                     function (string $arg) {
-                        return true;
+                        return $arg !== '';
                     },
-                    ''
+                    'This should not be empty.'
                 );
 
             case(self::TYPE_LANG):
@@ -134,7 +142,10 @@ class ilMDLOMDataFactory
             case(self::TYPE_VOCAB_VALUE):
                 return $this->factory->custom()->constraint(
                     function (string $arg) use ($vocabulary) {
-                        return in_array($arg, $vocabulary->getValues());
+                        return in_array(
+                            strtolower($arg),
+                            array_map('strtolower', $vocabulary->getValues())
+                        );
                     },
                     'Invalid vocabulary value'
                 );

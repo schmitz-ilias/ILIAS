@@ -534,9 +534,13 @@ class ilMDLOMStructure implements ilMDStructure
         return $this->pointer[array_key_last($this->pointer)];
     }
 
-    public function getPointerPath(): array
+    public function getPointerAsPath(): ilMDPath
     {
-        return $this->pointer;
+        $path = new ilMDPath();
+        foreach (array_slice($this->pointer, 1) as $key) {
+            $path->addStep($key);
+        }
+        return $path;
     }
 
     public function isPointerAtRootElement(): bool
@@ -549,6 +553,9 @@ class ilMDLOMStructure implements ilMDStructure
         return $this->getSubArrayAtPointer()['unique'];
     }
 
+    /**
+     * @return string[]
+     */
     public function getSubElementsAtPointer(): array
     {
         return array_keys($this->getSubArrayAtPointer()['sub']);
@@ -559,16 +566,16 @@ class ilMDLOMStructure implements ilMDStructure
         return $this->getSubArrayAtPointer()['type'];
     }
 
-    public function getMarkerAtPointer(): ?ilMDMarker
+    public function getTagAtPointer(): ?ilMDTag
     {
-        return $this->getSubArrayAtPointer()['marker'] ?? null;
+        return $this->getSubArrayAtPointer()['tag'] ?? null;
     }
 
-    public function setMarkerAtPointer(ilMDMarker $marker): ilMDLOMStructure
+    public function setTagAtPointer(ilMDTag $tag): ilMDLOMStructure
     {
         if ($this->read_mode) {
             throw new ilMDStructureException(
-                "Can not set markers on a structure in read mode."
+                "Can not set tags on a structure in read mode."
             );
         }
         $array = &$this->structure;
@@ -576,7 +583,7 @@ class ilMDLOMStructure implements ilMDStructure
         foreach (array_slice($this->pointer, 1) as $key) {
             $array = &$array['sub'][$key];
         }
-        $array['marker'] = $marker;
+        $array['tag'] = $tag;
         return $this;
     }
 
@@ -601,7 +608,8 @@ class ilMDLOMStructure implements ilMDStructure
     {
         if (!in_array($name, $this->getSubElementsAtPointer())) {
             throw new ilMDStructureException(
-                "The current element does not have a subelement with this name."
+                'The current element ' . $this->getNameAtPointer() .
+                ' does not have a subelement with the name ' . $name
             );
         }
         $this->pointer[] = $name;
@@ -616,5 +624,18 @@ class ilMDLOMStructure implements ilMDStructure
             $array = $array['sub'][$key];
         }
         return $array;
+    }
+
+    public function movePointerToEndOfPath(ilMDPath $path): ilMDStructure
+    {
+        $pointer = [];
+        $local_path = clone $path;
+        while (!$local_path->isAtRoot()) {
+            array_unshift($pointer, $local_path->getStep());
+            $local_path->removeLastStep();
+        }
+        array_unshift($pointer, self::NAME_ROOT);
+        $this->pointer = $pointer;
+        return $this;
     }
 }

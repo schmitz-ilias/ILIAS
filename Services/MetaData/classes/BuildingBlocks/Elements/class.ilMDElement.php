@@ -23,39 +23,34 @@ declare(strict_types=1);
  */
 class ilMDElement extends ilMDBaseElement
 {
-    protected ?int $md_id = null;
-    protected ?ilMDData $data = null;
+    protected int $md_id;
+    protected ilMDData $data;
 
     /**
      * @param string            $name
      * @param bool              $unique
      * @param ilMDBaseElement[] $sub_elements
-     * @param int|null          $md_id
-     * @param ilMDData|null     $data
+     * @param int               $md_id
+     * @param ilMDData          $data
      */
     public function __construct(
         string $name,
         bool $unique,
         array $sub_elements,
-        ?int $md_id = null,
-        ?ilMDData $data = null
+        int $md_id,
+        ilMDData $data
     ) {
-        if (!$unique && $md_id === null) {
-            throw new ilMDBuildingBlocksException(
-                "Non-unique elements can not be initiated without an ID."
-            );
-        }
         parent::__construct($name, $unique, $sub_elements);
         $this->md_id = $md_id;
         $this->data = $data;
     }
 
-    public function getMDID(): ?int
+    public function getMDID(): int
     {
         return $this->md_id;
     }
 
-    public function getData(): ?ilMDData
+    public function getData(): ilMDData
     {
         return $this->data;
     }

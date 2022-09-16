@@ -21,17 +21,6 @@ declare(strict_types=1);
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDDataMarker extends ilMDMarker
+class ilMDTag
 {
-    protected ilMDData $data;
-
-    public function __construct(ilMDData $data)
-    {
-        $this->data = $data;
-    }
-
-    public function getData(): ilMDData
-    {
-        return $this->data;
-    }
 }

@@ -48,6 +48,7 @@ class ilMDRootElement extends ilMDElement
      * @param string            $obj_type
      * @param string            $name
      * @param ilMDBaseElement[] $sub_elements
+     * @param ilMDData          $data
      */
     public function __construct(
         int $rbac_id,
@@ -55,8 +56,9 @@ class ilMDRootElement extends ilMDElement
         string $obj_type,
         string $name,
         array $sub_elements,
+        ilMDData $data
     ) {
-        parent::__construct($name, true, $sub_elements);
+        parent::__construct($name, true, $sub_elements, 0, $data);
         $this->rbac_id = $rbac_id;
         $this->obj_id = $obj_id;
         $this->obj_type = $obj_type;
@@ -82,5 +84,10 @@ class ilMDRootElement extends ilMDElement
     public function getObjType(): string
     {
         return $this->obj_type;
+    }
+
+    public function isRoot(): bool
+    {
+        return true;
     }
 }

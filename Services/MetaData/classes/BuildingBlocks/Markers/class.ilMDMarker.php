@@ -21,7 +21,17 @@ declare(strict_types=1);
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDGUIMarker extends ilMDMarker
+class ilMDMarker
 {
-    //TODO implement this with the GUI
+    protected ilMDData $data;
+
+    public function __construct(ilMDData $data)
+    {
+        $this->data = $data;
+    }
+
+    public function getData(): ilMDData
+    {
+        return $this->data;
+    }
 }

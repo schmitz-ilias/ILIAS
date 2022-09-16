@@ -32,6 +32,8 @@ class ilServicesMetaDataSuite extends TestSuite
         $suite->addTestSuite(ilMDLOMDataFactoryTest::class);
         include_once("./Services/MetaData/test/ilMDLOMStructureTest.php");
         $suite->addTestSuite(ilMDLOMStructureTest::class);
+        include_once("./Services/MetaData/test/ilMDPathTest.php");
+        $suite->addTestSuite(ilMDPathTest::class);
 
         return $suite;
     }

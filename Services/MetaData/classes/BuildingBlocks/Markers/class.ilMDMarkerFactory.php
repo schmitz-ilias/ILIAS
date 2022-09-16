@@ -21,10 +21,22 @@ declare(strict_types=1);
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface ilMDDictionary
+class ilMDMarkerFactory
 {
-    /**
-     * Returns a structure in read mode, decorated with tags.
-     */
-    public function getStructureWithTags(): ilMDStructure;
+    protected ilMDLOMDataFactory $data_factory;
+
+    public function __construct($data_factory)
+    {
+        $this->data_factory = $data_factory;
+    }
+
+    public function Marker(ilMDData $data): ilMDMarker
+    {
+        return new ilMDMarker($data);
+    }
+
+    public function NullMarker(): ilMDMarker
+    {
+        return $this->Marker($this->data_factory->MDNullData());
+    }
 }

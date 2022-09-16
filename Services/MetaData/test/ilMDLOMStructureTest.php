@@ -50,10 +50,31 @@ class ilMDLOMStructureTest extends TestCase
             'language',
             $structure->getNameAtPointer()
         );
-        $this->assertSame(
-            ['lom', 'general', 'language'],
-            $structure->getPointerPath()
+    }
+
+    public function testPointerPath(): void
+    {
+        $structure1 = new ilMDLOMStructure();
+        $structure2 = new ilMDLOMStructure();
+        $structure1->movePointerToSubElement('general')
+                  ->movePointerToSubElement('language');
+        $structure2->movePointerToEndOfPath(
+            $structure1->getPointerAsPath()
         );
+        $this->assertSame(
+            'language',
+            $structure2->getNameAtPointer()
+        );
+        $this->assertSame(
+            'general',
+            $structure2->movePointerToSuperElement()
+                      ->getNameAtPointer()
+        );
+
+        $structure2->movePointerToEndOfPath(
+            $structure1->movePointerToRoot()->getPointerAsPath()
+        );
+        $this->assertTrue($structure2->isPointerAtRootElement());
     }
 
     public function testMovePointerToSubElementException(): void
@@ -145,33 +166,115 @@ class ilMDLOMStructureTest extends TestCase
         );
     }
 
-    public function testMarkersAtPointer(): void
+    public function testTagsAtPointer(): void
     {
-        $marker_general = new ilMDMarker();
-        $marker_language = new ilMDMarker();
+        $tag_general = new ilMDTag();
+        $tag_language = new ilMDTag();
         $structure = new ilMDLOMStructure();
         $structure->movePointerToSubElement('general')
-                  ->setMarkerAtPointer($marker_general)
+                  ->setTagAtPointer($tag_general)
                   ->movePointerToSubElement('language')
-                  ->setMarkerAtPointer($marker_language);
+                  ->setTagAtPointer($tag_language);
         $this->assertSame(
-            $marker_language,
-            $structure->getMarkerAtPointer()
+            $tag_language,
+            $structure->getTagAtPointer()
         );
         $structure->movePointerToSuperElement();
         $this->assertSame(
-            $marker_general,
-            $structure->getMarkerAtPointer()
+            $tag_general,
+            $structure->getTagAtPointer()
         );
         $structure->movePointerToSuperElement();
-        $this->assertNull($structure->getMarkerAtPointer());
+        $this->assertNull($structure->getTagAtPointer());
     }
 
-    public function testReadModeMarkerException(): void
+    public function testReadModeTagException(): void
     {
         $structure = new ilMDLOMStructure();
         $structure->switchToReadMode();
         $this->expectException(ilMDStructureException::class);
-        $structure->setMarkerAtPointer(new ilMDMarker());
+        $structure->setTagAtPointer(new ilMDTag());
+    }
+
+    public function testLOMDatabaseDictionary(): void
+    {
+        $tag = $this->createMock(ilMDDatabaseTag::class);
+        $tag_factory = $this->createMock(ilMDTagFactory::class);
+        $tag_factory
+            ->expects($this->any())
+            ->method('databaseTag')
+            ->willReturn($tag);
+
+        $db = $this->createMock(ilDBInterface::class);
+
+        $dictionary = new ilMDLOMDatabaseDictionary($tag_factory, $db);
+        $structure = $dictionary->getStructureWithTags();
+
+        $this->assertInstanceOf(
+            ilMDDatabaseTag::class,
+            $structure->getTagAtPointer()
+        );
+        $this->assertInstanceOf(
+            ilMDDatabaseTag::class,
+            $structure->movePointerToSubElement('lifeCycle')->getTagAtPointer()
+        );
+        $this->assertInstanceOf(
+            ilMDDatabaseTag::class,
+            $structure->movePointerToSubElement('version')->getTagAtPointer()
+        );
+        $this->assertInstanceOf(
+            ilMDDatabaseTag::class,
+            $structure->movePointerToSubElement('language')->getTagAtPointer()
+        );
+        $this->assertInstanceOf(
+            ilMDDatabaseTag::class,
+            $structure
+                ->movePointerToSuperElement()
+                ->movePointerToSubElement('string')
+                ->getTagAtPointer()
+        );
+    }
+
+    public function testLOMVocabulariesDictionary(): void
+    {
+        $tag = $this->createMock(ilMDVocabularyTag::class);
+        $tag_factory = $this->createMock(ilMDTagFactory::class);
+        $tag_factory
+            ->expects($this->any())
+            ->method('vocabularyTag')
+            ->willReturn($tag);
+
+        $dictionary = new ilMDLOMVocabulariesDictionary($tag_factory);
+        $structure = $dictionary
+            ->getStructureWithTags()
+            ->movePointerToSubElement('lifeCycle')
+            ->movePointerToSubElement('contribute')
+            ->movePointerToSubElement('role')
+            ->movePointerToSubElement('source');
+
+        $this->assertInstanceOf(
+            ilMDVocabularyTag::class,
+            $structure->getTagAtPointer()
+        );
+        $this->assertInstanceOf(
+            ilMDVocabularyTag::class,
+            $structure
+                ->movePointerToSuperElement()
+                ->movePointerToSubElement('value')
+                ->getTagAtPointer()
+        );
+        $this->assertNull(
+            $structure
+                ->movePointerToRoot()
+                ->movePointerToSubElement('educational')
+                ->getTagAtPointer()
+        );
+        $this->assertInstanceOf(
+            ilMDVocabularyTag::class,
+            $structure
+                ->movePointerToSubElement('semanticDensity')
+                ->movePointerToSubElement('value')
+                ->getTagAtPointer()
+        );
     }
 }

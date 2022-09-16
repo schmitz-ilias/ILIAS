@@ -25,18 +25,13 @@ use PHPUnit\Framework\TestCase;
  */
 class ilMDBuildingBlocksTest extends TestCase
 {
-    public function testNonUniqueElementException(): void
-    {
-        $this->expectException(ilMDBuildingBlocksException::class);
-        $element = new ilMDElement('name', false, []);
-    }
-
     public function testSuperAndSubElements(): void
     {
+        $data = $this->createMock(ilMDData::class);
         $low1 = new ilMDScaffoldElement('low1', true, []);
-        $low2 = new ilMDElement('low2', false, [], 13);
-        $middle = new ilMDElement('middle', true, [$low1, $low2]);
-        $root = new ilMDRootElement(1, 2, 'type', 'root', [$middle]);
+        $low2 = new ilMDElement('low2', false, [], 13, $data);
+        $middle = new ilMDElement('middle', true, [$low1, $low2], 13, $data);
+        $root = new ilMDRootElement(1, 2, 'type', 'root', [$middle], $data);
 
         $this->assertSame($middle, $low1->getSuperElement());
         $this->assertSame($middle, $low2->getSuperElement());
@@ -46,51 +41,59 @@ class ilMDBuildingBlocksTest extends TestCase
 
     public function testSetSuperElementException(): void
     {
+        $data = $this->createMock(ilMDData::class);
         $element = new ilMDScaffoldElement('low', false, []);
-        $root1 = new ilMDRootElement(1, 2, 'type', 'root1', [$element]);
+        $root1 = new ilMDRootElement(1, 2, 'type', 'root1', [$element], $data);
 
         $this->expectException(ilMDBuildingBlocksException::class);
-        $root2 = new ilMDRootElement(1, 3, 'type', 'root2', [$element]);
+        $root2 = new ilMDRootElement(1, 3, 'type', 'root2', [$element], $data);
     }
     public function testRootSetSuperElementException(): void
     {
-        $root1 = new ilMDRootElement(1, 2, 'type', 'root1', []);
+        $data = $this->createMock(ilMDData::class);
+        $root1 = new ilMDRootElement(1, 2, 'type', 'root1', [], $data);
 
         $this->expectException(ilMDBuildingBlocksException::class);
-        $root2 = new ilMDRootElement(1, 3, 'type', 'root2', [$root1]);
+        $root2 = new ilMDRootElement(1, 3, 'type', 'root2', [$root1], $data);
     }
 
-    public function testSubElementsViaMagic(): void
+    public function testGetSubElement(): void
     {
+        $data = $this->createMock(ilMDData::class);
         $element1 = new ilMDScaffoldElement('low', false, []);
-        $element2 = new ilMDElement('low', false, [], 13);
-        $element3 = new ilMDElement('low', false, [], 7);
-        $element4 = new ilMDElement('low_unique', true, []);
+        $element2 = new ilMDElement('low', false, [], 13, $data);
+        $element3 = new ilMDElement('low', false, [], 7, $data);
+        $element4 = new ilMDElement('low_unique', true, [], 78, $data);
         $root = new ilMDRootElement(
             1,
             2,
             'type',
             'root',
-            [$element1, $element2, $element3, $element4]
+            [$element1, $element2, $element3, $element4],
+            $data
         );
 
-        $this->assertSame($element4, $root->low_unique());
-        $this->assertSame($element3, $root->low(7));
-        $this->assertSame($element2, $root->low(13));
+        $this->assertSame($element4, $root->getSubElement('low_unique'));
+        $this->assertSame($element3, $root->getSubElement('low', 7));
+        $this->assertSame($element2, $root->getSubElement('low', 13));
+        $this->assertNull($root->getSubElement('something'));
+        $this->assertNull($root->getSubElement('low', 143));
     }
 
-    public function testSubElementsViaMagicException(): void
+    public function testGetSubElementNoIDException(): void
     {
-        $element = new ilMDElement('low', false, [], 7);
-        $root = new ilMDElement('root', true, [$element]);
+        $data = $this->createMock(ilMDData::class);
+        $element = new ilMDElement('low', false, [], 7, $data);
+        $root = new ilMDElement('root', true, [$element], 13, $data);
 
         $this->expectException(ilMDBuildingBlocksException::class);
-        $root->low();
+        $root->getSubElement('low');
     }
 
     public function testAddScaffoldToSubElements(): void
     {
-        $root = new ilMDElement('root', true, []);
+        $data = $this->createMock(ilMDData::class);
+        $root = new ilMDElement('root', true, [], 7, $data);
         $scaffold = new ilMDScaffoldElement('scaffold', false, []);
         $root->addScaffoldToSubElements($scaffold);
 
@@ -106,7 +109,8 @@ class ilMDBuildingBlocksTest extends TestCase
 
     public function testAddScaffoldToSubElementsException(): void
     {
-        $root = new ilMDElement('root', true, []);
+        $data = $this->createMock(ilMDData::class);
+        $root = new ilMDElement('root', true, [], 7, $data);
         $scaffold = new ilMDScaffoldElement('scaffold', false, []);
         $root->addScaffoldToSubElements($scaffold);
 
@@ -116,35 +120,27 @@ class ilMDBuildingBlocksTest extends TestCase
 
     public function testLeaveMarkerTrail(): void
     {
-        $lowest = new ilMDElement('lowest', true, []);
-        $low1 = new ilMDScaffoldElement('low1', true, []);
-        $low2 = new ilMDElement('low2', false, [$lowest], 13);
-        $middle = new ilMDElement('middle', true, [$low1, $low2]);
-        $root = new ilMDRootElement(1, 2, 'type', 'root', [$middle]);
+        $data = $this->createMock(ilMDData::class);
+        $lowest1 = new ilMDScaffoldElement('lowest1', true, []);
+        $lowest2 = new ilMDElement('lowest2', true, [], 7, $data);
+        $low1 = new ilMDScaffoldElement('low1', true, [$lowest1]);
+        $low2 = new ilMDElement('low2', false, [$lowest2], 13, $data);
+        $middle = new ilMDElement('middle', true, [$low1, $low2], 78, $data);
+        $root = new ilMDRootElement(1, 2, 'type', 'root', [$middle], $data);
 
-        $fixed_marker = new ilMDMarker();
-        $low2->leaveMarkerTrail($fixed_marker);
+        $first_marker1 = $this->createMock(ilMDMarker::class);
+        $trail_marker1 = $this->createMock(ilMDMarker::class);
+        $low2->leaveMarkerTrail($first_marker1, $trail_marker1);
 
-        $this->assertInstanceOf(ilMDMarker::class, $root->getMarker());
-        $this->assertNotSame($fixed_marker, $root->getMarker());
-        $this->assertInstanceOf(ilMDMarker::class, $middle->getMarker());
-        $this->assertNotSame($fixed_marker, $middle->getMarker());
-        $this->assertSame($fixed_marker, $low2->getMarker());
-        $this->assertNull($low1->getMarker());
-        $this->assertNull($lowest->getMarker());
-    }
+        $first_marker2 = $this->createMock(ilMDMarker::class);
+        $trail_marker2 = $this->createMock(ilMDMarker::class);
+        $lowest1->leaveMarkerTrail($first_marker2, $trail_marker2);
 
-    public function testLeaveMarkerTrailException(): void
-    {
-        $low1 = new ilMDScaffoldElement('low1', true, []);
-        $low2 = new ilMDElement('low2', false, [], 13);
-        $root = new ilMDRootElement(1, 2, 'type', 'root', [$low1, $low2]);
-
-        $marker1 = new ilMDMarker();
-        $low2->leaveMarkerTrail($marker1);
-        $marker2 = new ilMDMarker();
-
-        $this->expectException(ilMDBuildingBlocksException::class);
-        $low1->leaveMarkerTrail($marker2);
+        $this->assertSame($trail_marker1, $root->getMarker());
+        $this->assertSame($trail_marker1, $middle->getMarker());
+        $this->assertSame($first_marker1, $low2->getMarker());
+        $this->assertSame($trail_marker2, $low1->getMarker());
+        $this->assertSame($first_marker2, $lowest1->getMarker());
+        $this->assertNull($lowest2->getMarker());
     }
 }

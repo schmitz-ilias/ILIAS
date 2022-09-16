@@ -127,14 +127,42 @@ class ilMDEditorGUI
 
     public function debug(): bool
     {
-        $xml_writer = new ilMD2XML($this->md_obj->getRBACId(), $this->md_obj->getObjId(), $this->md_obj->getObjType());
-        $xml_writer->startExport();
+        //$xml_writer = new ilMD2XML($this->md_obj->getRBACId(), $this->md_obj->getObjId(), $this->md_obj->getObjType());
+        //$xml_writer->startExport();
 
         $this->tpl->addBlockFile('ADM_CONTENT', 'adm_content', 'tpl.md_editor.html', 'Services/MetaData');
 
         $this->__setTabs('meta_general');
 
-        $this->tpl->setVariable("MD_CONTENT", htmlentities($xml_writer->getXML()));
+        //$this->tpl->setVariable("MD_CONTENT", htmlentities($xml_writer->getXML()));
+
+        /**
+         * testing the new repo
+         */
+        global $DIC;
+        $data_factory = new ilMDLOMDataFactory($DIC->refinery());
+        $marker_factory = new ilMDMarkerFactory($data_factory);
+        $repo = new ilMDLOMDatabaseRepository($this->md_obj->getRBACId(), $this->md_obj->getObjId(), $this->md_obj->getObjType());
+        $path = new ilMDPath();
+        $path->addStep('general')->addStep('keyword');
+        $string = '';
+        $array = $repo->getMDOnPath($path);
+        foreach ($array as $element) {
+            foreach ($element->getSubElements() as $subElement) {
+                $string .= $subElement->getName() . ': ' . $subElement->getData()->getValue() . ', ';
+            }
+        }
+        /*$root = $repo->getMD();
+        foreach ($root->getSubElement('general')->getSubElements() as $subElement) {
+            if ($subElement->getName() !== 'keyword') {
+                continue;
+            }
+            $string .= $subElement->getSubElement('string')->getData()->getValue() . ', ';
+        }*/
+        $this->tpl->setVariable("MD_CONTENT", $string);
+        /**
+         * end of testing the new repo
+         */
 
         return true;
     }

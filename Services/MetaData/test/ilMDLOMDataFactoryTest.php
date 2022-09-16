@@ -101,6 +101,20 @@ class ilMDLOMDataFactoryTest extends TestCase
         $factory = $this->getFactoryMock();
         $data = $factory->MDData(ilMDLOMDataFactory::TYPE_STRING, 'value');
         $this->assertNull($data->getError());
+        $data = $factory->MDData(ilMDLOMDataFactory::TYPE_STRING, '');
+        $this->assertIsString($data->getError());
+    }
+
+    public function testNoneConstraint(): void
+    {
+        $factory = $this->getFactoryMock();
+        $data = $factory->MDNullData();
+        $this->assertNull($data->getError());
+        $data = $factory->MDData(
+            ilMDLOMDataFactory::TYPE_NONE,
+            'something'
+        );
+        $this->assertIsString($data->getError());
     }
 
     public function testLangConstraint(): void
@@ -108,7 +122,7 @@ class ilMDLOMDataFactoryTest extends TestCase
         $factory = $this->getFactoryMock();
         $data = $factory->MDData(
             ilMDLOMDataFactory::TYPE_LANG,
-            ilMDLOMDataFactory::LANGUAGES[0]
+            'de'
         );
         $this->assertNull($data->getError());
         $data = $factory->MDData(ilMDLOMDataFactory::TYPE_LANG, 'not lang');

@@ -31,11 +31,10 @@ interface ilMDStructure
     public function getNameAtPointer(): string;
 
     /**
-     * Returns the path to the current position of the pointer as an array of
-     * element names, starting from the root element.
-     * @return string[]
+     * Returns the path to the current position of the pointer,
+     * starting from the root element.
      */
-    public function getPointerPath(): array;
+    public function getPointerAsPath(): ilMDPath;
 
     public function isPointerAtRootElement(): bool;
 
@@ -52,13 +51,13 @@ interface ilMDStructure
      */
     public function getTypeAtPointer(): string;
 
-    public function getMarkerAtPointer(): ?ilMDMarker;
+    public function getTagAtPointer(): ?ilMDTag;
 
     /**
      * Throws an Exception if read mode is on.
      * @throws ilMDStructureException
      */
-    public function setMarkerAtPointer(ilMDMarker $marker): ilMDStructure;
+    public function setTagAtPointer(ilMDTag $tag): ilMDStructure;
 
     public function movePointerToRoot(): ilMDStructure;
 
@@ -74,4 +73,9 @@ interface ilMDStructure
      * @throws ilMDStructureException
      */
     public function movePointerToSubElement(string $name): ilMDStructure;
+
+    /**
+     * Moves the pointer from the root along the path to its end.
+     */
+    public function movePointerToEndOfPath(ilMDPath $path): ilMDStructure;
 }

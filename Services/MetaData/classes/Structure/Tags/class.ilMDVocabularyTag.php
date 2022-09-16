@@ -21,6 +21,17 @@ declare(strict_types=1);
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDMarker
+class ilMDVocabularyTag extends ilMDTag
 {
+    protected ilMDVocabulary $vocabulary;
+
+    public function __construct(ilMDVocabulary $vocabulary)
+    {
+        $this->vocabulary = $vocabulary;
+    }
+
+    public function getVocabulary(): ilMDVocabulary
+    {
+        return $this->vocabulary;
+    }
 }

@@ -25,18 +25,23 @@ interface ilMDRepository
 {
     /**
      * Follows a trail of markers from the root element,
-     * and creates MD elements in place of every marked scaffold
-     * along the trail. Data on markers is transferred to the created
-     * elements.
+     * and creates or updates marked MD elements along the trail.
+     * Non-scaffold elements with non-null matching data markers are
+     * updated according to the marker, scaffold elements with matching
+     * data markers are created with the data on the marker.
      */
-    public function createMDElements(ilMDRootElement $root): void;
+    public function createAndUpdateMDElements(ilMDRootElement $root): void;
 
     /**
      * Returns as scaffolds the elements that could be added to this
-     * element as sub-elements.
+     * element as sub-elements. If a name is provided, returns only
+     * scaffolds with that name.
      * @return ilMDScaffoldElement[]
      */
-    public function getScaffoldForElement(ilMDBaseElement $element): array;
+    public function getScaffoldForElement(
+        ilMDBaseElement $element,
+        string $name = ''
+    ): array;
 
     /**
      * Returns the root element of the MD, with the full MD set
@@ -45,10 +50,13 @@ interface ilMDRepository
     public function getMD(): ilMDRootElement;
 
     /**
-     * Follows the trail of markers from the root element,
-     * and updates the data of MD elements which have data markers on them.
+     * Returns only the MD elements specified on a path, and all nested
+     * subelements of the last elements on the path, via the
+     * last element(s) on the path. Elements on the path that don't exist
+     * in the MD set are added as scaffolds.
+     * @return ilMDBaseElement[]
      */
-    public function updateMDElements(ilMDRootElement $root): void;
+    public function getMDOnPath(ilMDPath $path): array;
 
     /**
      * Follows the trail of markers from the passed root element,

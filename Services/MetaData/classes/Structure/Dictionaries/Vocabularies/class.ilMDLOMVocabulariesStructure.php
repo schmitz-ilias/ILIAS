@@ -21,10 +21,12 @@ declare(strict_types=1);
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface ilMDDictionary
+class ilMDLOMVocabulariesStructure extends ilMDLOMStructure
 {
-    /**
-     * Returns a structure in read mode, decorated with tags.
-     */
-    public function getStructureWithTags(): ilMDStructure;
+    public function getTagAtPointer(): ?ilMDVocabularyTag
+    {
+        /* @var $tag ilMDVocabularyTag|null */
+        $tag = parent::getTagAtPointer();
+        return $tag;
+    }
 }

@@ -21,10 +21,6 @@ declare(strict_types=1);
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface ilMDDictionary
+class ilMDPathException extends ilException
 {
-    /**
-     * Returns a structure in read mode, decorated with tags.
-     */
-    public function getStructureWithTags(): ilMDStructure;
 }
