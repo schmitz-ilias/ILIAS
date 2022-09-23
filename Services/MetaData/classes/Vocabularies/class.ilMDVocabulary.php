@@ -29,11 +29,16 @@ class ilMDVocabulary
      * @var string[]
      */
     protected array $values;
+    protected ?string $condition_value;
 
-    public function __construct(string $source, array $values)
-    {
+    public function __construct(
+        string $source,
+        array $values,
+        ?string $condition_value = null
+    ) {
         $this->source = $source;
         $this->values = $values;
+        $this->condition_value = $condition_value;
     }
 
     public function getSource(): string
@@ -47,5 +52,15 @@ class ilMDVocabulary
     public function getValues(): array
     {
         return $this->values;
+    }
+
+    /**
+     * Some vocabularies are only available, if a different
+     * MD element has a certain value. This value, if there
+     * is such a condition, is returned here.
+     */
+    public function getConditionValue(): ?string
+    {
+        return $this->condition_value;
     }
 }

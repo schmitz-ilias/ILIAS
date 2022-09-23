@@ -56,23 +56,30 @@ class ilMDLOMStructureTest extends TestCase
     {
         $structure1 = new ilMDLOMStructure();
         $structure2 = new ilMDLOMStructure();
+        $path_factory = new ilMDPathFactory();
         $structure1->movePointerToSubElement('general')
                   ->movePointerToSubElement('language');
         $structure2->movePointerToEndOfPath(
-            $structure1->getPointerAsPath()
+            $path_factory->getStructurePointerAsPath($structure1)
         );
         $this->assertSame(
             'language',
             $structure2->getNameAtPointer()
         );
         $this->assertSame(
+            'language',
+            $structure1->getNameAtPointer()
+        );
+        $this->assertSame(
             'general',
             $structure2->movePointerToSuperElement()
-                      ->getNameAtPointer()
+                       ->getNameAtPointer()
         );
 
         $structure2->movePointerToEndOfPath(
-            $structure1->movePointerToRoot()->getPointerAsPath()
+            $path_factory->getStructurePointerAsPath(
+                $structure1->movePointerToRoot()
+            )
         );
         $this->assertTrue($structure2->isPointerAtRootElement());
     }
@@ -237,14 +244,36 @@ class ilMDLOMStructureTest extends TestCase
 
     public function testLOMVocabulariesDictionary(): void
     {
-        $tag = $this->createMock(ilMDVocabularyTag::class);
+        $tag = $this->createMock(ilMDVocabulariesTag::class);
+        $tag_builder = $this->createMock(ilMDVocabulariesTagBuilder::class);
+        $tag_builder
+            ->expects($this->any())
+            ->method('getTag')
+            ->willReturn($tag);
         $tag_factory = $this->createMock(ilMDTagFactory::class);
         $tag_factory
             ->expects($this->any())
-            ->method('vocabularyTag')
-            ->willReturn($tag);
+            ->method('vocabulariesTag')
+            ->willReturn($tag_builder);
+        $path = $this->createMock(ilMDPathRelative::class);
+        $path
+            ->expects($this->any())
+            ->method('addStep')
+            ->willReturn($path);
+        $path
+            ->expects($this->any())
+            ->method('addStepToSuperElement')
+            ->willReturn($path);
+        $path_factory = $this->createMock(ilMDPathFactory::class);
+        $path_factory
+            ->expects($this->any())
+            ->method('getRelativePath')
+            ->willReturn($path);
 
-        $dictionary = new ilMDLOMVocabulariesDictionary($tag_factory);
+        $dictionary = new ilMDLOMVocabulariesDictionary(
+            $tag_factory,
+            $path_factory
+        );
         $structure = $dictionary
             ->getStructureWithTags()
             ->movePointerToSubElement('lifeCycle')
@@ -253,11 +282,11 @@ class ilMDLOMStructureTest extends TestCase
             ->movePointerToSubElement('source');
 
         $this->assertInstanceOf(
-            ilMDVocabularyTag::class,
+            ilMDVocabulariesTag::class,
             $structure->getTagAtPointer()
         );
         $this->assertInstanceOf(
-            ilMDVocabularyTag::class,
+            ilMDVocabulariesTag::class,
             $structure
                 ->movePointerToSuperElement()
                 ->movePointerToSubElement('value')
@@ -270,7 +299,7 @@ class ilMDLOMStructureTest extends TestCase
                 ->getTagAtPointer()
         );
         $this->assertInstanceOf(
-            ilMDVocabularyTag::class,
+            ilMDVocabulariesTag::class,
             $structure
                 ->movePointerToSubElement('semanticDensity')
                 ->movePointerToSubElement('value')

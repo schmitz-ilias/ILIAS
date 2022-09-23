@@ -29,14 +29,18 @@ class ilMDData
     protected string $value;
     protected Constraint $constraint;
 
+    protected ?ilMDPathRelative $path_to_condition;
+
     public function __construct(
         string $type,
         string $value,
-        Constraint $constraint
+        Constraint $constraint,
+        ?ilMDPathRelative $path_to_condition = null
     ) {
         $this->type = $type;
         $this->value = $value;
         $this->constraint = $constraint;
+        $this->path_to_condition = $path_to_condition;
     }
 
     public function getType(): string
@@ -49,8 +53,33 @@ class ilMDData
         return $this->value;
     }
 
-    public function getError(): ?string
+    /**
+     * Some vocabularies are only applicable if a different MD element
+     * takes a specific value. This returns the path to that different
+     * MD element.
+     */
+    public function getPathToConditionElement(): ?ilMDPathRelative
     {
+        return $this->path_to_condition;
+    }
+
+    public function getError(
+        ?string $condition_value = null
+    ): ?string {
+        if (
+            isset($this->path_to_condition) &&
+            !isset($condition_value)
+        ) {
+            throw new ilMDBuildingBlocksException(
+                'A conditional value can only be checked if the ' .
+                'value it is conditional on is supplied.'
+            );
+        }
+        if (isset($condition_value)) {
+            return $this->constraint->problemWith(
+                [$this->value, $condition_value]
+            );
+        }
         return $this->constraint->problemWith($this->value);
     }
 }

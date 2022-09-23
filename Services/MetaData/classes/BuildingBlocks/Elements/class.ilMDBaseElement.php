@@ -52,11 +52,29 @@ abstract class ilMDBaseElement
     }
 
     /**
+     * If a name is given, only returns sub-elements with that name (including
+     * scaffolds). If an ID is given, only returns sub-elements with that ID,
+     * and does not return any scaffolds.
      * @return ilMDBaseElement[]
      */
-    public function getSubElements(): array
-    {
-        return $this->sub_elements;
+    public function getSubElements(
+        string $name = '',
+        ?int $md_id = null
+    ): array {
+        $res = [];
+        foreach ($this->sub_elements as $sub_element) {
+            if ($name && $name !== $sub_element->getName()) {
+                continue;
+            }
+            if (
+                $md_id &&
+                ($sub_element->isScaffold() || $md_id !== $sub_element->getMDID())
+            ) {
+                continue;
+            }
+            $res[] = $sub_element;
+        }
+        return $res;
     }
 
     public function addScaffoldToSubElements(
@@ -64,45 +82,6 @@ abstract class ilMDBaseElement
     ): void {
         $scaffold->setSuperElement($this);
         $this->sub_elements[] = $scaffold;
-    }
-
-    /**
-     * This method can be used to access specific sub-elements quicker.
-     * Call the name of the sub-element as a method. When the element is not
-     * unique, pass its ID as an argument. Note that this can not be used to
-     * access scaffold elements.
-     */
-    public function getSubElement(string $name, ?int $md_id = null): ?ilMDElement
-    {
-        $res = [];
-        foreach ($this->getSubElements() as $sub_element) {
-            if (
-                !$sub_element->isScaffold() &&
-                $sub_element->getName() === $name
-            ) {
-                $res[] = $sub_element;
-            }
-        }
-        if (empty($res)) {
-            return null;
-        }
-        //if a unique element was found, return it
-        if (count($res) === 1 && $res[0]->isUnique()) {
-            return $res[0];
-        }
-        //else check for an id as argument
-        if (!isset($md_id)) {
-            throw new ilMDBuildingBlocksException(
-                "To access the non-unique sub-element ' . $name .
-                 ', pass its ID as an argument."
-            );
-        }
-        foreach ($res as $sub_element) {
-            if ($sub_element->getMDID() === $md_id) {
-                return $sub_element;
-            }
-        }
-        return null;
     }
 
     public function getSuperElement(): ?ilMDBaseElement
@@ -169,5 +148,15 @@ abstract class ilMDBaseElement
     public function getMarker(): ?ilMDMarker
     {
         return $this->marker;
+    }
+
+    // TODO don't put this in the public API
+    public function deleteFromSubElements(ilMDBaseElement $element): void
+    {
+        foreach ($this->sub_elements as $key => $sub_el) {
+            if ($sub_el === $element) {
+                unset($this->sub_elements[$key]);
+            }
+        }
     }
 }

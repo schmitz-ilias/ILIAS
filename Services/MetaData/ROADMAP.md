@@ -1,5 +1,10 @@
 # Roadmap
 
+### Performance
+Check the performance of the repository, as a lot of cloning of
+structures is happening there. An easy first step towards improving
+performance should be unsetting the clones when appropriate.
+
 ### Location Type
 Check whether the field 'location_type' in the table 
 'il_meta_location' can be removed. Location type can be set in
@@ -20,8 +25,9 @@ as a first step one can allow custom inputs for vocabulary input
 fields e.g. as a text input in a switchable group. This entails:
 * Introduction of 'source' fields for every vocabulary field in
   the database.
-* Modify the VOCAB_SOURCE constraint in the MDDataFactory.
-* 
+* Modify the VOCAB_SOURCE constraint in the MDDataFactory, probably
+  making it conditional on the corresponding value.
+
 Please beware of 'type' and 'name' in technical>requirement>orComposite
 as a potential stumbling block.
 
@@ -35,7 +41,9 @@ be supported better in ILIAS, currently any string is valid.
 
 Allow adding other vocabularies than LOM. This could be implemented
 along similar lines as the 'copyright' tab in the administration
-settings for MD.
+settings for MD. Note that the usage of non-LOMv1.0 sources for
+vocabularies in a MD set means that also the element 'metadataSchema'
+has to be appendend, see the LOM standard.
 
 ### Abandon the old backend
 
@@ -45,4 +53,5 @@ new classes as the new MD editor does.
 ### Customizable LOM Digest
 
 Allow customizing what elements are part of the LOM Digest in
-administration settings.
+administration settings. It would also be worth thinking about 
+how to implement multilinguality in the Digest.

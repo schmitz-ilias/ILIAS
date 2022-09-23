@@ -28,9 +28,10 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
     protected const MANIP_DELETE = 'delete';
 
     protected ilDBInterface $db;
-    protected ilMDLOMDatabaseStructure $structure;
-    protected ilMDLOMVocabulariesStructure $vocab_structure;
+    protected ilMDLOMDatabaseDictionary $db_dictionary;
+    protected ilMDLOMVocabulariesDictionary $vocab_dictionary;
     protected ilMDLOMDataFactory $data_factory;
+    protected ilMDPathFactory $path_factory;
     protected ilLogger $logger;
 
     /**
@@ -58,15 +59,12 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
         global $DIC;
 
         $this->db = $DIC->database();
-        $this->structure = (new ilMDLOMDatabaseDictionary(
-            new ilMDTagFactory(),
-            $this->db
-        ))->getStructureWithTags();
-        $this->vocab_structure = (new ilMDLOMVocabulariesDictionary(
-            new ilMDTagFactory(),
-        ))->getStructureWithTags();
-        $this->data_factory = new ilMDLOMDataFactory(
-            $DIC->refinery()
+        $this->data_factory = new ilMDLOMDataFactory($DIC->refinery());
+        $this->path_factory = new ilMDPathFactory();
+        $library = new ilMDLOMLibrary(new ilMDTagFactory());
+        $this->db_dictionary = $library->getLOMDatabaseDictionary($this->db);
+        $this->vocab_dictionary = $library->getLOMVocabulariesDictionary(
+            $this->path_factory
         );
         $this->logger = $DIC->logger()->meta();
 
@@ -77,11 +75,18 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
 
     public function createAndUpdateMDElements(ilMDRootElement $root): void
     {
+        /**
+         * @param ilMDBaseElement          $element
+         * @param ilMDLOMDatabaseStructure $structure
+         * @param int                      $super_md_id
+         * @param int[]                    $parent_ids
+         * @return int
+         */
         $action = function (
             ilMDBaseElement $element,
             ilMDLOMDatabaseStructure $structure,
             int $super_md_id,
-            ?int $parent_id
+            array $parent_ids
         ): int {
             $marker = $element->getMarker();
             $tag = $structure->getTagAtPointer();
@@ -106,7 +111,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                             $element->getMDID(),
                             $super_md_id,
                             $marker->getData(),
-                            $parent_id
+                            $parent_ids
                         );
                         break;
 
@@ -129,7 +134,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                         $next_id = $this->db->nextId($tag->getTable()),
                         $super_md_id,
                         $marker->getData(),
-                        $parent_id
+                        $parent_ids
                     );
                     break;
 
@@ -147,14 +152,20 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
         $null_action = function (): void {
         };
 
+        $this->validateMD(
+            'create and upated',
+            $root,
+            true
+        );
+
         $this->iterateThroughMD(
             true,
             $root,
-            clone $this->structure->movePointerToRoot(),
+            $this->getNewDBStructure(),
             $action,
             $null_action,
             0,
-            null,
+            [],
             0
         );
     }
@@ -172,50 +183,47 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
             array_unshift($name_path, $element->getName());
             $element = $element->getSuperElement();
         }
-        $this->structure->movePointerToRoot();
+        $structure = $this->getNewDBStructure();
         foreach ($name_path as $next_name) {
-            $this->structure->movePointerToSubElement($next_name);
+            $structure->movePointerToSubElement($next_name);
         }
 
         //get the sub-elements as scaffolds
-        $sub_elements = $this->structure->getSubElementsAtPointer();
+        $sub_elements = $structure->getSubElementsAtPointer();
         $scaffolds = [];
         foreach ($sub_elements as $sub_element) {
             if ($name !== '' && $name !== $sub_element) {
                 continue;
             }
-            $this->structure->movePointerToSubElement($sub_element);
+            $structure->movePointerToSubElement($sub_element);
             if (
-                $this->structure->isUniqueAtPointer() &&
-                $element->getSubElement($sub_element) !== null
+                $structure->isUniqueAtPointer() &&
+                !empty($element->getSubElements($sub_element))
             ) {
-                $this->structure->movePointerToSuperElement();
+                $structure->movePointerToSuperElement();
                 continue;
             }
             $scaffolds[] = new ilMDScaffoldElement(
                 $sub_element,
-                $this->structure->isUniqueAtPointer(),
+                $structure->isUniqueAtPointer(),
                 []
             );
-            $this->structure->movePointerToSuperElement();
+            $structure->movePointerToSuperElement();
         }
-        //move pointer back, just to be safe
-        $this->structure->movePointerToRoot();
         return $scaffolds;
     }
 
     public function getMD(): ilMDRootElement
     {
-        $this->structure->movePointerToRoot();
-        $structure = clone $this->structure;
-        return new ilMDRootElement(
+        $structure = $this->getNewDBStructure();
+        $root =  new ilMDRootElement(
             $this->rbac_id,
             $this->obj_id,
             $this->obj_type,
             $structure->getNameAtPointer(),
             $this->getSubElements(
                 $structure,
-                null,
+                [],
                 0,
                 1
             ),
@@ -224,16 +232,21 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 ''
             )
         );
+        $this->validateMD(
+            'read',
+            $root,
+            false
+        );
+        return $root;
     }
 
     /**
      * @return ilMDBaseElement[]
      */
-    public function getMDOnPath(ilMDPath $path): array
+    public function getMDOnPath(ilMDPathFromRoot $path): array
     {
         $this->validatePath($path);
-        $this->structure->movePointerToRoot();
-        $structure = clone $this->structure;
+        $structure = $this->getNewDBStructure();
         $root = new ilMDRootElement(
             $this->rbac_id,
             $this->obj_id,
@@ -241,7 +254,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
             $structure->getNameAtPointer(),
             $this->getSubElements(
                 $structure,
-                null,
+                [],
                 0,
                 1,
                 $path
@@ -250,6 +263,12 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 $structure->getTypeAtPointer(),
                 ''
             )
+        );
+
+        $this->validateMD(
+            'read',
+            $root,
+            false
         );
 
         /*
@@ -284,10 +303,9 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
     /**
      * @throws ilMDStructureException
      */
-    protected function validatePath(ilMDPath $path): void
+    protected function validatePath(ilMDPathFromRoot $path): void
     {
-        $structure = clone $this->structure;
-        $structure->movePointerToRoot();
+        $structure = $this->getNewDBStructure();
         for ($i = 1; $i < $path->getPathLength(); $i++) {
             try {
                 $structure->movePointerToSubElement(
@@ -302,14 +320,19 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
     }
 
     /**
+     * @param ilMDLOMDatabaseStructure $structure
+     * @param int[]                    $parent_ids
+     * @param int                      $super_id
+     * @param int                      $depth
+     * @param ilMDPathFromRoot|null    $path
      * @return ilMDElement[]
      */
     protected function getSubElements(
         ilMDLOMDatabaseStructure $structure,
-        ?int $parent_id,
+        array $parent_ids,
         int $super_id,
         int $depth,
-        ?ilMDPath $path = null
+        ?ilMDPathFromRoot $path = null
     ): array {
         //stop the recursion after a while, just to be safe.
         if ($depth >= 20) {
@@ -319,10 +342,10 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
         }
 
         $sub_elements = [];
-        $new_parent_id = $parent_id;
+        $new_parent_ids = $parent_ids;
         foreach ($structure->getSubElementsAtPointer() as $sub_name) {
             // TODO remove after testing
-            if (!in_array($sub_name, ['general', 'lifeCycle', 'metaMetadata']) && $depth === 1) {
+            if (in_array($sub_name, ['technical', 'educational', 'relation']) && $depth === 1) {
                 continue;
             }
             // TODO up to here
@@ -336,7 +359,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
             $new_structure = clone $structure;
             $new_structure->movePointerToSubElement($sub_name);
             $tag = $new_structure->getTagAtPointer();
-            $res = $this->executeRead($tag, $parent_id, $super_id);
+            $res = $this->executeRead($tag, $parent_ids, $super_id);
 
             //check whether unique elements are actually unique
             $unique = $new_structure->isUniqueAtPointer();
@@ -351,7 +374,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 );
             }
 
-            $index = 0;
+            $index = 1;
             while ($row = $this->db->fetchAssoc($res)) {
                 if (
                     isset($path) &&
@@ -372,7 +395,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 }
                 $md_id = (int) $row[ilMDLOMDatabaseDictionary::RES_MD_ID];
                 if ($tag->isParent()) {
-                    $new_parent_id = $md_id;
+                    $new_parent_ids[] = $md_id;
                 }
 
                 //get the data of the element, if it should have any
@@ -403,35 +426,25 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     continue;
                 }
 
-                $vocab = null;
-                if (
-                    $type === ilMDLOMDataFactory::TYPE_VOCAB_VALUE ||
-                    $type === ilMDLOMDataFactory::TYPE_VOCAB_SOURCE
-                ) {
-                    $this->vocab_structure->movePointerToEndOfPath(
-                        $new_structure->getPointerAsPath()
-                    );
-                    $vocab = $this->vocab_structure
-                        ->getTagAtPointer()
-                        ->getVocabulary();
-                    $this->vocab_structure->movePointerToRoot();
+                $vocab_tag = $this
+                    ->getNewVocabStructure()
+                    ->movePointerToEndOfPath(
+                        $this->path_factory
+                            ->getStructurePointerAsPath($new_structure)
+                    )
+                    ->getTagAtPointer();
+
+                if (isset($vocab_tag)) {
+                    $vocabs = $vocab_tag->getVocabularies();
+                    $condition_path = $vocab_tag->getConditionPath();
                 }
 
-                $data = $this->data_factory->MDData($type, $value, $vocab);
-                if ($error = $data->getError()) {
-                    $this->logger->error(
-                        'The element ' . $sub_name .
-                        ' with the value ' . $value .
-                        ' and the ID ' . $md_id .
-                        ' in the table ' . $tag->getTable() .
-                        ' for the object with' .
-                        ' rbac_id=' . $this->rbac_id .
-                        ', obj_id=' . $this->obj_id .
-                        ', obj_type=' . $this->obj_type .
-                        ' contains invalid data: ' . $error
-                    );
-                    continue;
-                }
+                $data = $this->data_factory->MDData(
+                    $type,
+                    $value,
+                    $vocabs ?? [],
+                    $condition_path ?? null
+                );
 
                 //create the element
                 $sub_elements[] = new ilMDElement(
@@ -439,7 +452,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     $new_structure->isUniqueAtPointer(),
                     $this->getSubElements(
                         $new_structure,
-                        $new_parent_id,
+                        $new_parent_ids,
                         $md_id,
                         $depth + 1,
                         $path
@@ -457,11 +470,18 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
 
     public function deleteMDElements(ilMDRootElement $root): void
     {
+        /**
+         * @param ilMDBaseElement          $element
+         * @param ilMDLOMDatabaseStructure $structure
+         * @param int                      $super_md_id
+         * @param int[]                    $parent_ids
+         * @return int
+         */
         $action = function (
             ilMDBaseElement $element,
             ilMDLOMDatabaseStructure $structure,
             int $super_md_id,
-            ?int $parent_id
+            array $parent_ids
         ): int {
             if (!($element instanceof ilMDElement)) {
                 throw new ilMDDatabaseException(
@@ -478,11 +498,18 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
             $null_action = function (): void {
             };
 
+            /**
+             * @param ilMDBaseElement          $element
+             * @param ilMDLOMDatabaseStructure $structure
+             * @param int                      $super_md_id
+             * @param int[]                    $parent_ids
+             * @return void
+             */
             $delete_action = function (
                 ilMDBaseElement $element,
                 ilMDLOMDatabaseStructure $structure,
                 int $super_md_id,
-                ?int $parent_id
+                array $parent_ids
             ): void {
                 if ($element->isScaffold()) {
                     return;
@@ -494,7 +521,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     $element->getMDID(),
                     $super_md_id,
                     $this->data_factory->MDNullData(),
-                    $parent_id
+                    $parent_ids
                 );
             };
 
@@ -505,7 +532,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 $null_action,
                 $delete_action,
                 $super_md_id,
-                $parent_id,
+                $parent_ids,
                 0
             );
             return $element->getMDID();
@@ -517,11 +544,11 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
         $this->iterateThroughMD(
             true,
             $root,
-            clone $this->structure->movePointerToRoot(),
+            $this->getNewDBStructure(),
             $action,
             $null_action,
             0,
-            null,
+            [],
             0
         );
     }
@@ -552,6 +579,17 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
         return $this->obj_type;
     }
 
+    /**
+     * @param bool                     $only_marked
+     * @param ilMDBaseElement          $element
+     * @param ilMDLOMDatabaseStructure $structure
+     * @param callable                 $top_down_action
+     * @param callable                 $bottom_up_action
+     * @param int                      $super_md_id
+     * @param int[]                    $parent_ids
+     * @param int                      $depth
+     * @return void
+     */
     protected function iterateThroughMD(
         bool $only_marked,
         ilMDBaseElement $element,
@@ -559,7 +597,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
         callable $top_down_action,
         callable $bottom_up_action,
         int $super_md_id,
-        ?int $parent_id,
+        array $parent_ids,
         int $depth
     ): void {
         //stop the recursion after a while, just to be safe.
@@ -577,16 +615,16 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
             $element,
             $structure,
             $super_md_id,
-            $parent_id
+            $parent_ids
         );
 
         if (!is_int($new_super_md_id)) {
             $new_super_md_id = $element->getMDID();
         }
 
-        $new_parent_id = $parent_id;
+        $new_parent_ids = $parent_ids;
         if ($structure->getTagAtPointer()->isParent()) {
-            $new_parent_id = $element->getMDID();
+            $new_parent_ids[] = $element->getMDID();
         }
 
         $results = [];
@@ -600,7 +638,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 $top_down_action,
                 $bottom_up_action,
                 $new_super_md_id,
-                $new_parent_id,
+                $new_parent_ids,
                 $depth + 1
             );
         }
@@ -609,17 +647,149 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
             $element,
             $structure,
             $super_md_id,
-            $parent_id
+            $parent_ids
         );
     }
 
+    /**
+     * Checks whether the MD set and its data are correct. If not in
+     * 'throw exception' mode, will delete MD elements that have invalid
+     * data.
+     */
+    protected function validateMD(
+        string $action_description,
+        ilMDRootElement $root,
+        bool $throw_exception
+    ): void {
+        /**
+         * @param ilMDBaseElement          $element
+         * @param ilMDLOMDatabaseStructure $structure
+         * @param int                      $super_md_id
+         * @param int[]                    $parent_ids
+         * @return void
+         */
+        $action = function (
+            ilMDBaseElement $element,
+            ilMDLOMDatabaseStructure $structure,
+            int $super_md_id,
+            array $parent_ids
+        ) use ($throw_exception, $action_description): void {
+            $name_path = $element->getName();
+            $el = $element;
+            while (!$el->isRoot()) {
+                $el = $el->getSuperElement();
+                $name_path = $el->getName() . '>' . $name_path;
+            }
+            $id_string = ($element instanceof ilMDElement) ?
+                ' (ID=' . $element->getMDID() . ')' :
+                ' (scaffold)';
+            $error_intro = 'Error during MD action ' . $action_description .
+                ' for element ' . $name_path . $id_string .
+                ' of the object with' .
+                ' rbac_id=' . $this->rbac_id .
+                ', obj_id=' . $this->obj_id .
+                ', obj_type=' . $this->obj_type . ': ';
+
+            if ($element instanceof ilMDElement) {
+                $data = $element->getData();
+            }
+            if ($marker = $element->getMarker()) {
+                $data = $marker->getData();
+            }
+            if (!isset($data)) {
+                return;
+            }
+
+            if ($data->getType() !== $structure->getTypeAtPointer()) {
+                $error = $error_intro . 'Data type is ' . $data->getType() .
+                    ', should be ' . $structure->getTypeAtPointer();
+                if ($throw_exception) {
+                    throw new ilMDDatabaseException($error);
+                }
+                $this->logger->error($error);
+                $element->getSuperElement()->deleteFromSubElements($element);
+                return;
+            }
+
+            /*
+             * if appropriate, grab the value of the element this element
+             * is conditional on.
+             */
+            if ($path = $data->getPathToConditionElement()) {
+                $struct = clone $structure;
+                $el = $element;
+                for ($i = 1; $i < $path->getPathLength(); $i++) {
+                    $step = $path->getStep($i);
+                    if ($step === ilMDPath::SUPER_ELEMENT) {
+                        $struct->movePointerToSuperElement();
+                        $el = $el->getSuperElement();
+                        continue;
+                    }
+                    $struct->movePointerToSubElement(
+                        $path->getStep()
+                    );
+                    $els = $el->getSubElements(
+                        $path->getStep()
+                    );
+                    if (count($els) > 1) {
+                        throw new ilMDDatabaseException(
+                            $error_intro . 'Path to condition element ' .
+                            'is not unique.'
+                        );
+                    }
+                    if (count($els) === 0) {
+                        $condition_value = '';
+                        break;
+                    }
+                    $el = $els[0];
+                }
+                if (!isset($condition_value)) {
+                    $condition_value = ($el instanceof ilMDElement) ?
+                        $el->getData()->getValue() :
+                        '';
+                }
+            }
+
+            if ($error = $data->getError($condition_value ?? null)) {
+                if ($throw_exception) {
+                    throw new ilMDDatabaseException($error_intro . $error);
+                }
+                $this->logger->error($error_intro . $error);
+                $element->getSuperElement()->deleteFromSubElements($element);
+            }
+        };
+
+        $null_action = function (): void {
+        };
+
+        $this->iterateThroughMD(
+            false,
+            $root,
+            $this->getNewDBStructure(),
+            $action,
+            $null_action,
+            0,
+            [],
+            0
+        );
+    }
+
+    /**
+     * @param string          $action
+     * @param ilMDDatabaseTag $tag
+     * @param int             $md_id
+     * @param int             $super_md_id
+     * @param ilMDData        $data
+     * @param int[]           $parent_ids
+     * @return void
+     */
     protected function executeManip(
         string $action,
         ilMDDatabaseTag $tag,
         int $md_id,
         int $super_md_id,
         ilMDData $data,
-        ?int $parent_id
+        array $parent_ids
     ): void {
         $params = [];
         $param_types = [];
@@ -631,12 +801,22 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     break;
 
                 case ilMDLOMDatabaseDictionary::EXP_PARENT_MD_ID:
-                    if (!is_int($parent_id)) {
+                    if (empty($parent_ids)) {
                         throw new ilMDDatabaseException(
                             'Parent ID is needed, but not set.'
                         );
                     }
-                    $params[] = $parent_id;
+                    $params[] = $parent_ids[array_key_last($parent_ids)];
+                    $param_types[] = ilDBConstants::T_INTEGER;
+                    break;
+
+                case ilMDLOMDatabaseDictionary::EXP_SECOND_PARENT_MD_ID:
+                    if (count($parent_ids) < 2) {
+                        throw new ilMDDatabaseException(
+                            'Second parent ID is needed, but not set.'
+                        );
+                    }
+                    $params[] = $parent_ids[array_key_last($parent_ids) - 1];
                     $param_types[] = ilDBConstants::T_INTEGER;
                     break;
 
@@ -712,9 +892,15 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
         }
     }
 
+    /**
+     * @param ilMDDatabaseTag $tag
+     * @param int[]           $parent_ids
+     * @param int             $super_id
+     * @return ilDBStatement
+     */
     protected function executeRead(
         ilMDDatabaseTag $tag,
-        ?int $parent_id,
+        array $parent_ids,
         int $super_id
     ): ilDBStatement {
         $params = [];
@@ -722,12 +908,22 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
         foreach ($tag->getExpectedParams() as $expected_param) {
             switch ($expected_param) {
                 case ilMDLOMDatabaseDictionary::EXP_PARENT_MD_ID:
-                    if (!is_int($parent_id)) {
+                    if (empty($parent_ids)) {
                         throw new ilMDDatabaseException(
                             'Parent ID is needed, but not set.'
                         );
                     }
-                    $params[] = $parent_id;
+                    $params[] = $parent_ids[array_key_last($parent_ids)];
+                    $param_types[] = ilDBConstants::T_INTEGER;
+                    break;
+
+                case ilMDLOMDatabaseDictionary::EXP_SECOND_PARENT_MD_ID:
+                    if (count($parent_ids) < 2) {
+                        throw new ilMDDatabaseException(
+                            'Second parent ID is needed, but not set.'
+                        );
+                    }
+                    $params[] = $parent_ids[array_key_last($parent_ids) - 1];
                     $param_types[] = ilDBConstants::T_INTEGER;
                     break;
 
@@ -764,5 +960,15 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
             $param_types,
             $params
         );
+    }
+
+    protected function getNewDBStructure(): ilMDLOMDatabaseStructure
+    {
+        return $this->db_dictionary->getStructureWithTags();
+    }
+
+    protected function getNewVocabStructure(): ilMDLOMVocabulariesStructure
+    {
+        return $this->vocab_dictionary->getStructureWithTags();
     }
 }

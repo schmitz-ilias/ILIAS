@@ -38,7 +38,7 @@ class ilMDLOMDataFactoryTest extends TestCase
         $constraint = \Mockery::mock(Constraint::class);
         $constraint->shouldReceive('problemWith')
                    ->andReturnUsing(function (
-                       string $value
+                       string|array $value
                    ) use ($constraint) {
                        if (!call_user_func($this->call, $value)) {
                            return $this->error;
@@ -96,6 +96,24 @@ class ilMDLOMDataFactoryTest extends TestCase
         $factory->MDData(ilMDLOMDataFactory::TYPE_VOCAB_VALUE, 'value');
     }
 
+    public function testVocabValueConditionException(): void
+    {
+        $ref_factory = \Mockery::mock(Factory::class);
+        $ref_factory->shouldReceive('custom->constraint')
+                    ->never();
+
+        $factory = new ilMDLOMDataFactory($ref_factory);
+        $path = $this->createMock(ilMDPathRelative::class);
+
+        $this->expectException(ilMDBuildingBlocksException::class);
+        $factory->MDData(
+            ilMDLOMDataFactory::TYPE_VOCAB_VALUE,
+            'value',
+            [],
+            $path
+        );
+    }
+
     public function testStringConstraint(): void
     {
         $factory = $this->getFactoryMock();
@@ -131,38 +149,81 @@ class ilMDLOMDataFactoryTest extends TestCase
 
     public function testVocabConstraint(): void
     {
+        $path = $this->createMock(ilMDPathRelative::class);
         $factory = $this->getFactoryMock();
-        $vocab = $this->getMockBuilder(ilMDVocabulary::class)
+        $vocab1 = $this->getMockBuilder(ilMDVocabulary::class)
                       ->disableOriginalConstructor()
                       ->getMock();
-        $vocab->method('getValues')->willReturn(['value1', 'value2']);
-        $vocab->method('getSource')->willReturn('source');
+        $vocab1->method('getValues')->willReturn(['value1', 'value2']);
+        $vocab1->method('getSource')->willReturn('source');
+        $vocab2 = $this->getMockBuilder(ilMDVocabulary::class)
+                       ->disableOriginalConstructor()
+                       ->getMock();
+        $vocab2->method('getValues')->willReturn(['sheep', 'cow']);
+        $vocab2->method('getSource')->willReturn('different source');
+        $vocab2->method('getConditionValue')->willReturn('condition');
 
         $data = $factory->MDData(
             ilMDLOMDataFactory::TYPE_VOCAB_SOURCE,
             'source',
-            $vocab
+            [$vocab1, $vocab2]
         );
         $this->assertNull($data->getError());
         $data = $factory->MDData(
             ilMDLOMDataFactory::TYPE_VOCAB_SOURCE,
             'not source',
-            $vocab
+            [$vocab1, $vocab2]
         );
         $this->assertIsString($data->getError());
 
         $data = $factory->MDData(
             ilMDLOMDataFactory::TYPE_VOCAB_VALUE,
             'value1',
-            $vocab
+            [$vocab1, $vocab2]
         );
         $this->assertNull($data->getError());
         $data = $factory->MDData(
             ilMDLOMDataFactory::TYPE_VOCAB_VALUE,
             'not value',
-            $vocab
+            [$vocab1, $vocab2]
         );
         $this->assertIsString($data->getError());
+        $data = $factory->MDData(
+            ilMDLOMDataFactory::TYPE_VOCAB_VALUE,
+            'sheep',
+            [$vocab1, $vocab2],
+            $path
+        );
+        $this->assertNull($data->getError('condition'));
+        $this->assertIsString($data->getError('something else'));
+        $data = $factory->MDData(
+            ilMDLOMDataFactory::TYPE_VOCAB_VALUE,
+            'value1',
+            [$vocab1, $vocab2],
+            $path
+        );
+        $this->assertIsString($data->getError('condition'));
+        $this->assertNull($data->getError('something else'));
+    }
+
+    public function testGetErrorExceptionForVocabValue(): void
+    {
+        $path = $this->createMock(ilMDPathRelative::class);
+        $factory = $this->getFactoryMock();
+        $vocab = $this->getMockBuilder(ilMDVocabulary::class)
+                       ->disableOriginalConstructor()
+                       ->getMock();
+        $vocab->method('getValues')->willReturn(['sheep', 'cow']);
+        $vocab->method('getSource')->willReturn('different source');
+        $vocab->method('getConditionValue')->willReturn('condition');
+        $data = $factory->MDData(
+            ilMDLOMDataFactory::TYPE_VOCAB_VALUE,
+            'sheep',
+            [$vocab],
+            $path
+        );
+        $this->expectException(ilMDBuildingBlocksException::class);
+        $this->assertNull($data->getError());
     }
 
     public function testDatetimeConstraint(): void

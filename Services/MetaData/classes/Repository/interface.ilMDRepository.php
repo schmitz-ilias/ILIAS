@@ -56,7 +56,7 @@ interface ilMDRepository
      * in the MD set are added as scaffolds.
      * @return ilMDBaseElement[]
      */
-    public function getMDOnPath(ilMDPath $path): array;
+    public function getMDOnPath(ilMDPathFromRoot $path): array;
 
     /**
      * Follows the trail of markers from the passed root element,

@@ -24,12 +24,18 @@ declare(strict_types=1);
 class ilMDLOMVocabulariesDictionary implements ilMDDictionary
 {
     public const SOURCE = 'LOMv1.0';
-    protected ilMDTagFactory $factory;
+    protected ilMDTagFactory $tag_factory;
+    protected ilMDPathFactory $path_factory;
+
+    protected ilMDLOMVocabulariesStructure $structure;
 
     public function __construct(
-        ilMDTagFactory $factory
+        ilMDTagFactory $tag_factory,
+        ilMDPathFactory $path_factory
     ) {
-        $this->factory = $factory;
+        $this->tag_factory = $tag_factory;
+        $this->path_factory = $path_factory;
+        $this->structure = $this->initStructureWithTags();
     }
 
     /**
@@ -37,6 +43,11 @@ class ilMDLOMVocabulariesDictionary implements ilMDDictionary
      * tag on every vocabulary value or source.
      */
     public function getStructureWithTags(): ilMDLOMVocabulariesStructure
+    {
+        return clone $this->structure;
+    }
+
+    protected function initStructureWithTags(): ilMDLOMVocabulariesStructure
     {
         $structure = new ilMDLOMVocabulariesStructure();
         $this->setTagsForGeneral($structure);
@@ -151,6 +162,36 @@ class ilMDLOMVocabulariesDictionary implements ilMDDictionary
                     'any', 'netscape communicator', 'ms-internet explorer',
                     'opera', 'amaya'
                 ]
+            )
+            ->movePointerToSubElement('value')
+            ->setTagAtPointer(
+                $this->tag_factory
+                    ->vocabulariesTag()
+                    ->addVocabulary(
+                        self::SOURCE,
+                        [
+                            'pc-dos', 'ms-windows', 'macos', 'unix',
+                            'multi-os', 'none'
+                        ],
+                        'operating system'
+                    )
+                    ->addVocabulary(
+                        self::SOURCE,
+                        [
+                            'any', 'netscape communicator',
+                            'ms-internet explorer', 'opera', 'amaya'
+                        ],
+                        'browser'
+                    )
+                    ->setPathToConditionElement(
+                        $this->path_factory
+                            ->getRelativePath('value')
+                            ->addStepToSuperElement()
+                            ->addStepToSuperElement()
+                            ->addStep('type')
+                            ->addStep('value')
+                    )
+                    ->getTag()
             );
         return $structure->movePointerToRoot();
     }
@@ -300,10 +341,13 @@ class ilMDLOMVocabulariesDictionary implements ilMDDictionary
 
     /**
      * @param string[] $values
-     * @return ilMDVocabularyTag
+     * @return ilMDVocabulariesTag
      */
-    protected function getTag(array $values): ilMDVocabularyTag
+    protected function getTag(array $values): ilMDVocabulariesTag
     {
-        return $this->factory->vocabularyTag(self::SOURCE, $values);
+        return $this->tag_factory
+            ->vocabulariesTag()
+            ->addVocabulary(self::SOURCE, $values)
+            ->getTag();
     }
 }

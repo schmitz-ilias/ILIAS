@@ -76,24 +76,45 @@ class ilMDLOMDataFactory
         $this->factory = $factory;
     }
 
+    /**
+     * @param string                $type
+     * @param string                $value
+     * @param ilMDVocabulary        $vocabularies
+     * @param ilMDPathRelative|null $path_to_condition
+     * @return ilMDData
+     */
     public function MDData(
         string $type,
         string $value,
-        ?ilMDVocabulary $vocabulary = null
+        array $vocabularies = [],
+        ?ilMDPathRelative $path_to_condition = null
     ): ilMDData {
         if (
             ($type === self::TYPE_VOCAB_SOURCE ||
             $type === self::TYPE_VOCAB_VALUE) &&
-            !isset($vocabulary)
+            empty($vocabularies)
         ) {
             throw new ilMDBuildingBlocksException(
-                "Vocabulary data can not be constructed without a vocabulary."
+                "Vocabulary data can not be constructed without vocabularies."
+            );
+        }
+        if (
+            !($type === self::TYPE_VOCAB_VALUE) &&
+            isset($path_to_condition)
+        ) {
+            throw new ilMDBuildingBlocksException(
+                "Only vocabulary values can be conditional on other elements."
             );
         }
         return new ilMDData(
             $type,
             $value,
-            $this->getConstraintForType($type, $vocabulary)
+            $this->getConstraintForType(
+                $type,
+                $vocabularies,
+                isset($path_to_condition)
+            ),
+            $path_to_condition
         );
     }
 
@@ -102,10 +123,61 @@ class ilMDLOMDataFactory
         return $this->MDData(self::TYPE_NONE, '');
     }
 
+    /**
+     * @param string         $type
+     * @param ilMDVocabulary $vocabularies
+     * @param bool           $conditional
+     * @return Constraint
+     */
     protected function getConstraintForType(
         string $type,
-        ?ilMDVocabulary $vocabulary = null
+        array $vocabularies,
+        bool $conditional
     ): Constraint {
+        if ($conditional) {
+            if ($type !== self::TYPE_VOCAB_VALUE) {
+                throw new ilMDBuildingBlocksException(
+                    "Only vocabulary values can have a conditional constraint."
+                );
+            }
+            $values = [];
+            $values[''] = [];
+            foreach ($vocabularies as $vocabulary) {
+                if (!$vocabulary->getConditionValue()) {
+                    $values[''] = array_merge(
+                        $values[''],
+                        $vocabulary->getValues()
+                    );
+                    continue;
+                }
+                $key = $vocabulary->getConditionValue();
+                if (array_key_exists($key, $values)) {
+                    $values[$key] = array_merge(
+                        $values[$key],
+                        $vocabulary->getValues()
+                    );
+                    continue;
+                }
+                $values[$key] = $vocabulary->getValues();
+            }
+            return $this->factory->custom()->constraint(
+                /*
+                 * args[0] should be the regular value,
+                 * and args[1] the condition value.
+                 */
+                function (array $args) use ($values) {
+                    return in_array(
+                        strtolower($args[0]),
+                        array_map(
+                            'strtolower',
+                            $values[$args[1]] ?? $values['']
+                        )
+                    );
+                },
+                'Invalid vocabulary value'
+            );
+        }
+
         switch ($type) {
             case(self::TYPE_NONE):
                 return $this->factory->custom()->constraint(
@@ -132,19 +204,30 @@ class ilMDLOMDataFactory
                 );
 
             case(self::TYPE_VOCAB_SOURCE):
+                $sources = [];
+                foreach ($vocabularies as $vocabulary) {
+                    $sources[] = $vocabulary->getSource();
+                }
                 return $this->factory->custom()->constraint(
-                    function (string $arg) use ($vocabulary) {
-                        return $arg === $vocabulary->getSource();
+                    function (string $arg) use ($sources) {
+                        return in_array($arg, $sources);
                     },
                     'Invalid vocabulary source'
                 );
 
             case(self::TYPE_VOCAB_VALUE):
+                $values = [];
+                foreach ($vocabularies as $vocabulary) {
+                    if ($vocabulary->getConditionValue()) {
+                        continue;
+                    }
+                    $values = array_merge($values, $vocabulary->getValues());
+                }
                 return $this->factory->custom()->constraint(
-                    function (string $arg) use ($vocabulary) {
+                    function (string $arg) use ($values) {
                         return in_array(
                             strtolower($arg),
-                            array_map('strtolower', $vocabulary->getValues())
+                            array_map('strtolower', $values)
                         );
                     },
                     'Invalid vocabulary value'
@@ -152,7 +235,7 @@ class ilMDLOMDataFactory
 
             case(self::TYPE_DATETIME):
                 return $this->factory->custom()->constraint(
-                    function (string $arg) use ($vocabulary) {
+                    function (string $arg) {
                         if (!preg_match(
                             ilMDLOMDataFactory::DATETIME_REGEX,
                             $arg,
@@ -196,7 +279,7 @@ class ilMDLOMDataFactory
 
             case(self::TYPE_DURATION):
                 return $this->factory->custom()->constraint(
-                    function (string $arg) use ($vocabulary) {
+                    function (string $arg) {
                         if (!preg_match(
                             ilMDLOMDataFactory::DURATION_REGEX,
                             $arg,

@@ -25,7 +25,7 @@ use PHPUnit\Framework\TestCase;
  */
 class ilMDBuildingBlocksTest extends TestCase
 {
-    public function testSuperAndSubElements(): void
+    public function testSuperElements(): void
     {
         $data = $this->createMock(ilMDData::class);
         $low1 = new ilMDScaffoldElement('low1', true, []);
@@ -64,30 +64,54 @@ class ilMDBuildingBlocksTest extends TestCase
         $element2 = new ilMDElement('low', false, [], 13, $data);
         $element3 = new ilMDElement('low', false, [], 7, $data);
         $element4 = new ilMDElement('low_unique', true, [], 78, $data);
+        $element5 = new ilMDElement('name', true, [], 7, $data);
         $root = new ilMDRootElement(
             1,
             2,
             'type',
             'root',
-            [$element1, $element2, $element3, $element4],
+            [$element1, $element2, $element3, $element4, $element5],
             $data
         );
 
-        $this->assertSame($element4, $root->getSubElement('low_unique'));
-        $this->assertSame($element3, $root->getSubElement('low', 7));
-        $this->assertSame($element2, $root->getSubElement('low', 13));
-        $this->assertNull($root->getSubElement('something'));
-        $this->assertNull($root->getSubElement('low', 143));
+        $this->assertSame(
+            [$element1, $element2, $element3, $element4, $element5],
+            $root->getSubElements()
+        );
+        $this->assertSame([$element4], $root->getSubElements('low_unique'));
+        $this->assertSame(
+            [$element1, $element2, $element3],
+            $root->getSubElements('low')
+        );
+        $this->assertSame([$element3, $element5], $root->getSubElements('', 7));
+        $this->assertSame([$element3], $root->getSubElements('low', 7));
+        $this->assertSame([$element2], $root->getSubElements('low', 13));
+        $this->assertSame([], $root->getSubElements('something'));
+        $this->assertSame([], $root->getSubElements('low', 143));
     }
 
-    public function testGetSubElementNoIDException(): void
+    public function testDeleteSubElement(): void
     {
         $data = $this->createMock(ilMDData::class);
-        $element = new ilMDElement('low', false, [], 7, $data);
-        $root = new ilMDElement('root', true, [$element], 13, $data);
+        $element1 = new ilMDScaffoldElement('low', false, []);
+        $element2 = new ilMDElement('low', false, [], 13, $data);
+        $element3 = new ilMDElement('low', false, [], 7, $data);
+        $element4 = new ilMDElement('low_unique', true, [], 78, $data);
+        $element5 = new ilMDElement('name', true, [], 7, $data);
+        $root = new ilMDRootElement(
+            1,
+            2,
+            'type',
+            'root',
+            [$element1, $element2, $element3, $element4, $element5],
+            $data
+        );
 
-        $this->expectException(ilMDBuildingBlocksException::class);
-        $root->getSubElement('low');
+        $root->deleteFromSubElements($element2);
+        $this->assertSame(
+            [$element1, $element3, $element4, $element5],
+            $root->getSubElements()
+        );
     }
 
     public function testAddScaffoldToSubElements(): void

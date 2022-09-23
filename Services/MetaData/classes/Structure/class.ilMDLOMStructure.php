@@ -67,12 +67,12 @@ class ilMDLOMStructure implements ilMDStructure
                     'sub' => self::STRUCTURE_RELATION
                 ],
                 'annotation' => [
-                    'unique' => true,
+                    'unique' => false,
                     'type' => ilMDLOMDataFactory::TYPE_NONE,
                     'sub' => self::STRUCTURE_ANNOTATION
                 ],
                 'classification' => [
-                    'unique' => true,
+                    'unique' => false,
                     'type' => ilMDLOMDataFactory::TYPE_NONE,
                     'sub' => self::STRUCTURE_CLASSIFICATION
                 ]
@@ -353,7 +353,7 @@ class ilMDLOMStructure implements ilMDStructure
             'type' => ilMDLOMDataFactory::TYPE_NONE,
             'sub' => self::STRUCTURE_VOCAB
         ],
-        'decription' => [
+        'description' => [
             'unique' => true,
             'type' => ilMDLOMDataFactory::TYPE_NONE,
             'sub' => self::STRUCTURE_LANGSTRING
@@ -523,7 +523,7 @@ class ilMDLOMStructure implements ilMDStructure
         return $this->read_mode;
     }
 
-    public function switchToReadMode(): ilMDLOMStructure
+    public function switchToReadMode(): self
     {
         $this->read_mode = true;
         return $this;
@@ -532,15 +532,6 @@ class ilMDLOMStructure implements ilMDStructure
     public function getNameAtPointer(): string
     {
         return $this->pointer[array_key_last($this->pointer)];
-    }
-
-    public function getPointerAsPath(): ilMDPath
-    {
-        $path = new ilMDPath();
-        foreach (array_slice($this->pointer, 1) as $key) {
-            $path->addStep($key);
-        }
-        return $path;
     }
 
     public function isPointerAtRootElement(): bool
@@ -587,13 +578,13 @@ class ilMDLOMStructure implements ilMDStructure
         return $this;
     }
 
-    public function movePointerToRoot(): ilMDLOMStructure
+    public function movePointerToRoot(): self
     {
         $this->pointer = [self::NAME_ROOT];
         return $this;
     }
 
-    public function movePointerToSuperElement(): ilMDLOMStructure
+    public function movePointerToSuperElement(): self
     {
         if ($this->isPointerAtRootElement()) {
             throw new ilMDStructureException(
@@ -604,7 +595,7 @@ class ilMDLOMStructure implements ilMDStructure
         return $this;
     }
 
-    public function movePointerToSubElement(string $name): ilMDLOMStructure
+    public function movePointerToSubElement(string $name): self
     {
         if (!in_array($name, $this->getSubElementsAtPointer())) {
             throw new ilMDStructureException(
@@ -626,11 +617,11 @@ class ilMDLOMStructure implements ilMDStructure
         return $array;
     }
 
-    public function movePointerToEndOfPath(ilMDPath $path): ilMDStructure
+    public function movePointerToEndOfPath(ilMDPathFromRoot $path): self
     {
         $pointer = [];
         $local_path = clone $path;
-        while (!$local_path->isAtRoot()) {
+        while (!$local_path->isAtStart()) {
             array_unshift($pointer, $local_path->getStep());
             $local_path->removeLastStep();
         }

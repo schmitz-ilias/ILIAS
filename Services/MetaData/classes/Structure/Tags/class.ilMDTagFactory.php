@@ -50,13 +50,8 @@ class ilMDTagFactory
         );
     }
 
-    /**
-     * @param string    $source
-     * @param string[]  $values
-     * @return ilMDVocabularyTag
-     */
-    public function vocabularyTag(string $source, array $values): ilMDVocabularyTag
+    public function vocabulariesTag(): ilMDVocabulariesTagBuilder
     {
-        return new ilMDVocabularyTag(new ilMDVocabulary($source, $values));
+        return new ilMDVocabulariesTagBuilder();
     }
 }

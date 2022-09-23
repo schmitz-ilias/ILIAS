@@ -29,6 +29,7 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
      */
     public const EXP_MD_ID = 'md_id';
     public const EXP_PARENT_MD_ID = 'parent_md_id';
+    public const EXP_SECOND_PARENT_MD_ID ='second_parent_md_id';
     public const EXP_SUPER_MD_ID = 'super_md_id';
 
     /**
@@ -62,7 +63,9 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
         'tar' => 'il_meta_tar',
         'taxon' => 'il_meta_taxon',
         'taxon_path' => 'il_meta_taxon_path',
-        'technical' => 'il_meta_technical'
+        'technical' => 'il_meta_technical',
+        'coverage' => 'il_meta_coverage',
+        'schema' => 'il_meta_schema'
     ];
 
     public const ID_NAME = [
@@ -87,11 +90,15 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
         'tar' => 'meta_tar_id',
         'taxon' => 'meta_taxon_id',
         'taxon_path' => 'meta_taxon_path_id',
-        'technical' => 'meta_technical_id'
+        'technical' => 'meta_technical_id',
+        'coverage' => 'meta_coverage_id',
+        'schema' => 'meta_schema_id'
     ];
 
     protected ilMDTagFactory $factory;
     protected ilDBInterface $db;
+
+    protected ilMDLOMDatabaseStructure $structure;
 
     public function __construct(
         ilMDTagFactory $factory,
@@ -99,6 +106,7 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
     ) {
         $this->factory = $factory;
         $this->db = $db;
+        $this->structure = $this->initStructureWithTags();
     }
 
     /**
@@ -106,6 +114,11 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
      * tag on every element.
      */
     public function getStructureWithTags(): ilMDLOMDatabaseStructure
+    {
+        return clone $this->structure;
+    }
+
+    protected function initStructureWithTags(): ilMDLOMDatabaseStructure
     {
         $structure = new ilMDLOMDatabaseStructure();
         $structure
@@ -123,6 +136,12 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
         $this->setTagsForGeneral($structure);
         $this->setTagsForLifeCycle($structure);
         $this->setTagsForMetaMetadata($structure);
+        //$this->setTagsForTechnical($structure);
+        //$this->setTagsForEducational($structure);
+        $this->setTagsForRights($structure);
+        //$this->setTagsForRelation($structure);
+        $this->setTagsForAnnotation($structure);
+        $this->setTagsForClassification($structure);
         return $structure->switchToReadMode()
                          ->movePointerToRoot();
     }
@@ -201,15 +220,15 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             ->movePointerToSuperElement()
             ->movePointerToSubElement('coverage')
             ->setTagAtPointer(
-                $this->getTagForNonTableContainer(
-                    'general',
-                    ['coverage', 'coverage_language']
+                $this->getTagForTableContainerWithParent(
+                    'coverage',
+                    'meta_general'
                 )
             );
         $this
             ->setTagsForLangStringSubElements(
                 $structure,
-                'general',
+                'coverage',
                 'coverage',
                 'coverage_language'
             )
@@ -287,7 +306,6 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             $structure,
             'meta_lifecycle'
         );
-
         return $structure->movePointerToRoot();
     }
 
@@ -327,7 +345,7 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
                     'language'
                 )
             );
-
+        // TODO fix metadataSchema
         return $structure->movePointerToRoot();
     }
 
@@ -373,7 +391,281 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
                     'meta_technical'
                 )
             );
-        //TODO continue with orComposite
+        // TODO continue with orComposite
+        return $structure->movePointerToRoot();
+    }
+
+    protected function setTagsForEducational(
+        ilMDLOMDatabaseStructure $structure
+    ): ilMDLOMDatabaseStructure {
+        $structure
+            ->movePointerToRoot()
+            ->movePointerToSubElement('educational')
+            ->setTagAtPointer(
+                $this->getTagForTableContainer('educational')
+                     ->withIsParent(true)
+            );
+        // TODO continue with interactivityType
+        return $structure->movePointerToRoot();
+    }
+
+    protected function setTagsForRights(
+        ilMDLOMDatabaseStructure $structure
+    ): ilMDLOMDatabaseStructure {
+        $structure
+            ->movePointerToRoot()
+            ->movePointerToSubElement('rights')
+            ->setTagAtPointer(
+                $this->getTagForTableContainer('rights')
+            )
+            ->movePointerToSubElement('cost')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'rights',
+                    ['costs']
+                )
+            );
+        $this
+            ->setTagsForVocabSubElements(
+                $structure,
+                'rights',
+                'costs'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('copyrightAndOtherRestrictions')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'rights',
+                    ['cpr_and_or']
+                )
+            );
+        $this
+            ->setTagsForVocabSubElements(
+                $structure,
+                'rights',
+                'cpr_and_or'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('description')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'rights',
+                    ['description', 'description_language']
+                )
+            );
+        $this->setTagsForLangStringSubElements(
+            $structure,
+            'rights',
+            'description',
+            'description_language'
+        );
+        return $structure->movePointerToRoot();
+    }
+
+    protected function setTagsForRelation(
+        ilMDLOMDatabaseStructure $structure
+    ): ilMDLOMDatabaseStructure {
+        $structure
+            ->movePointerToRoot()
+            ->movePointerToSubElement('relation')
+            ->setTagAtPointer(
+                $this->getTagForTableContainer('relation')
+            )
+            ->movePointerToSubElement('kind')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'relation',
+                    ['kind']
+                )
+            );
+        $this
+            ->setTagsForVocabSubElements(
+                $structure,
+                'relation',
+                'kind'
+            );
+        // TODO continue with resource
+        return $structure->movePointerToRoot();
+    }
+
+    protected function setTagsForAnnotation(
+        ilMDLOMDatabaseStructure $structure
+    ): ilMDLOMDatabaseStructure {
+        $structure
+            ->movePointerToRoot()
+            ->movePointerToSubElement('annotation')
+            ->setTagAtPointer(
+                $this->getTagForTableContainer('annotation')
+            )
+            ->movePointerToSubElement('entity')
+            ->setTagAtPointer(
+                $this->getTagForData(
+                    'annotation',
+                    'entity'
+                )
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('date')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'annotation',
+                    ['a_date', 'a_date_descr', 'date_descr_lang']
+                )
+            )
+            ->movePointerToSubElement('dateTime')
+            ->setTagAtPointer(
+                $this->getTagForData(
+                    'annotation',
+                    'a_date'
+                )
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('description')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'annotation',
+                    ['a_date_descr', 'date_descr_lang']
+                )
+            );
+        $this
+            ->setTagsForLangStringSubElements(
+                $structure,
+                'annotation',
+                'a_date_descr',
+                'date_descr_lang'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('description')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'annotation',
+                    ['description', 'description_language']
+                )
+            );
+        $this->setTagsForLangStringSubElements(
+            $structure,
+            'annotation',
+            'description',
+            'description_language'
+        );
+        return $structure->movePointerToRoot();
+    }
+
+    protected function setTagsForClassification(
+        ilMDLOMDatabaseStructure $structure
+    ): ilMDLOMDatabaseStructure {
+        $structure
+            ->movePointerToRoot()
+            ->movePointerToSubElement('classification')
+            ->setTagAtPointer(
+                $this->getTagForTableContainer('classification')
+                     ->withIsParent(true)
+            )
+            ->movePointerToSubElement('purpose')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'classification',
+                    ['purpose']
+                )
+            );
+        $this
+            ->setTagsForVocabSubElements(
+                $structure,
+                'classification',
+                'purpose'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('taxonPath')
+            ->setTagAtPointer(
+                $this->getTagForTableContainerWithParent(
+                    'taxon_path',
+                    'meta_classification'
+                )->withIsParent(true)
+            )
+            ->movePointerToSubElement('source')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainerWithParent(
+                    'taxon_path',
+                    ['source', 'source_language'],
+                    'meta_classification',
+                    true
+                )
+            );
+        $this
+            ->setTagsForLangStringSubElements(
+                $structure,
+                'taxon_path',
+                'source',
+                'source_language',
+                'meta_classification',
+                true
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('taxon')
+            ->setTagAtPointer(
+                $this->getTagForTableContainerWithParent(
+                    'taxon',
+                    'meta_taxon_path'
+                )
+            )
+            ->movePointerToSubElement('id')
+            ->setTagAtPointer(
+                $this->getTagForDataWithParent(
+                    'taxon',
+                    'taxon_id',
+                    'meta_taxon_path'
+                )
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('entry')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainerWithParent(
+                    'taxon',
+                    ['taxon', 'taxon_language'],
+                    'meta_taxon_path'
+                )
+            );
+        $this
+            ->setTagsForLangStringSubElements(
+                $structure,
+                'taxon',
+                'taxon',
+                'taxon_language'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSuperElement()
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('description')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'classification',
+                    ['description', 'description_language']
+                )
+            );
+        $this
+            ->setTagsForLangStringSubElements(
+                $structure,
+                'classification',
+                'description',
+                'description_language'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('keyword')
+            ->setTagAtPointer(
+                $this->getTagForTableContainerWithParent(
+                    'keyword',
+                    'meta_classification'
+                )
+            );
+        $this
+            ->setTagsForLangStringSubElements(
+                $structure,
+                'keyword',
+                'keyword',
+                'keyword_language',
+                'meta_classification'
+            );
         return $structure->movePointerToRoot();
     }
 
@@ -431,7 +723,8 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
                 $this->getTagForNonTableContainerWithParent(
                     'contribute',
                     ['role'],
-                    $parent_type
+                    $parent_type,
+                    true
                 )
             );
         $this
@@ -439,7 +732,8 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
                 $structure,
                 'contribute',
                 'role',
-                $parent_type
+                $parent_type,
+                true
             )
             ->movePointerToSuperElement()
             ->movePointerToSubElement('entity')
@@ -456,7 +750,8 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
                 $this->getTagForNonTableContainerWithParent(
                     'contribute',
                     ['c_date', 'c_date_descr', 'descr_lang'],
-                    $parent_type
+                    $parent_type,
+                    true
                 )
             )
             ->movePointerToSubElement('dateTime')
@@ -464,7 +759,8 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
                 $this->getTagForDataWithParent(
                     'contribute',
                     'c_date',
-                    $parent_type
+                    $parent_type,
+                    true
                 )
             )
             ->movePointerToSuperElement()
@@ -473,7 +769,8 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
                 $this->getTagForNonTableContainerWithParent(
                     'contribute',
                     ['c_date_descr', 'descr_lang'],
-                    $parent_type
+                    $parent_type,
+                    true
                 )
             );
         $this
@@ -482,7 +779,8 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
                 'contribute',
                 'c_date_descr',
                 'descr_lang',
-                $parent_type
+                $parent_type,
+                true
             )
             ->movePointerToSuperElement()
             ->movePointerToSuperElement()
@@ -496,18 +794,21 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
         string $table,
         string $field_string,
         string $field_lang,
-        string $parent_type = ''
+        string $parent_type = '',
+        bool $second_parent = false
     ): ilMDLOMDatabaseStructure {
         if ($parent_type) {
             $tag_string = $this->getTagForDataWithParent(
                 $table,
                 $field_string,
-                $parent_type
+                $parent_type,
+                $second_parent
             );
             $tag_lang = $this->getTagForDataWithParent(
                 $table,
                 $field_lang,
-                $parent_type
+                $parent_type,
+                $second_parent
             );
         } else {
             $tag_string = $this->getTagForData(
@@ -534,13 +835,15 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
         ilMDLOMDatabaseStructure $structure,
         string $table,
         string $field_value,
-        string $parent_type = ''
+        string $parent_type = '',
+        bool $second_parent = false
     ): ilMDLOMDatabaseStructure {
         if ($parent_type) {
             $tag_value = $this->getTagForDataWithParent(
                 $table,
                 $field_value,
-                $parent_type
+                $parent_type,
+                $second_parent
             );
         } else {
             $tag_value = $this->getTagForData(
@@ -609,7 +912,8 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
      */
     protected function getTagForTableContainerWithParent(
         string $table,
-        string $parent_type
+        string $parent_type,
+        bool $second_parent = false
     ): ilMDDatabaseTag {
         $this->checkTable($table);
 
@@ -638,7 +942,12 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             '',
             $delete,
             self::TABLES[$table],
-            [self::EXP_MD_ID, self::EXP_PARENT_MD_ID]
+            [
+                self::EXP_MD_ID,
+                $second_parent ?
+                    self::EXP_SECOND_PARENT_MD_ID :
+                    self::EXP_PARENT_MD_ID
+            ]
         );
     }
 
@@ -659,16 +968,18 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
                 'A container element can not be empty.'
             );
         }
-        $read_fields = '';
+        $read_fields = '(';
         foreach ($fields as $field) {
             $read_fields .= 'CHAR_LENGTH(' . $this->db->quoteIdentifier($field) .
-                ') > 0 AND ';
+                ') > 0 OR ';
         }
+        $read_fields = substr($read_fields, 0, -3) . ') AND ';
         $read =
             'SELECT ' . $this->db->quoteIdentifier(self::ID_NAME[$table]) .
             ' AS ' . $this->db->quoteIdentifier(self::RES_MD_ID) .
             ' FROM ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
             ' WHERE ' . $read_fields .
+            $this->db->quoteIdentifier(self::ID_NAME[$table]) . ' = %s AND' .
             ' rbac_id = %s AND obj_id = %s AND obj_type = %s' .
             ' ORDER BY ' . $this->db->quoteIdentifier(self::ID_NAME[$table]);
         $delete_fields = '';
@@ -688,22 +999,24 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             '',
             $delete,
             self::TABLES[$table],
-            [self::EXP_MD_ID]
+            [self::EXP_MD_ID, self::EXP_SUPER_MD_ID]
         );
     }
 
     /**
      * Returns the appropriate database tag for a container element
      * without its own table, but with a parent.
-     * @param string    $table
-     * @param string[]  $fields
-     * @param string    $parent_type
+     * @param string   $table
+     * @param string[] $fields
+     * @param string   $parent_type
+     * @param bool     $second_parent
      * @return ilMDDatabaseTag
      */
     protected function getTagForNonTableContainerWithParent(
         string $table,
         array $fields,
-        string $parent_type
+        string $parent_type,
+        bool $second_parent = false
     ): ilMDDatabaseTag {
         $this->checkTable($table);
         if (empty($fields)) {
@@ -711,17 +1024,19 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
                 'A container element can not be empty.'
             );
         }
-        $read_fields = '';
+        $read_fields = '(';
         foreach ($fields as $field) {
             $read_fields .= 'CHAR_LENGTH(' . $this->db->quoteIdentifier($field) .
-                ') > 0 AND ';
+                ') > 0 OR ';
         }
+        $read_fields = substr($read_fields, 0, -3) . ') AND ';
         $read =
             'SELECT ' . $this->db->quoteIdentifier(self::ID_NAME[$table]) .
             ' AS ' . $this->db->quoteIdentifier(self::RES_MD_ID) .
             ' FROM ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
             ' WHERE ' . $read_fields . ' parent_type = ' .
-            $this->db->quote($parent_type, ilDBConstants::T_TEXT) .
+            $this->db->quote($parent_type, ilDBConstants::T_TEXT) . ' AND ' .
+            $this->db->quoteIdentifier(self::ID_NAME[$table]) . ' = %s' .
             ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s' .
             ' ORDER BY ' . $this->db->quoteIdentifier(self::ID_NAME[$table]);
         $delete_fields = '';
@@ -742,7 +1057,13 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             '',
             $delete,
             self::TABLES[$table],
-            [self::EXP_MD_ID, self::EXP_PARENT_MD_ID]
+            [
+                self::EXP_MD_ID,
+                self::EXP_SUPER_MD_ID,
+                $second_parent ?
+                    self::EXP_SECOND_PARENT_MD_ID :
+                    self::EXP_PARENT_MD_ID
+            ]
         );
     }
 
@@ -753,7 +1074,8 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
     protected function getTagForDataWithParent(
         string $table,
         string $field,
-        string $parent_type
+        string $parent_type,
+        bool $second_parent = false
     ): ilMDDatabaseTag {
         $this->checkTable($table);
 
@@ -787,7 +1109,13 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             $create_and_update,
             $delete,
             self::TABLES[$table],
-            [self::EXP_DATA, self::EXP_SUPER_MD_ID, self::EXP_PARENT_MD_ID]
+            [
+                self::EXP_DATA,
+                self::EXP_SUPER_MD_ID,
+                $second_parent ?
+                    self::EXP_SECOND_PARENT_MD_ID :
+                    self::EXP_PARENT_MD_ID
+            ]
         );
     }
 
@@ -841,7 +1169,8 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
     protected function getTagForTableDataWithParent(
         string $table,
         string $field,
-        string $parent_type
+        string $parent_type,
+        bool $second_parent = false
     ): ilMDDatabaseTag {
         $this->checkTable($table);
 
@@ -880,7 +1209,14 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             $update,
             $delete,
             self::TABLES[$table],
-            [self::EXP_DATA, self::EXP_MD_ID, self::EXP_PARENT_MD_ID]
+            [
+                self::EXP_DATA,
+                self::EXP_MD_ID,
+                self::EXP_PARENT_MD_ID,
+                $second_parent ?
+                    self::EXP_SECOND_PARENT_MD_ID :
+                    self::EXP_PARENT_MD_ID
+            ]
         );
     }
 

@@ -143,7 +143,7 @@ class ilMDEditorGUI
         $data_factory = new ilMDLOMDataFactory($DIC->refinery());
         $marker_factory = new ilMDMarkerFactory($data_factory);
         $repo = new ilMDLOMDatabaseRepository($this->md_obj->getRBACId(), $this->md_obj->getObjId(), $this->md_obj->getObjType());
-        $path = new ilMDPath();
+        $path = new ilMDPathFromRoot();
         $path->addStep('general')->addStep('keyword');
         $string = '';
         $array = $repo->getMDOnPath($path);
@@ -153,11 +153,13 @@ class ilMDEditorGUI
             }
         }
         /*$root = $repo->getMD();
-        foreach ($root->getSubElement('general')->getSubElements() as $subElement) {
-            if ($subElement->getName() !== 'keyword') {
-                continue;
-            }
-            $string .= $subElement->getSubElement('string')->getData()->getValue() . ', ';
+        foreach (
+            $root
+                ->getSubElements('general')[0]
+                ->getSubElements('coverage')[0]
+                ->getSubElements() as $subElement
+        ) {
+            $string .= $subElement->getName() . ': ' . $subElement->getData()->getValue() . ', ';
         }*/
         $this->tpl->setVariable("MD_CONTENT", $string);
         /**

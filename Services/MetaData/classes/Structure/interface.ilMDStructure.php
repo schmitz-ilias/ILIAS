@@ -19,7 +19,7 @@ declare(strict_types=1);
  *********************************************************************/
 
 /**
- * Fluent interface for navigating MD structure
+ * Fluent interface for navigating an MD structure
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 interface ilMDStructure
@@ -29,12 +29,6 @@ interface ilMDStructure
     public function switchToReadMode(): ilMDStructure;
 
     public function getNameAtPointer(): string;
-
-    /**
-     * Returns the path to the current position of the pointer,
-     * starting from the root element.
-     */
-    public function getPointerAsPath(): ilMDPath;
 
     public function isPointerAtRootElement(): bool;
 
@@ -77,5 +71,5 @@ interface ilMDStructure
     /**
      * Moves the pointer from the root along the path to its end.
      */
-    public function movePointerToEndOfPath(ilMDPath $path): ilMDStructure;
+    public function movePointerToEndOfPath(ilMDPathFromRoot $path): ilMDStructure;
 }

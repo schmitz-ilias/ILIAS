@@ -21,12 +21,20 @@ declare(strict_types=1);
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDLOMVocabulariesStructure extends ilMDLOMStructure
+class ilMDPathRelative extends ilMDPath
 {
-    public function getTagAtPointer(): ?ilMDVocabulariesTag
+    protected string $start;
+
+    public function __construct(string $start)
     {
-        /* @var $tag ilMDVocabulariesTag|null */
-        $tag = parent::getTagAtPointer();
-        return $tag;
+        $this->validateInput($start);
+        $this->start = $start;
+        $this->path = $start;
+    }
+
+    public function addStepToSuperElement(): ilMDPathRelative
+    {
+        $this->path .= self::SEPARATOR . self::SUPER_ELEMENT;
+        return $this;
     }
 }

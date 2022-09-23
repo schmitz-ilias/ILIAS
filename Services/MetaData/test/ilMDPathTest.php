@@ -27,7 +27,7 @@ class ilMDPathTest extends TestCase
 {
     public function testConstructPath(): void
     {
-        $path = new ilMDPath();
+        $path = new ilMDPathFromRoot();
         $path
             ->addStep('step1')
             ->addStep('step2')
@@ -56,6 +56,10 @@ class ilMDPathTest extends TestCase
             $path->getIndexFilter(2)
         );
         $this->assertSame(
+            ilMDPath::ROOT,
+            $path->getStep(0)
+        );
+        $this->assertSame(
             ilMDPath::ROOT . ilMDPath::SEPARATOR . 'step1' .
             ilMDPath::SEPARATOR . 'step2' .
             ilMDPath::FILTER_OPEN . '2' . ilMDPath::FILTER_CLOSE .
@@ -79,22 +83,36 @@ class ilMDPathTest extends TestCase
 
     public function testEmptyStepException(): void
     {
-        $path = new ilMDPath();
+        $path = new ilMDPathFromRoot();
         $this->expectException(ilMDPathException::class);
         $path->addStep('');
     }
 
     public function testReservedCharacterException(): void
     {
-        $path = new ilMDPath();
+        $path = new ilMDPathFromRoot();
         $this->expectException(ilMDPathException::class);
         $path->addStep(ilMDPath::SEPARATOR);
     }
 
     public function testNoStepToRemoveException(): void
     {
-        $path = new ilMDPath();
+        $path = new ilMDPathFromRoot();
         $this->expectException(ilMDPathException::class);
         $path->removeLastStep();
+    }
+
+    public function testRelativePath(): void
+    {
+        $path = new ilMDPathRelative('start');
+        $path->addStepToSuperElement();
+        $this->assertSame(
+            ilMDPath::SUPER_ELEMENT,
+            $path->getStep(1)
+        );
+        $this->assertSame(
+            'start',
+            $path->getStep(0)
+        );
     }
 }

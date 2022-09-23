@@ -21,21 +21,22 @@ declare(strict_types=1);
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDPath
+abstract class ilMDPath
 {
     public const SEPARATOR = ';';
     public const FILTER_OPEN = '{';
     public const FILTER_CLOSE = '}';
     public const ROOT = '@';
+    public const SUPER_ELEMENT = '^';
 
     public const FILTER_INDEX = 'opt_index';
 
-    protected string $path = self::ROOT;
+    protected string $path;
 
     /**
      * Add the name of an MD element as a step in the path.
      */
-    public function addStep(string $step): ilMDPath
+    public function addStep(string $step): self
     {
         $this->validateInput($step);
         $this->path .= self::SEPARATOR . $step;
@@ -44,10 +45,10 @@ class ilMDPath
 
     /**
      * Specify which element of the name of the step should be on the path,
-     * using an index starting at 0, sorted by their md_id.
+     * using an index starting at 1, sorted by their md_id.
      * If no index is specified, the path branches over all available elements.
      */
-    public function addIndexFilter(int $index): ilMDPath
+    public function addIndexFilter(int $index): self
     {
         $this->addFilter((string) $index);
         return $this;
@@ -63,7 +64,7 @@ class ilMDPath
      * Returns the name of the final step in the path. If a
      * number n lower than the length of the path is given,
      * returns the name of the nth step instead, starting
-     * with the root at 0.
+     * with the start at 0.
      */
     public function getStep(?int $number = null): string
     {
@@ -97,17 +98,14 @@ class ilMDPath
         );
     }
 
-    public function isAtRoot(): bool
+    public function isAtStart(): bool
     {
-        if ($this->path === self::ROOT) {
-            return true;
-        }
-        return false;
+        return $this->getPathLength() === 1;
     }
 
-    public function removeLastStep(): ilMDPath
+    public function removeLastStep(): self
     {
-        if ($this->isAtRoot()) {
+        if ($this->isAtStart()) {
             throw new ilMDPathException(
                 'No step in path to remove'
             );
@@ -128,7 +126,7 @@ class ilMDPath
         return $this->path;
     }
 
-    protected function addFilter(string $option): ilMDPath
+    protected function addFilter(string $option): self
     {
         $this->validateInput($option);
         $this->path .= self::FILTER_OPEN . $option . self::FILTER_CLOSE;
@@ -149,7 +147,8 @@ class ilMDPath
             self::SEPARATOR,
             self::FILTER_OPEN,
             self::FILTER_CLOSE,
-            self::ROOT
+            self::ROOT,
+            self::SUPER_ELEMENT
         ];
         $conflict = '';
         foreach ($reserved_chars as $char) {
