@@ -41,8 +41,6 @@ class ilMDEditorGUI
     protected ilTabsGUI $tabs_gui;
     protected Factory $ui_factory;
     protected Renderer $ui_renderer;
-    protected ilRbacSystem $rbac_system;
-    protected ilTree $tree;
     protected ilToolbarGUI $toolbarGUI;
     protected ilMDSettings $md_settings;
     protected GlobalHttpState $http;
@@ -69,8 +67,6 @@ class ilMDEditorGUI
         $this->tpl = $DIC->ui()->mainTemplate();
         $this->tabs_gui = $DIC->tabs();
         $this->ctrl = $DIC->ctrl();
-        $this->rbac_system = $DIC->rbac()->system();
-        $this->tree = $DIC->repositoryTree();
         $this->toolbarGUI = $DIC->toolbar();
 
         $this->ui_factory = $DIC->ui()->factory();

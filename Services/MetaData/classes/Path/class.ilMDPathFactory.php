@@ -49,5 +49,4 @@ class ilMDPathFactory
         unset($structure);
         return $path;
     }
-
 }

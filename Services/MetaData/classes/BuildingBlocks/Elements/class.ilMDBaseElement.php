@@ -51,6 +51,15 @@ abstract class ilMDBaseElement
         $this->name = $name;
     }
 
+    public function __clone()
+    {
+        $this->super_element = clone $this->super_element;
+        $this->sub_elements = array_map(
+            fn (ilMDBaseElement $arg) => clone $arg,
+            $this->sub_elements
+        );
+    }
+
     /**
      * If a name is given, only returns sub-elements with that name (including
      * scaffolds). If an ID is given, only returns sub-elements with that ID,

@@ -71,6 +71,48 @@ class ilMDRootElement extends ilMDElement
         );
     }
 
+    /**
+     * Returns the elements at the end of the path.
+     * There might be multiple if there are branches
+     * in the path. Elements on the path that don't exist
+     * in the MD set are added as scaffolds.
+     * @return ilMDBaseElement[]
+     */
+    public function getSubElementsByPath(
+        ilMDPathFromRoot $path,
+        ilMDRepository $repo
+    ): array {
+        $elements = [$this];
+        for ($i = 1; $i < $path->getPathLength(); $i++) {
+            $next_elements = [];
+            foreach ($elements as $element) {
+                $index = 1;
+                foreach ($element->getSubElements($path->getStep($i)) as $sub) {
+                    $index += 1;
+                    if (
+                        !empty($path->getIndexFilter($i)) &&
+                        !in_array($index, $path->getIndexFilter($i))
+                    ) {
+                        continue;
+                    }
+                    $next_elements[] = $sub;
+                }
+
+                if (empty($element->getSubElements($path->getStep($i)))) {
+                    foreach ($repo->getScaffoldForElement(
+                        $element,
+                        $path->getStep($i)
+                    ) as $scaffold) {
+                        $element->addScaffoldToSubElements($scaffold);
+                        $next_elements[] = $scaffold;
+                    }
+                }
+            }
+            $elements = $next_elements;
+        }
+        return $elements;
+    }
+
     public function getRbacId(): int
     {
         return $this->rbac_id;

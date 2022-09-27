@@ -271,33 +271,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
             false
         );
 
-        /*
-         * Navigate to the last element in the path, creating as scaffold
-         * what is not there yet.
-         */
-        $elements = [$root];
-        for ($i = 1; $i < $path->getPathLength(); $i++) {
-            $next_elements = [];
-            foreach ($elements as $element) {
-                if (!empty($element->getSubElements())) {
-                    $next_elements = array_merge(
-                        $next_elements,
-                        $element->getSubElements()
-                    );
-                    continue;
-                }
-
-                foreach ($this->getScaffoldForElement($element) as $scaffold) {
-                    if ($path->getStep($i) !== $scaffold->getName()) {
-                        continue;
-                    }
-                    $element->addScaffoldToSubElements($scaffold);
-                    $next_elements[] = $scaffold;
-                }
-            }
-            $elements = $next_elements;
-        }
-        return $elements;
+        return $root->getSubElementsByPath($path, $this);
     }
 
     /**
@@ -484,9 +458,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
             array $parent_ids
         ): int {
             if (!($element instanceof ilMDElement)) {
-                throw new ilMDDatabaseException(
-                    'Scaffold elements can not be deleted.'
-                );
+                return 0;
             }
 
             foreach ($element->getSubElements() as $sub_element) {
