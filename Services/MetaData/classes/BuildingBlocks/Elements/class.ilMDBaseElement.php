@@ -53,9 +53,15 @@ abstract class ilMDBaseElement
 
     public function __clone()
     {
-        $this->super_element = clone $this->super_element;
+        $this->super_element = null;
+        // for some reason $this can't be used in closures
+        $self = $this;
         $this->sub_elements = array_map(
-            fn (ilMDBaseElement $arg) => clone $arg,
+            function (ilMDBaseElement $arg) use ($self) {
+                $arg = clone $arg;
+                $arg->setSuperElement($self);
+                return $arg;
+            },
             $this->sub_elements
         );
     }
@@ -89,6 +95,11 @@ abstract class ilMDBaseElement
     public function addScaffoldToSubElements(
         ilMDScaffoldElement $scaffold
     ): void {
+        if ($scaffold->getSuperElement()) {
+            throw new ilMDBuildingBlocksException(
+                'This scaffold was already added to a different super-element.'
+            );
+        }
         $scaffold->setSuperElement($this);
         $this->sub_elements[] = $scaffold;
     }
@@ -100,13 +111,7 @@ abstract class ilMDBaseElement
 
     protected function setSuperElement(ilMDBaseElement $super_element): void
     {
-        if (!isset($this->super_element)) {
-            $this->super_element = $super_element;
-            return;
-        }
-        throw new ilMDBuildingBlocksException(
-            "This element already has a superordinate element."
-        );
+        $this->super_element = $super_element;
     }
 
     public function isUnique(): bool

@@ -54,4 +54,14 @@ class ilMDTagFactory
     {
         return new ilMDVocabulariesTagBuilder();
     }
+
+    public function editorGUITag(
+        ?ilMDPathRelative $path_to_preview = null,
+        ?ilMDPathRelative $path_to_representation = null
+    ): ilMDEditorGUITag {
+        return new ilMDEditorGUITag(
+            $path_to_preview,
+            $path_to_representation
+        );
+    }
 }

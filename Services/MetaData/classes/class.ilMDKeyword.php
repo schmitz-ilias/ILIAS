@@ -122,7 +122,7 @@ class ilMDKeyword extends ilMDBase
                 $this->setParentId((int) $row->parent_id);
                 $this->setParentType((string) $row->parent_type);
                 $this->setKeyword((string) $row->keyword);
-                $this->setKeywordLanguage(new ilMDLanguageItem($row->keyword_language));
+                $this->setKeywordLanguage(new ilMDLanguageItem($row->keyword_language ?? ''));
             }
         }
         return true;

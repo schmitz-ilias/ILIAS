@@ -23,7 +23,7 @@ declare(strict_types=1);
  */
 class ilMDPathFactory
 {
-    public function getPathfromRoot(): ilMDPathFromRoot
+    public function getPathFromRoot(): ilMDPathFromRoot
     {
         return new ilMDPathFromRoot();
     }

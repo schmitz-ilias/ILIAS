@@ -128,10 +128,20 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
             //create scaffold elements
             switch ($marker->getData()->getType()) {
                 case $structure->getTypeAtPointer():
+                    $next_id = $super_md_id;
+                    if (
+                        in_array(
+                            ilMDLOMDatabaseDictionary::EXP_MD_ID,
+                            $tag->getExpectedParams()
+                        ) &&
+                        $tag->getCreate()
+                    ) {
+                        $next_id = $this->db->nextId($tag->getTable());
+                    }
                     $this->executeManip(
                         self::MANIP_CREATE,
                         $tag,
-                        $next_id = $this->db->nextId($tag->getTable()),
+                        $next_id,
                         $super_md_id,
                         $marker->getData(),
                         $parent_ids
@@ -316,7 +326,6 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
         }
 
         $sub_elements = [];
-        $new_parent_ids = $parent_ids;
         foreach ($structure->getSubElementsAtPointer() as $sub_name) {
             // TODO remove after testing
             if (in_array($sub_name, ['technical', 'educational', 'relation']) && $depth === 1) {
@@ -350,15 +359,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
 
             $index = 1;
             while ($row = $this->db->fetchAssoc($res)) {
-                if (
-                    isset($path) &&
-                    $depth < $path->getPathLength() &&
-                    !empty($path->getIndexFilter($depth)) &&
-                    !in_array($index, $path->getIndexFilter($depth))
-                ) {
-                    continue;
-                }
-                $index += 1;
+                $new_parent_ids = $parent_ids;
 
                 //get the id of the element
                 if (!isset($row[ilMDLOMDatabaseDictionary::RES_MD_ID])) {
@@ -371,6 +372,26 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 if ($tag->isParent()) {
                     $new_parent_ids[] = $md_id;
                 }
+
+                //check the filter
+                if (
+                    isset($path) &&
+                    $depth < $path->getPathLength()
+                ) {
+                    if (
+                        !empty($path->getIndexFilter($depth)) &&
+                        !in_array($index, $path->getIndexFilter($depth))
+                    ) {
+                        continue;
+                    }
+                    if (
+                        !empty($path->getMDIDFilter($depth)) &&
+                        !in_array($md_id, $path->getMDIDFilter($depth))
+                    ) {
+                        continue;
+                    }
+                }
+                $index += 1;
 
                 //get the data of the element, if it should have any
                 $type = $new_structure->getTypeAtPointer();
@@ -596,7 +617,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
 
         $new_parent_ids = $parent_ids;
         if ($structure->getTagAtPointer()->isParent()) {
-            $new_parent_ids[] = $element->getMDID();
+            $new_parent_ids[] = $new_super_md_id;
         }
 
         $results = [];
@@ -645,7 +666,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
             ilMDLOMDatabaseStructure $structure,
             int $super_md_id,
             array $parent_ids
-        ) use ($throw_exception, $action_description): void {
+        ) use ($throw_exception, $action_description): int {
             $name_path = $element->getName();
             $el = $element;
             while (!$el->isRoot()) {
@@ -669,7 +690,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 $data = $marker->getData();
             }
             if (!isset($data)) {
-                return;
+                return 0;
             }
 
             if ($data->getType() !== $structure->getTypeAtPointer()) {
@@ -680,7 +701,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 }
                 $this->logger->error($error);
                 $element->getSuperElement()->deleteFromSubElements($element);
-                return;
+                return 0;
             }
 
             /*
@@ -729,6 +750,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 $this->logger->error($error_intro . $error);
                 $element->getSuperElement()->deleteFromSubElements($element);
             }
+            return 0;
         };
 
         $null_action = function (): void {

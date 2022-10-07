@@ -1178,7 +1178,7 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             'INSERT INTO ' . $this->db->quoteIdentifier(self::TABLES[$table]) .
             ' (' . $this->db->quoteIdentifier($field) . ', ' .
             $this->db->quoteIdentifier(self::ID_NAME[$table]) .
-            ', parent_type, parent_id, rbac_id, obj_id, obj_type) VALUES (%s, %s ' .
+            ', parent_type, parent_id, rbac_id, obj_id, obj_type) VALUES (%s, %s, ' .
             $this->db->quote($parent_type, ilDBConstants::T_TEXT) . ', ' .
             '%s, %s, %s, %s)';
         $read =
@@ -1212,7 +1212,6 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             [
                 self::EXP_DATA,
                 self::EXP_MD_ID,
-                self::EXP_PARENT_MD_ID,
                 $second_parent ?
                     self::EXP_SECOND_PARENT_MD_ID :
                     self::EXP_PARENT_MD_ID

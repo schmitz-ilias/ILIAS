@@ -39,15 +39,6 @@ class ilMDBuildingBlocksTest extends TestCase
         $this->assertNull($root->getSuperElement());
     }
 
-    public function testSetSuperElementException(): void
-    {
-        $data = $this->createMock(ilMDData::class);
-        $element = new ilMDScaffoldElement('low', false, []);
-        $root1 = new ilMDRootElement(1, 2, 'type', 'root1', [$element], $data);
-
-        $this->expectException(ilMDBuildingBlocksException::class);
-        $root2 = new ilMDRootElement(1, 3, 'type', 'root2', [$element], $data);
-    }
     public function testRootSetSuperElementException(): void
     {
         $data = $this->createMock(ilMDData::class);

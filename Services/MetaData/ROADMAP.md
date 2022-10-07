@@ -14,6 +14,11 @@ the old MD editor, but is not part of the LOM standard. It
 would be nice to get rid of it, should it not be used anywhere
 else in ILIAS.
 
+### Input Validation for Paths
+
+Currently any string can be converted to a path, so it would be
+good to include validation for input strings.
+
 ### Refactor ilMDCopyrightSelectionEntry
 
 The class ilMDCopyrightSelectionEntry could need some refactoring
@@ -63,6 +68,16 @@ super- and sub-elements, structures, paths...). However,
 I'm not quite sure whether they are similar enough to replace
 them entirely, as they currently fulfill different functions.
 It should be checked whether there are redundancies there.
+
+Some initial ideas:
+* Replace paths by structures decorated with path tags
+* Additional filters: give a number of elements to return,
+  filter by md_id (basically all the things that have to
+  be done by hand in the LOMDigestGUI right now).
+* Scaffolds should also have data (type none) and the reserved
+  md_id 0. 
+* Elements have grown in scope quite a bit, can one shift the
+  extra functionality to fiducial classes?
 
 ### Vocabularies
 

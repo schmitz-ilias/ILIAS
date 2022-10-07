@@ -26,10 +26,12 @@ abstract class ilMDPath
     public const SEPARATOR = ';';
     public const FILTER_OPEN = '{';
     public const FILTER_CLOSE = '}';
+    public const FILTER_ID_SEPARATOR = ':';
     public const ROOT = '@';
     public const SUPER_ELEMENT = '^';
 
-    public const FILTER_INDEX = 'opt_index';
+    public const FILTER_ID_INDEX = 'INDEX';
+    public const FILTER_ID_MDID = 'ID';
 
     protected string $path;
 
@@ -50,7 +52,13 @@ abstract class ilMDPath
      */
     public function addIndexFilter(int $index): self
     {
-        $this->addFilter((string) $index);
+        $this->addFilter(self::FILTER_ID_INDEX, (string) $index);
+        return $this;
+    }
+
+    public function addMDIDFilter(int $md_id): self
+    {
+        $this->addFilter(self::FILTER_ID_MDID, (string) $md_id);
         return $this;
     }
 
@@ -85,6 +93,30 @@ abstract class ilMDPath
      */
     public function getIndexFilter(?int $number = null): array
     {
+        return array_map(
+            fn (string $arg) => (int) $arg,
+            $this->getFilters(self::FILTER_ID_INDEX, $number)
+        );
+    }
+
+    /**
+     * @return int[]
+     */
+    public function getMDIDFilter(?int $number = null): array
+    {
+        return array_map(
+            fn (string $arg) => (int) $arg,
+            $this->getFilters(self::FILTER_ID_MDID, $number)
+        );
+    }
+
+    /**
+     * @return string[]
+     */
+    protected function getFilters(
+        string $filter_id,
+        ?int $number = null
+    ): array {
         $path_array = explode(self::SEPARATOR, $this->path);
         $step = $path_array[array_key_last($path_array)];
         if (isset($number) && array_key_exists($number, $path_array)) {
@@ -92,10 +124,18 @@ abstract class ilMDPath
         }
         $exploded_step = explode(self::FILTER_OPEN, $step);
         array_shift($exploded_step);
-        return array_map(
-            fn (string $arg): int => (int) rtrim($arg, self::FILTER_CLOSE),
+        $all_filters = array_map(
+            fn (string $arg): string => rtrim($arg, self::FILTER_CLOSE),
             $exploded_step
         );
+        $res = [];
+        foreach ($all_filters as $filter) {
+            $filter_parts = explode(self::FILTER_ID_SEPARATOR, $filter);
+            if ($filter_parts[0] === $filter_id) {
+                $res[] = $filter_parts[1];
+            }
+        }
+        return $res;
     }
 
     public function isAtStart(): bool
@@ -126,10 +166,22 @@ abstract class ilMDPath
         return $this->path;
     }
 
-    protected function addFilter(string $option): self
+    /**
+     * Please note that input strings are not validated, so be careful.
+     */
+    public function setPathFromString(string $string): self
+    {
+        $this->path = $string;
+        return $this;
+    }
+
+    protected function addFilter(string $filter_id, string $option): self
     {
         $this->validateInput($option);
-        $this->path .= self::FILTER_OPEN . $option . self::FILTER_CLOSE;
+        $this->path .=
+            self::FILTER_OPEN . $filter_id .
+            self::FILTER_ID_SEPARATOR . $option .
+            self::FILTER_CLOSE;
         return $this;
     }
 
@@ -147,6 +199,7 @@ abstract class ilMDPath
             self::SEPARATOR,
             self::FILTER_OPEN,
             self::FILTER_CLOSE,
+            self::FILTER_ID_SEPARATOR,
             self::ROOT,
             self::SUPER_ELEMENT
         ];

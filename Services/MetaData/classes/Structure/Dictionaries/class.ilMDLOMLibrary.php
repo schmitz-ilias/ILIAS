@@ -60,4 +60,13 @@ class ilMDLOMLibrary
             $path_factory
         );
     }
+
+    public function getLOMEditorGUIDictionary(
+        ilMDPathFactory $path_factory
+    ): ilMDLOMEditorGUIDictionary {
+        return new ilMDLOMEditorGUIDictionary(
+            $this->factory,
+            $path_factory
+        );
+    }
 }

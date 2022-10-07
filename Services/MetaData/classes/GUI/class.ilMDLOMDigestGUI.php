@@ -22,8 +22,9 @@ use ILIAS\UI\Component\Input\Container\Form\Standard as StandardForm;
 use ILIAS\UI\Factory as UIFactory;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use ILIAS\Refinery\Factory as RefineryFactory;
-use ILIAS\UI\Component\Input\Field\Section as Section;
+use ILIAS\UI\Component\Input\Field\Section;
 use ILIAS\UI\Component\Modal\Interruptive;
+use ILIAS\UI\Component\Signal;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -60,12 +61,12 @@ class ilMDLOMDigestGUI
         $this->lng = $lng;
         $this->lng->loadLanguageModule('meta');
 
-        $role_vocab = $library
+        $this->role_vocab = $library
             ->getLOMVocabulariesDictionary($path_factory)
             ->getStructureWithTags()
             ->movePointerToEndOfPath(
                 $this->path_factory
-                    ->getPathfromRoot()
+                    ->getPathFromRoot()
                     ->addStep('lifeCycle')
                     ->addStep('contribute')
                     ->addStep('role')
@@ -74,12 +75,12 @@ class ilMDLOMDigestGUI
             ->getTagAtPointer()
             ->getVocabularies()[0];
 
-        $cp_vocab = $library
+        $this->cp_vocab = $library
             ->getLOMVocabulariesDictionary($path_factory)
             ->getStructureWithTags()
             ->movePointerToEndOfPath(
                 $this->path_factory
-                    ->getPathfromRoot()
+                    ->getPathFromRoot()
                     ->addStep('rights')
                     ->addStep('copyrightAndOtherRestrictions')
                     ->addStep('value')
@@ -89,11 +90,12 @@ class ilMDLOMDigestGUI
     }
 
     public function getForm(
+        ilMDRootElement $root,
         string $post_url,
-        ?Request $request = null
+        ?Request $request = null,
+        ?Signal $signal = null,
     ): StandardForm {
         $ff = $this->factory->input()->field();
-        $root = $this->repo->getMD();
 
         // section general
         // title
@@ -102,7 +104,7 @@ class ilMDLOMDigestGUI
             ->text(
                 $this->lng->txt('title')
             )
-            ->withRequired('true')
+            ->withRequired(true)
             ->withValue(
                 $el->isScaffold() ? '' : $el->getData()->getValue()
             );
@@ -159,7 +161,7 @@ class ilMDLOMDigestGUI
         $keywords = $ff
             ->tag(
                 $this->lng->txt('keywords'),
-                [$strings]
+                $strings
             )
             ->withValue($strings);
 
@@ -213,11 +215,12 @@ class ilMDLOMDigestGUI
             $this->isCPSelectionActive() &&
             !empty($this->getCPEntries())
         ) {
-            $sec_rights = $this->getCopyrightSection($root);
+            $sec_rights = $this->getCopyrightSection($root, $signal);
         }
 
         // section(s) tlt
-        $tlt_sections = [];
+        // TODO add this when educational is done in the db dictionary
+        /*$tlt_sections = [];
         foreach ($this->getTltDurationElement($root) as $dur) {
             preg_match(
                 ilMDLOMDataFactory::DURATION_REGEX,
@@ -270,7 +273,7 @@ class ilMDLOMDigestGUI
                         'seconds' => $seconds
                     ],
                     $this->lng->txt('meta_typical_learning_time') .
-                    count($tlt_sections) > 0 ? count($tlt_sections) + 1 : ''
+                    (count($tlt_sections) > 0 ? count($tlt_sections) + 1 : '')
                 )
                 ->withAdditionalTransformation(
                     $this->refinery->custom()->transformation(function ($vs) {
@@ -308,7 +311,7 @@ class ilMDLOMDigestGUI
                     })
                 );
         }
-        $tlts = $ff->group($tlt_sections);
+        $tlts = $ff->group($tlt_sections);*/
 
         // Assemble the form
         $sections = [
@@ -331,8 +334,10 @@ class ilMDLOMDigestGUI
         return $form;
     }
 
-    protected function getCopyrightSection(ilMDRootElement $root): Section
-    {
+    protected function getCopyrightSection(
+        ilMDRootElement $root,
+        ?Signal $signal
+    ): Section {
         $ff = $this->factory->input()->field();
         $oer_settings = $this->getOerHarvesterSettings();
 
@@ -412,6 +417,13 @@ class ilMDLOMDigestGUI
                 $this->lng->txt('meta_copyright')
             )
             ->withValue($current_id);
+        if (isset($signal)) {
+            $copyright = $copyright->
+                withAdditionalOnLoadCode(function ($id) use ($signal) {
+                    return 'il.MetaDataCopyrightListener.init("' .
+                        $signal . '","' . $id . '");';
+                });
+        }
 
         return $ff
             ->section(
@@ -434,29 +446,21 @@ class ilMDLOMDigestGUI
             $post_url
         );
 
-        $signal = $modal->getShowSignal();
-
         $tpl->addJavaScript(
             'Services/MetaData/js/ilMetaCopyrightListener.js'
-        );
-        // TODO change the parameters here over to those from the KS form
-        $tpl->addOnLoadCode(
-            'il.MetaDataCopyrightListener.init("' .
-            $signal . '","copyright","form_ilquickeditform","button_ilquickeditform");'
         );
 
         return $modal;
     }
 
-    public function update(Request $request): bool
+    public function update(ilMDRootElement $root, Request $request): bool
     {
-        $form = $this->getForm('', $request);
+        $form = $this->getForm($root, '', $request);
 
         if (!$form->getData()) {
             return false;
         }
 
-        $root = $this->repo->getMD();
         $root_for_delete = clone $root;
         $data = $form->getData();
 
@@ -550,14 +554,14 @@ class ilMDLOMDigestGUI
             $general_el,
             'keyword'
         )[0];
-        $string_scaffold = $this->repo->getScaffoldForElement(
-            $keyword_scaffold,
-            'string'
-        )[0];
-        $keyword_scaffold->addScaffoldToSubElements($string_scaffold);
         foreach ($input_keywords as $keyword_string) {
             $new_keyword = clone $keyword_scaffold;
             $general_el->addScaffoldToSubElements($new_keyword);
+            $string_scaffold = $this->repo->getScaffoldForElement(
+                $new_keyword,
+                'string'
+            )[0];
+            $new_keyword->addScaffoldToSubElements($string_scaffold);
             $new_keyword->getSubElements('string')[0]->leaveMarkerTrail(
                 $this->marker_factory->Marker(
                     $this->data_factory->MDData(
@@ -595,7 +599,7 @@ class ilMDLOMDigestGUI
         // section rights
         if (
             ($data_rights = $data['rights'] ?? null) &&
-            (($data_cp = $data_rights['copyright'][0]) > 0 ||
+            (($data_cp = $data_rights['copyright'])[0] > 0 ||
             $data_cp[1]['copyright_text'])
         ) {
             $data_cp = $data_rights['copyright'];
@@ -604,7 +608,7 @@ class ilMDLOMDigestGUI
                     $this->data_factory->MDData(
                         ilMDLOMDataFactory::TYPE_VOCAB_VALUE,
                         'yes',
-                        $this->cp_vocab
+                        [$this->cp_vocab]
                     )
                 ),
                 $this->marker_factory->NullMarker()
@@ -653,7 +657,7 @@ class ilMDLOMDigestGUI
                         $this->data_factory->MDData(
                             ilMDLOMDataFactory::TYPE_VOCAB_VALUE,
                             'no',
-                            $this->cp_vocab
+                            [$this->cp_vocab]
                         )
                     ),
                     $this->marker_factory->NullMarker()
@@ -702,7 +706,7 @@ class ilMDLOMDigestGUI
         ilMDRootElement $root
     ): ilMDBaseElement {
         $path = $this->path_factory
-            ->getPathfromRoot()
+            ->getPathFromRoot()
             ->addStep('general')
             ->addStep('title')
             ->addStep('string');
@@ -721,7 +725,7 @@ class ilMDLOMDigestGUI
         ilMDRootElement $root
     ): array {
         $path = $this->path_factory
-            ->getPathfromRoot()
+            ->getPathFromRoot()
             ->addStep('general')
             ->addStep('description')
             ->addStep('string');
@@ -740,7 +744,7 @@ class ilMDLOMDigestGUI
         ilMDRootElement $root
     ): array {
         $path = $this->path_factory
-            ->getPathfromRoot()
+            ->getPathFromRoot()
             ->addStep('general')
             ->addStep('language');
 
@@ -758,7 +762,7 @@ class ilMDLOMDigestGUI
         ilMDRootElement $root
     ): array {
         $path = $this->path_factory
-            ->getPathfromRoot()
+            ->getPathFromRoot()
             ->addStep('general')
             ->addStep('keyword')
             ->addStep('string');
@@ -779,7 +783,7 @@ class ilMDLOMDigestGUI
         int $min
     ): array {
         $path = $this->path_factory
-            ->getPathfromRoot()
+            ->getPathFromRoot()
             ->addStep('lifeCycle')
             ->addStep('contribute')
             ->addStep('entity');
@@ -795,7 +799,10 @@ class ilMDLOMDigestGUI
             )) {
                 continue;
             }
-            if (empty($values = $roles[0]->getSubElements('value'))) {
+            if (
+                empty($values = $roles[0]->getSubElements('value')) ||
+                $values[0]->isScaffold()
+            ) {
                 continue;
             }
             if (strtolower($values[0]->getData()->getValue()) === 'author') {
@@ -806,7 +813,7 @@ class ilMDLOMDigestGUI
         //if not enough results are returned, add more as scaffolds
         if (count($res) < $min) {
             $path = $this->path_factory
-                ->getPathfromRoot()
+                ->getPathFromRoot()
                 ->addStep('lifeCycle')
                 ->addStep('contribute');
 
@@ -860,19 +867,19 @@ class ilMDLOMDigestGUI
                     'value'
                 )[0];
                 $role->addScaffoldToSubElements($value);
-                $value->leaveMarkerTrail(
+                $role->setMarker($this->marker_factory->NullMarker());
+                $value->setMarker(
                     $this->marker_factory->Marker(
                         $this->data_factory->MDData(
                             ilMDLOMDataFactory::TYPE_VOCAB_VALUE,
-                            'role',
-                            $this->role_vocab
+                            'author',
+                            [$this->role_vocab]
                         )
-                    ),
-                    $this->marker_factory->NullMarker()
+                    )
                 );
             }
-
-            for ($i = 0; $i < $min - count($res); $i++) {
+            $missing = $min - count($res);
+            for ($i = 0; $i < $missing; $i++) {
                 $s = $this->repo->getScaffoldForElement($author_el, 'entity')[0];
                 $res[] = $s;
                 $author_el->addScaffoldToSubElements($s);
@@ -886,7 +893,7 @@ class ilMDLOMDigestGUI
         ilMDRootElement $root
     ): array {
         $path = $this->path_factory
-            ->getPathfromRoot()
+            ->getPathFromRoot()
             ->addStep('educational')
             ->addStep('typicalLearningTime')
             ->addStep('duration');
@@ -901,7 +908,7 @@ class ilMDLOMDigestGUI
         ilMDRootElement $root
     ): ilMDBaseElement {
         $path = $this->path_factory
-            ->getPathfromRoot()
+            ->getPathFromRoot()
             ->addStep('rights')
             ->addStep('description')
             ->addStep('string');
@@ -916,7 +923,7 @@ class ilMDLOMDigestGUI
         ilMDRootElement $root
     ): ilMDBaseElement {
         $path = $this->path_factory
-            ->getPathfromRoot()
+            ->getPathFromRoot()
             ->addStep('rights')
             ->addStep('copyrightAndOtherRestrictions')
             ->addStep('value');

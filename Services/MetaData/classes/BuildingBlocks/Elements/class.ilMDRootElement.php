@@ -74,13 +74,14 @@ class ilMDRootElement extends ilMDElement
     /**
      * Returns the elements at the end of the path.
      * There might be multiple if there are branches
-     * in the path. Elements on the path that don't exist
+     * in the path. If a repository is supplied,
+     * Elements on the path that don't exist
      * in the MD set are added as scaffolds.
      * @return ilMDBaseElement[]
      */
     public function getSubElementsByPath(
         ilMDPathFromRoot $path,
-        ilMDRepository $repo
+        ?ilMDRepository $repo = null
     ): array {
         $elements = [$this];
         for ($i = 1; $i < $path->getPathLength(); $i++) {
@@ -95,10 +96,20 @@ class ilMDRootElement extends ilMDElement
                     ) {
                         continue;
                     }
+                    if (
+                        !empty($path->getMDIDFilter($i)) &&
+                        ($sub->isScaffold() ||
+                        !in_array($sub->getMDID(), $path->getMDIDFilter($i)))
+                    ) {
+                        continue;
+                    }
                     $next_elements[] = $sub;
                 }
 
-                if (empty($element->getSubElements($path->getStep($i)))) {
+                if (
+                    empty($element->getSubElements($path->getStep($i))) &&
+                    isset($repo)
+                ) {
                     foreach ($repo->getScaffoldForElement(
                         $element,
                         $path->getStep($i)

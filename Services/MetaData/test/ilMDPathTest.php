@@ -31,17 +31,7 @@ class ilMDPathTest extends TestCase
         $path
             ->addStep('step1')
             ->addStep('step2')
-            ->addIndexFilter(2)
-            ->addIndexFilter(4)
             ->addStep('step3');
-        $this->assertSame(
-            ilMDPath::ROOT . ilMDPath::SEPARATOR . 'step1' .
-            ilMDPath::SEPARATOR . 'step2' .
-            ilMDPath::FILTER_OPEN . '2' . ilMDPath::FILTER_CLOSE .
-            ilMDPath::FILTER_OPEN . '4' . ilMDPath::FILTER_CLOSE .
-            ilMDPath::SEPARATOR . 'step3',
-            $path->getPathAsString()
-        );
         $this->assertSame(4, $path->getPathLength());
         $this->assertSame(
             'step3',
@@ -52,32 +42,54 @@ class ilMDPathTest extends TestCase
             $path->getStep(2)
         );
         $this->assertSame(
-            [2, 4],
-            $path->getIndexFilter(2)
-        );
-        $this->assertSame(
             ilMDPath::ROOT,
             $path->getStep(0)
         );
-        $this->assertSame(
-            ilMDPath::ROOT . ilMDPath::SEPARATOR . 'step1' .
-            ilMDPath::SEPARATOR . 'step2' .
-            ilMDPath::FILTER_OPEN . '2' . ilMDPath::FILTER_CLOSE .
-            ilMDPath::FILTER_OPEN . '4' . ilMDPath::FILTER_CLOSE,
-            $path->removeLastStep()->getPathAsString()
-        );
+        $path->removeLastStep();
         $this->assertSame(3, $path->getPathLength());
         $this->assertSame(
             'step2',
             $path->getStep()
         );
+    }
+
+    public function testIndexFilter(): void
+    {
+        $path = new ilMDPathFromRoot();
+        $path
+            ->addStep('step1')
+            ->addStep('step2')
+            ->addIndexFilter(2)
+            ->addIndexFilter(4)
+            ->addStep('step3');
+        $this->assertSame(
+            [2, 4],
+            $path->getIndexFilter(2)
+        );
+        $path->removeLastStep();
         $this->assertSame(
             [2, 4],
             $path->getIndexFilter()
         );
+    }
+
+    public function testMDIDFilter(): void
+    {
+        $path = new ilMDPathFromRoot();
+        $path
+            ->addStep('step1')
+            ->addStep('step2')
+            ->addMDIDFilter(2)
+            ->addStep('step3')
+            ->addMDIDFilter(14)
+            ->addMDIDFilter(57);
         $this->assertSame(
-            ilMDPath::ROOT . ilMDPath::SEPARATOR . 'step1',
-            $path->removeLastStep()->getPathAsString()
+            [2],
+            $path->getMDIDFilter(2)
+        );
+        $this->assertSame(
+            [14, 57],
+            $path->getMDIDFilter()
         );
     }
 
@@ -114,5 +126,21 @@ class ilMDPathTest extends TestCase
             'start',
             $path->getStep(0)
         );
+    }
+
+    public function testStringConversion(): void
+    {
+        $path = new ilMDPathFromRoot();
+        $path
+            ->addStep('step1')
+            ->addStep('step2')
+            ->addIndexFilter(2)
+            ->addIndexFilter(4)
+            ->addStep('step3');
+        $new_path = new ilMDPathFromRoot();
+        $new_path->setPathFromString(
+            $path->getPathAsString()
+        );
+        $this->assertEquals($path, $new_path);
     }
 }

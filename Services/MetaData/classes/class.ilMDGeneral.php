@@ -313,8 +313,8 @@ class ilMDGeneral extends ilMDBase
             'general_structure' => array('text', $this->getStructure()),
             'title' => array('text', $this->getTitle()),
             'title_language' => array('text', $this->getTitleLanguageCode()),
-            'coverage' => array('text', $this->getCoverage()),
-            'coverage_language' => array('text', $this->getCoverageLanguageCode())
+            //'coverage' => array('text', $this->getCoverage()),
+            //'coverage_language' => array('text', $this->getCoverageLanguageCode())
         );
     }
 
