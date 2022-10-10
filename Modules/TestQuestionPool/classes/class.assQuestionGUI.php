@@ -38,6 +38,8 @@ abstract class assQuestionGUI
     public const FORM_ENCODING_URLENCODE = 'application/x-www-form-urlencoded';
     public const FORM_ENCODING_MULTIPART = 'multipart/form-data';
 
+    protected const HAS_SPECIAL_QUESTION_COMMANDS = false;
+
     public const SESSION_PREVIEW_DATA_BASE_INDEX = 'ilAssQuestionPreviewAnswers';
     private $ui;
     private ilObjectDataCache $ilObjDataCache;
@@ -45,6 +47,11 @@ abstract class assQuestionGUI
     private ilAccessHandler $access;
     private ilObjUser $ilUser;
     private ilTabsGUI $ilTabs;
+
+    private $tree;
+    private ilDBInterface $ilDB;
+    private ilComponentRepository $component_repository;
+
     protected \ILIAS\Notes\GUIService $notes_gui;
 
     protected ilCtrl $ctrl;
@@ -115,7 +122,9 @@ abstract class assQuestionGUI
         $this->ilTabs = $DIC['ilTabs'];
         $this->rbacsystem = $DIC['rbacsystem'];
         $this->request = $DIC->testQuestionPool()->internal()->request();
-
+        $this->tree = $DIC['tree'];
+        $this->ilDB = $DIC->database();
+        $this->component_repository = $DIC['component.repository'];
         $this->ctrl->saveParameter($this, "q_id");
         $this->ctrl->saveParameter($this, "prev_qid");
         $this->ctrl->saveParameter($this, "calling_test");
@@ -192,18 +201,19 @@ abstract class assQuestionGUI
     {
         $this->ilHelp->setScreenIdComponent('qpl');
 
-        $cmd = $this->ctrl->getCmd("editQuestion");
         $next_class = $this->ctrl->getNextClass($this);
 
         switch ($next_class) {
             case 'ilformpropertydispatchgui':
                 $form = $this->buildEditForm();
-
                 $form_prop_dispatch = new ilFormPropertyDispatchGUI();
                 $form_prop_dispatch->setItem($form->getItemByPostVar(ilUtil::stripSlashes($this->request->raw('postvar'))));
-                return $this->ctrl->forwardCommand($form_prop_dispatch);
+                $this->ctrl->forwardCommand($form_prop_dispatch);
+                break;
 
             default:
+                $cmd = $this->ctrl->getCmd('editQuestion');
+
                 switch ($cmd) {
                     case 'suggestedsolution':
                     case 'showSuggestedSolution':
@@ -220,10 +230,20 @@ abstract class assQuestionGUI
                         break;
 
                     default:
-                        $ret = $this->$cmd();
+                        if (method_exists($this, $cmd)) {
+                            $this->$cmd();
+                            return;
+                        }
+                        if ($this->hasSpecialQuestionCommands() === true) {
+                            $this->callSpecialQuestionCommands($cmd);
+                        }
                 }
         }
-        return $ret;
+    }
+
+    protected function hasSpecialQuestionCommands(): bool
+    {
+        return static::HAS_SPECIAL_QUESTION_COMMANDS;
     }
 
     /** needed for page editor compliance */
@@ -727,11 +747,14 @@ abstract class assQuestionGUI
                 $this->ctrl->setParameter($this, 'return_to', 'editQuestion');
                 $this->ctrl->redirect($this, "originalSyncForm");
                 return;
-            } elseif ($this->request->raw("calling_test")) {
+            }
+
+            if ($this->request->raw("calling_test")) {
                 $test = new ilObjTest($this->request->raw("calling_test"));
                 if (!assQuestion::_questionExistsInTest($this->object->getId(), $test->getTestId())) {
-                    $tree = $DIC['tree'];
-                    $ilDB = $DIC['ilDB'];
+                    $tree = $this->tree;
+                    $ilDB = $this->ilDB;
+                    global $DIC;
                     $component_repository = $DIC['component.repository'];
 
                     // TODO: Courier Antipattern!
@@ -774,9 +797,10 @@ abstract class assQuestionGUI
                         $test->moveQuestionAfter($this->request->raw('prev_qid'), $this->object->getId());
                     }
                     if ( /*$___test_express_mode || */ $this->request->raw('express_mode')) {
-                        $tree = $DIC['tree'];
-                        $ilDB = $DIC['ilDB'];
-                        $component_repository = $DIC['component.repository'];
+                        $tree = $this->tree;
+                        $ilDB = $this->ilDB;
+                        $component_repository = $this->component_repository;
+
                         // TODO: Courier Antipattern!
                         $test = new ilObjTest($this->request->getRefId(), true);
                         $testQuestionSetConfigFactory = new ilTestQuestionSetConfigFactory($tree, $ilDB, $component_repository, $test);
@@ -798,7 +822,7 @@ abstract class assQuestionGUI
                 $this->ctrl->redirect($this, 'editQuestion');
             }
         }
-        $tabs = $DIC['ilTabs'];
+        $tabs = $this->ilTabs;
         $tabs->setTabActive('edit_question');
     }
 
@@ -828,9 +852,9 @@ abstract class assQuestionGUI
                 #var_dump(assQuestion::_questionExistsInTest($this->object->getId(), $test->getTestId()));
                 $q_id = $this->object->getId();
                 if (!assQuestion::_questionExistsInTest($this->object->getId(), $test->getTestId())) {
-                    $tree = $DIC['tree'];
-                    $ilDB = $DIC['ilDB'];
-                    $component_repository = $DIC['component.repository'];
+                    $tree = $this->tree;
+                    $ilDB = $this->ilDB;
+                    $component_repository = $this->component_repository;
                     // TODO: Courier Antipattern!
                     //$_GET["ref_id"] = $this->request->raw("calling_test");
                     $test = new ilObjTest($this->request->raw("calling_test"), true);
@@ -1038,7 +1062,7 @@ abstract class assQuestionGUI
         $question->setCols(80);
 
         if (!$this->object->getSelfAssessmentEditingMode()) {
-            if ($this->object->getAdditionalContentEditingMode() != assQuestion::ADDITIONAL_CONTENT_EDITING_MODE_PAGE_OBJECT) {
+            if ($this->object->getAdditionalContentEditingMode() != assQuestion::ADDITIONAL_CONTENT_EDITING_MODE_IPE) {
                 $question->setUseRte(true);
                 $question->setRteTags(ilObjAdvancedEditing::_getUsedHTMLTags("assessment"));
                 $question->addPlugin("latex");
@@ -1729,17 +1753,6 @@ abstract class assQuestionGUI
 
         // add tab for question's suggested solution within common class assQuestionGUI
         $this->addTab_SuggestedSolution($ilTabs, $classname);
-
-        // Assessment of questions sub menu entry
-        if ($this->request->getQuestionId()) {
-            $ilTabs->addTarget(
-                "statistics",
-                $this->ctrl->getLinkTargetByClass($classname, "assessment"),
-                array("assessment"),
-                $classname,
-                ""
-            );
-        }
 
         $this->addBackTab($ilTabs);
     }

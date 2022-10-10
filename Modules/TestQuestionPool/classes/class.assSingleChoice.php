@@ -638,10 +638,9 @@ class assSingleChoice extends assQuestion implements ilObjQuestionScoringAdjusta
 
         $this->getProcessLocker()->executeUserSolutionUpdateLockOperation(function () use (&$entered_values, $ilDB, $active_id, $pass, $authorized) {
             $result = $this->getCurrentSolutionResultSet($active_id, $pass, $authorized);
-            $row = $ilDB->fetchAssoc($result);
 
             $update = -1;
-            if ($ilDB->numRows($result) != 0) {
+            if ($ilDB->numRows($result)) {
                 $row = $ilDB->fetchAssoc($result);
                 $update = $row["solution_id"];
             }
@@ -1081,15 +1080,7 @@ class assSingleChoice extends assQuestion implements ilObjQuestionScoringAdjusta
         }
     }
 
-    public function createRandomSolution(int $active_id, int $pass): void
-    {
-        $value = rand(0, count($this->answers) - 1);
-        $_POST["multiple_choice_result"] = (strlen($value)) ? (string) $value : '0';
-        $this->saveWorkingData($active_id, $pass);
-        $this->calculateResultsFromSolution($active_id, $pass);
-    }
-
-    public function getMultilineAnswerSetting(): int
+    public function getMultilineAnswerSetting()
     {
         global $DIC;
         $ilUser = $DIC['ilUser'];

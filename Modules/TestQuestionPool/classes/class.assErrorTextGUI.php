@@ -12,7 +12,8 @@
  * us at:
  * https://www.ilias.de
  * https://github.com/ILIAS-eLearning
- */
+ *
+ *********************************************************************/
 
 require_once './Modules/Test/classes/inc.AssessmentConstants.php';
 
@@ -77,7 +78,7 @@ class assErrorTextGUI extends assQuestionGUI implements ilGuiQuestionScoringAdju
                 $this->object->addErrorData(
                     $val,
                     $errordata['value'][$idx],
-                    $errordata['points'][$idx]
+                    (float) $errordata['points'][$idx]
                 );
             }
         }

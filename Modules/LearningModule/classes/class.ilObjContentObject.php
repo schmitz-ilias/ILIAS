@@ -613,7 +613,7 @@ class ilObjContentObject extends ilObject
         $res = $ilDB->query($q);
         $rec = $ilDB->fetchAssoc($res);
 
-        return (bool) $rec["disable_def_feedback"];
+        return (bool) ($rec["disable_def_feedback"] ?? false);
     }
 
     public static function _lookupStoreTries(int $a_id): bool
@@ -627,7 +627,7 @@ class ilObjContentObject extends ilObject
         $res = $ilDB->query($q);
         $rec = $ilDB->fetchAssoc($res);
 
-        return (bool) $rec["store_tries"];
+        return (bool) ($rec["store_tries"] ?? false);
     }
 
 
@@ -645,7 +645,7 @@ class ilObjContentObject extends ilObject
         $cset = $ilDB->query($q);
         $crow = $ilDB->fetchAssoc($cset);
 
-        return (int) $crow["cnt"];
+        return (int) ($crow["cnt"] ?? 0);
     }
 
 
@@ -1823,6 +1823,9 @@ class ilObjContentObject extends ilObject
         bool $as_subitem = false,
         string $movecopy = "move"
     ): void {
+        if ($source_id === $target_id) {
+            return;
+        }
         $lmtree = new ilTree($this->getId());
         $lmtree->setTableNames('lm_tree', 'lm_data');
         $lmtree->setTreeTablePK("lm_id");
@@ -2118,7 +2121,7 @@ class ilObjContentObject extends ilObject
                 $chap["child"],
                 $parent_id,
                 ilTree::POS_LAST_NODE,
-                $time,
+                (string) $time,
                 $copied_nodes,
                 true,
                 $this->lm

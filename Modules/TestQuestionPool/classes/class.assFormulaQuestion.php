@@ -1,6 +1,20 @@
 <?php
 
-/* Copyright (c) 1998-2013 ILIAS open source, Extended GPL, see docs/LICENSE */
+/**
+ * This file is part of ILIAS, a powerful learning management system
+ * published by ILIAS open source e-Learning e.V.
+ *
+ * ILIAS is licensed with the GPL-3.0,
+ * see https://www.gnu.org/licenses/gpl-3.0.en.html
+ * You should have received a copy of said license along with the
+ * source code, too.
+ *
+ * If this is not the case or you just want to try ILIAS, you'll find
+ * us at:
+ * https://www.ilias.de
+ * https://github.com/ILIAS-eLearning
+ *
+ *********************************************************************/
 
 include_once "./Modules/TestQuestionPool/classes/class.assQuestion.php";
 include_once "./Modules/TestQuestionPool/classes/class.assFormulaQuestionResult.php";
@@ -100,7 +114,8 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
     public function addResultUnit($result, $unit): void
     {
         if (is_object($result) && is_object($unit)) {
-            if (!is_array($this->resultunits[$result->getResult()])) {
+            if (!array_key_exists($result->getResult(), $this->resultunits) ||
+                !is_array($this->resultunits[$result->getResult()])) {
                 $this->resultunits[$result->getResult()] = array();
             }
             $this->resultunits[$result->getResult()][$unit->getId()] = $unit;
@@ -438,10 +453,22 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
                 if ($result_output) {
                     $template = new ilTemplate("tpl.il_as_qpl_formulaquestion_output_solution_result.html", true, true, 'Modules/TestQuestionPool');
 
-                    if (is_array($userdata)) {
-                        $found = $resObj->getResultInfo($this->getVariables(), $this->getResults(), $userdata[$resObj->getResult()]["value"], $userdata[$resObj->getResult()]["unit"], $this->getUnitrepository()->getUnits());
+                    if (is_array($userdata) && array_key_exists($resObj->getResult(), $userdata)) {
+                        $found = $resObj->getResultInfo(
+                            $this->getVariables(),
+                            $this->getResults(),
+                            $userdata[$resObj->getResult()]["value"],
+                            $userdata[$resObj->getResult()]["unit"] ?? null,
+                            $this->getUnitrepository()->getUnits()
+                        );
                     } else {
-                        $found = $resObj->getResultInfo($this->getVariables(), $this->getResults(), $resObj->calculateFormula($this->getVariables(), $this->getResults(), parent::getId()), is_object($resObj->getUnit()) ? $resObj->getUnit()->getId() : null, $this->getUnitrepository()->getUnits());
+                        $found = $resObj->getResultInfo(
+                            $this->getVariables(),
+                            $this->getResults(),
+                            $resObj->calculateFormula($this->getVariables(), $this->getResults(), parent::getId()),
+                            is_object($resObj->getUnit()) ? $resObj->getUnit()->getId() : null,
+                            $this->getUnitrepository()->getUnits()
+                        );
                     }
                     $resulttext = "(";
                     if ($resObj->getRatingSimple()) {
@@ -875,7 +902,13 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
         $points = 0;
         foreach ($this->getResults() as $result) {
             //vd($user_solution[$result->getResult()]["value"]);
-            $points += $result->getReachedPoints($this->getVariables(), $this->getResults(), $user_solution[$result->getResult()]["value"], $user_solution[$result->getResult()]["unit"], $this->unitrepository->getUnits());
+            $points += $result->getReachedPoints(
+                $this->getVariables(),
+                $this->getResults(),
+                $user_solution[$result->getResult()]["value"] ?? '',
+                $user_solution[$result->getResult()]["unit"] ?? '',
+                $this->unitrepository->getUnits()
+            );
         }
 
         return $points;
@@ -1263,7 +1296,9 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
                 $available_units = $result->getAvailableResultUnits(parent::getId());
                 $result_name = $result->getResult();
 
-                if ($available_units[$result_name] != null) {
+                $check_unit = false;
+                if (array_key_exists($result_name, $available_units) &&
+                    $available_units[$result_name] !== null) {
                     $check_unit = in_array($user_solution[$result_name]['unit'], $available_units[$result_name]);
                 }
 
@@ -1329,27 +1364,39 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
      */
     protected function getSolutionSubmit(): array
     {
-        $solutionSubmit = array();
-        foreach ($_POST as $k => $v) {
-            if (preg_match("/^result_(\\\$r\\d+)$/", $k)) {
-                $solutionSubmit[$k] = $v;
-            } elseif (preg_match("/^result_(\\\$r\\d+)_unit$/", $k)) {
-                $solutionSubmit[$k] = $v;
+        $solutionSubmit = [];
+
+        $post = $this->dic->http()->wrapper()->post();
+
+        foreach ($this->getResults() as $index => $a) {
+            $key = "result_$index";
+            if (
+                $post->has($key)
+                ||
+               $post->has($key . "_unit")
+            ) {
+                $value =$post->retrieve(
+                    $key,
+                    $this->dic->refinery()->kindlyTo()->string()
+                );
+
+                $solutionSubmit[$key] = $value;
             }
         }
+
         return $solutionSubmit;
     }
 
     public function validateSolutionSubmit(): bool
     {
         foreach ($this->getSolutionSubmit() as $key => $value) {
-            if (preg_match("/^result_(\\\$r\\d+)$/", $key)) {
-                if (strlen($value) && !$this->isValidSolutionResultValue($value)) {
-                    $this->tpl->setOnScreenMessage('failure', $this->lng->txt("err_no_numeric_value"), true);
-                    return false;
-                }
-            } elseif (preg_match("/^result_(\\\$r\\d+)_unit$/", $key)) {
-                continue;
+            if ($value && !$this->isValidSolutionResultValue($value)) {
+                $this->tpl->setOnScreenMessage(
+                    'failure',
+                    $this->lng->txt("err_no_numeric_value"),
+                    true
+                );
+                return false;
             }
         }
 

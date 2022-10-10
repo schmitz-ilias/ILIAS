@@ -541,22 +541,20 @@ abstract class ilTestPlayerAbstractGUI extends ilTestServiceGUI
     {
         global $DIC;
         $ilUser = $DIC['ilUser'];
-
-        if ($_POST["chb_javascript"]) {
-            $ilUser->writePref("tst_javascript", 1);
-        } else {
-            $ilUser->writePref("tst_javascript", 0);
+        $post_array = $_POST;
+        if (! is_array($post_array)) {
+            $request = $DIC->http()->request();
+            $post_array = $request->getParsedBody();
         }
 
-        // hide previous results
-        if ($this->object->getNrOfTries() != 1) {
-            if ($this->object->getUsePreviousAnswers() == 1) {
-                if ($_POST["chb_use_previous_answers"]) {
-                    $ilUser->writePref("tst_use_previous_answers", 1);
-                } else {
-                    $ilUser->writePref("tst_use_previous_answers", 0);
-                }
-            }
+        $tst_javascript = array_key_exists("chb_javascript", $post_array) ? 1 : 0;
+        $ilUser->writePref("tst_javascript", $tst_javascript);
+
+        if ($this->object->getNrOfTries() != 1
+            && $this->object->getUsePreviousAnswers() == 1
+        ) {
+            $chb_use_previous_answers = array_key_exists("chb_use_previous_answers", $post_array) ? 1 : 0;
+            $ilUser->writePref("chb_use_previous_answers", $chb_use_previous_answers);
         }
     }
 
@@ -1212,8 +1210,16 @@ abstract class ilTestPlayerAbstractGUI extends ilTestServiceGUI
             $solutionoutput
         );
 
-        $this->tpl->setCurrentBlock('readonly_css_class');
-        $this->tpl->touchBlock('readonly_css_class');
+        //$this->tpl->setCurrentBlock('readonly_css_class');
+        //$this->tpl->touchBlock('readonly_css_class');
+        global $DIC;
+        $f = $DIC->ui()->factory();
+        $renderer = $DIC->ui()->renderer();
+
+        $this->tpl->setVariable(
+            'LOCKSTATE_INFOBOX',
+            $renderer->render($f->messageBox()->info("Answer is saved and locked and can no longer be changed"))
+        );
         $this->tpl->parseCurrentBlock();
 
         $this->tpl->setVariable('QUESTION_OUTPUT', $pageoutput);

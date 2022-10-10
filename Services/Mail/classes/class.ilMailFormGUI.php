@@ -27,7 +27,7 @@ use ILIAS\Filesystem\Stream\Streams;
 /**
  * @author Jens Conze
  * @ingroup ServicesMail
- * @ilCtrl_Calls ilMailFormGUI: ilMailFolderGUI, ilMailAttachmentGUI, ilMailSearchGUI, ilMailSearchCoursesGUI, ilMailSearchGroupsGUI, ilMailingListsGUI
+ * @ilCtrl_Calls ilMailFormGUI: ilMailAttachmentGUI, ilMailSearchGUI, ilMailSearchCoursesGUI, ilMailSearchGroupsGUI, ilMailingListsGUI
  */
 class ilMailFormGUI
 {
@@ -120,10 +120,6 @@ class ilMailFormGUI
     {
         $forward_class = $this->ctrl->getNextClass($this);
         switch (strtolower($forward_class)) {
-            case strtolower(ilMailFolderGUI::class):
-                $this->ctrl->forwardCommand(new ilMailFolderGUI());
-                break;
-
             case strtolower(ilMailAttachmentGUI::class):
                 $this->ctrl->setReturn($this, 'returnFromAttachments');
                 $this->ctrl->forwardCommand(new ilMailAttachmentGUI());
@@ -525,11 +521,6 @@ class ilMailFormGUI
 
         switch ($type) {
             case self::MAIL_FORM_TYPE_REPLY:
-                if ((int) ilSession::get('mail_id') !== 0) {
-                    $mailId = (int) ilSession::get('mail_id');
-                    ilSession::clear('mail_id');
-                }
-
                 $mailData = $this->umail->getMail($mailId);
 
                 $mailData['m_subject'] = $this->umail->formatReplySubject($mailData['m_subject'] ?? '');
@@ -616,7 +607,7 @@ class ilMailFormGUI
                 if ($bcc === '' && ilSession::get('rcp_bcc')) {
                     $bcc = ilSession::get('rcp_bcc');
                 }
-                $mailData['rcp_bcc'] = $cc;
+                $mailData['rcp_bcc'] = $bcc;
 
                 $mailData['m_message'] = '';
                 if (($sig = ilMailFormCall::getSignature()) !== '') {
@@ -847,7 +838,7 @@ class ilMailFormGUI
         $chb->setValue('1');
         $chb->setChecked(isset($mailData['use_placeholders']) && $mailData['use_placeholders']);
 
-        $placeholders = new ilManualPlaceholderInputGUI('m_message');
+        $placeholders = new ilManualPlaceholderInputGUI($this->lng->txt('mail_form_placeholders_label'), 'm_message');
         $placeholders->setInstructionText($this->lng->txt('mail_nacc_use_placeholder'));
         $placeholders->setAdviseText(sprintf($this->lng->txt('placeholders_advise'), '<br />'));
         foreach ($context->getPlaceholders() as $value) {

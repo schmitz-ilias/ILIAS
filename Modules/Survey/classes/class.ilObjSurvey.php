@@ -2337,7 +2337,7 @@ class ilObjSurvey extends ilObject
             $run_manager = $this->survey_service
                 ->domain()
                 ->execution()
-                ->run($this, $this->user->getId());
+                ->run($this, $this->user->getId(), $appr_id);
             $run = $run_manager->getById($finished_id);
             $rater_id = "";
             if ($run->getUserId() !== 0 && $run->getUserId() !== ANONYMOUS_USER_ID) {
@@ -4319,8 +4319,8 @@ class ilObjSurvey extends ilObject
         $mail = new ilMail(ANONYMOUS_USER_ID);
         $mail->enqueue(
             ilObjUser::_lookupLogin($a_user_id),
-            null,
-            null,
+            "",
+            "",
             $subject,
             $ntf->composeAndGetMessage($a_user_id, null, "read", true),
             []
@@ -4348,8 +4348,8 @@ class ilObjSurvey extends ilObject
         $mail = new ilMail(ANONYMOUS_USER_ID);
         $mail->enqueue(
             ilObjUser::_lookupLogin($a_user_id),
-            null,
-            null,
+            "",
+            "",
             $subject,
             $ntf->composeAndGetMessage($a_user_id, null, "read", true),
             []
@@ -4379,8 +4379,8 @@ class ilObjSurvey extends ilObject
         $mail = new ilMail(ANONYMOUS_USER_ID);
         $mail->enqueue(
             ilObjUser::_lookupLogin($a_user_id),
-            null,
-            null,
+            "",
+            "",
             $subject,
             $ntf->composeAndGetMessage($a_user_id, null, "read", true),
             []
@@ -4583,7 +4583,7 @@ class ilObjSurvey extends ilObject
                 $name["user_id"] = "u" . $name["user_id"];
                 $name["email"] = ilObjUser::_lookupEmail($row["user_id"]);
                 $name["sent"] = $row["mail_sent"];
-                $name["finished"] = (bool) $this->is360SurveyStarted($a_appraisee_id, $row["user_id"]);
+                $name["finished"] = (bool) $this->is360SurveyStarted($a_appraisee_id, (int) $row["user_id"]);
                 $res["u" . $row["user_id"]] = $name;
             }
         }
@@ -4602,7 +4602,7 @@ class ilObjSurvey extends ilObject
                         "code" => $item["code"],
                         "href" => $item["href"],
                         "sent" => $res["a" . $item["id"]]["sent"],
-                        "finished" => (bool) $this->is360SurveyStarted($a_appraisee_id, null, $item["code"])
+                        "finished" => (bool) $this->is360SurveyStarted($a_appraisee_id, 0, $item["code"])
                     );
                 }
             }
@@ -4639,7 +4639,7 @@ class ilObjSurvey extends ilObject
 
         // user may evaluate himself if already appraisee
         if ($this->get360SelfEvaluation() &&
-            $this->isAppraisee($a_user_id) &&
+            $this->isAppraisee((int) $a_user_id) &&
             !in_array($a_user_id, $res)) {
             $res[] = $a_user_id;
         }
@@ -5163,7 +5163,7 @@ class ilObjSurvey extends ilObject
                     in_array($this->getReminderTarget(), array(self::NOTIFICATION_APPRAISEES, self::NOTIFICATION_APPRAISEES_AND_RATERS))) {
                     $this->svy_log->debug("...1");
                     // did user already finished self evaluation?
-                    if (!$this->is360SurveyStarted($app['user_id'], $app['user_id'])) {
+                    if (!$this->is360SurveyStarted((int) $app['user_id'], (int) $app['user_id'])) {
                         $this->svy_log->debug("...2");
                         if (!is_array($rater_ids[$app['user_id']])) {
                             $rater_ids[$app['user_id']] = array();
@@ -5233,8 +5233,8 @@ class ilObjSurvey extends ilObject
         $mail = new ilMail(ANONYMOUS_USER_ID);
         $mail->enqueue(
             ilObjUser::_lookupLogin($a_user_id),
-            null,
-            null,
+            "",
+            "",
             $subject,
             $ntf->composeAndGetMessage($a_user_id, null, "read", true),
             []

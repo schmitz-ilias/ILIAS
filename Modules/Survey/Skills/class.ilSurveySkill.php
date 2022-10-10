@@ -306,14 +306,14 @@ class ilSurveySkill
             $previous = 0;
             $previous_t = 0;
             foreach ($skills[$k]["level_data"] as $l) {
-                $t = $thresholds[$l["id"]][$s["tref_id"]];
+                $t = $thresholds[$l["id"]][$s["tref_id"]] ?? 0;
                 if ($t > 0 && $mean_sum >= $t) {
                     $skills[$k]["new_level"] = $l["title"];
                     $skills[$k]["new_level_id"] = $l["id"];
                     $skills[$k]["next_level_perc"] = 0;
                 } elseif ($t > 0 && $mean_sum < $t) {
                     // first unfulfilled level
-                    if ($previous == $skills[$k]["new_level_id"] && !isset($skills[$k]["next_level_perc"])) {
+                    if ($previous == ($skills[$k]["new_level_id"] ?? null) && !isset($skills[$k]["next_level_perc"])) {
                         $skills[$k]["next_level_perc"] = 1 / ($t - $previous_t) * ($mean_sum - $previous_t);
                     }
                 }
@@ -340,7 +340,7 @@ class ilSurveySkill
             }
             $cats = $q->getCategories();
             $max_scale = 0;
-            for ($i = 0; $i <= $cats->getCategoryCount(); $i++) {
+            for ($i = 0; $i < $cats->getCategoryCount(); $i++) {
                 $c = $cats->getCategory($i);
                 $n = $c->neutral;
                 $s = $c->scale;

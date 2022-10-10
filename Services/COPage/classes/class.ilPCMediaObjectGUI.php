@@ -26,15 +26,15 @@ class ilPCMediaObjectGUI extends ilPageContentGUI
     protected ilPropertyFormGUI $form;
     protected ilPropertyFormGUI $form_gui;
     protected string $page_back_title = "";
-    protected bool $enabledmapareas;
+    protected bool $enabledmapareas = false;
     protected ilTabsGUI $tabs;
     protected ilAccessHandler $access;
     protected ilToolbarGUI $toolbar;
     protected ilObjUser $user;
     protected \ILIAS\DI\UIServices $ui;
-    protected string $pool_view;
-    public string $header;
-    protected string $sub_cmd;
+    protected string $pool_view = "";
+    public string $header = "";
+    protected string $sub_cmd = "";
     protected \ILIAS\MediaObjects\MediaType\MediaTypeManager $media_type;
 
     public function __construct(
@@ -1218,7 +1218,7 @@ class ilPCMediaObjectGUI extends ilPageContentGUI
 
         $chars = $this->getCharacteristics();
         if (is_object($this->content_obj)) {
-            if ($chars[$a_seleted_value] == "" && ($this->content_obj->getClass() != "")) {
+            if (($chars[$a_seleted_value] ?? "") === "" && ($this->content_obj->getClass() !== "")) {
                 $chars = array_merge(
                     array($this->content_obj->getClass() => $this->content_obj->getClass()),
                     $chars

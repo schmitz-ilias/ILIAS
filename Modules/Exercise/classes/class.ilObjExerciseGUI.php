@@ -242,7 +242,6 @@ class ilObjExerciseGUI extends ilObjectGUI
                 }
 
                 $cmd .= "Object";
-
                 $this->$cmd();
 
                 break;
@@ -1068,10 +1067,9 @@ class ilObjExerciseGUI extends ilObjectGUI
         }
 
         $ilUserCertificateRepository = new ilUserCertificateRepository($database, $logger);
-        $pdfGenerator = new ilPdfGenerator($ilUserCertificateRepository, $logger);
+        $pdfGenerator = new ilPdfGenerator($ilUserCertificateRepository);
 
         $pdfAction = new ilCertificatePdfAction(
-            $logger,
             $pdfGenerator,
             new ilCertificateUtilHelper(),
             $this->lng->txt('error_creating_certificate_pdf')

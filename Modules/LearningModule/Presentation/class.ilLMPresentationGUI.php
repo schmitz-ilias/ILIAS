@@ -340,11 +340,12 @@ class ilLMPresentationGUI implements ilCtrlBaseClassInterface, ilCtrlSecurityInt
             case "illearningprogressgui":
                 $this->initScreenHead("learning_progress");
                 $new_gui = new ilLearningProgressGUI(
-                    ilLearningProgressGUI::LP_CONTEXT_REPOSITORY,
+                    ilLearningProgressBaseGUI::LP_CONTEXT_REPOSITORY,
                     $this->requested_ref_id,
                     $ilUser->getId()
                 );
                 $this->ctrl->forwardCommand($new_gui);
+                $this->tpl->printToStdout();
                 break;
 
             case "ilratinggui":
@@ -827,9 +828,9 @@ class ilLMPresentationGUI implements ilCtrlBaseClassInterface, ilCtrlSecurityInt
         );
         $dispatcher->setSubObject("pg", $this->getCurrentPageId());
 
-        $this->ctrl->setParameter($this, "embed_mode", $this->embed_mode);
-        $this->ctrl->setParameterByClass("ilnotegui", "embed_mode", $this->embed_mode);
-        $this->ctrl->setParameterByClass("iltagginggui", "embed_mode", $this->embed_mode);
+        $this->ctrl->setParameter($this, "embed_mode", (int) $this->embed_mode);
+        $this->ctrl->setParameterByClass("ilnotegui", "embed_mode", (int) $this->embed_mode);
+        $this->ctrl->setParameterByClass("iltagginggui", "embed_mode", (int) $this->embed_mode);
         ilObjectListGUI::prepareJsLinks(
             $this->ctrl->getLinkTarget($this, "redrawHeaderAction", "", true),
             "",
@@ -856,7 +857,8 @@ class ilLMPresentationGUI implements ilCtrlBaseClassInterface, ilCtrlSecurityInt
                 true,
                 $this->lng->txt("lm_rating"),
                 false,
-                array("ilcommonactiondispatchergui", "ilratinggui")
+                array("ilcommonactiondispatchergui", "ilratinggui"),
+                true
             );
         }
 
@@ -1161,8 +1163,7 @@ class ilLMPresentationGUI implements ilCtrlBaseClassInterface, ilCtrlSecurityInt
     public function updatePageRating(): void
     {
         $ilUser = $this->user;
-
-        $pg_id = $this->requested_pg_id;
+        $pg_id = $this->getCurrentPageId();
         if (!$this->ctrl->isAsynch() || !$pg_id) {
             exit();
         }

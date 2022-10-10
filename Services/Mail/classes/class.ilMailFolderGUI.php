@@ -25,7 +25,6 @@ use ILIAS\Refinery\Factory as Refinery;
  * @author       Jens Conze
  * @version      $Id$
  * @ingroup      ServicesMail
- * @ilCtrl_Calls ilMailFolderGUI: ilMailOptionsGUI, ilMailAttachmentGUI, ilMailSearchGUI
  * @ilCtrl_Calls ilMailFolderGUI: ilPublicUserProfileGUI
  */
 class ilMailFolderGUI
@@ -44,6 +43,7 @@ class ilMailFolderGUI
     private GlobalHttpState $http;
     private Refinery $refinery;
     private int $currentFolderId = 0;
+    private ilErrorHandling $error;
 
     public function __construct()
     {
@@ -57,6 +57,7 @@ class ilMailFolderGUI
         $this->tabs = $DIC->tabs();
         $this->http = $DIC->http();
         $this->refinery = $DIC->refinery();
+        $this->error = $DIC['ilErr'];
 
         $this->umail = new ilMail($this->user->getId());
         $this->mbox = new ilMailbox($this->user->getId());
@@ -112,11 +113,6 @@ class ilMailFolderGUI
         switch (strtolower($nextClass)) {
             case strtolower(ilContactGUI::class):
                 $this->ctrl->forwardCommand(new ilContactGUI());
-                break;
-
-            case strtolower(ilMailOptionsGUI::class):
-                $this->tpl->setTitle($this->lng->txt('mail'));
-                $this->ctrl->forwardCommand(new ilMailOptionsGUI());
                 break;
 
             case strtolower(ilPublicUserProfileGUI::class):
@@ -577,17 +573,20 @@ class ilMailFolderGUI
 
     protected function showMail(): void
     {
-        if ((int) ilSession::get('mail_id') > 0) {
-            $mailId = (int) ilSession::get('mail_id');
-            ilSession::set('mail_id', null);
-        } else {
-            $mailId = 0;
-            if ($this->http->wrapper()->query()->has('mail_id')) {
-                $mailId = $this->http->wrapper()->query()->retrieve('mail_id', $this->refinery->kindlyTo()->int());
-            }
+        $mailId = 0;
+        if ($this->http->wrapper()->query()->has('mail_id')) {
+            $mailId = $this->http->wrapper()->query()->retrieve('mail_id', $this->refinery->kindlyTo()->int());
+        }
+
+        if ($mailId <= 0) {
+            $this->error->raiseError($this->lng->txt('permission_denied'), $this->error->MESSAGE);
         }
 
         $mailData = $this->umail->getMail($mailId);
+        if ($mailData === null) {
+            $this->error->raiseError($this->lng->txt('permission_denied'), $this->error->MESSAGE);
+        }
+
         $this->umail->markRead([$mailId]);
 
         $this->tpl->setTitle($this->lng->txt('mail_mails_of'));
@@ -901,9 +900,8 @@ class ilMailFolderGUI
             $mailId = $this->http->wrapper()->query()->retrieve('mail_id', $this->refinery->kindlyTo()->int());
         }
 
-        if ((int) ilSession::get('mail_id') > 0) {
-            $mailId = (int) ilSession::get('mail_id');
-            ilSession::set('mail_id', null);
+        if ($mailId <= 0) {
+            $this->error->raiseError($this->lng->txt('permission_denied'), $this->error->MESSAGE);
         }
 
         $filename = '';

@@ -1,27 +1,22 @@
 <?php
 
 declare(strict_types=1);
-/*
-    +-----------------------------------------------------------------------------+
-    | ILIAS open source                                                           |
-    +-----------------------------------------------------------------------------+
-    | Copyright (c) 1998-2006 ILIAS open source, University of Cologne            |
-    |                                                                             |
-    | This program is free software; you can redistribute it and/or               |
-    | modify it under the terms of the GNU General Public License                 |
-    | as published by the Free Software Foundation; either version 2              |
-    | of the License, or (at your option) any later version.                      |
-    |                                                                             |
-    | This program is distributed in the hope that it will be useful,             |
-    | but WITHOUT ANY WARRANTY; without even the implied warranty of              |
-    | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the               |
-    | GNU General Public License for more details.                                |
-    |                                                                             |
-    | You should have received a copy of the GNU General Public License           |
-    | along with this program; if not, write to the Free Software                 |
-    | Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA. |
-    +-----------------------------------------------------------------------------+
-*/
+
+/**
+ * This file is part of ILIAS, a powerful learning management system
+ * published by ILIAS open source e-Learning e.V.
+ *
+ * ILIAS is licensed with the GPL-3.0,
+ * see https://www.gnu.org/licenses/gpl-3.0.en.html
+ * You should have received a copy of said license along with the
+ * source code, too.
+ *
+ * If this is not the case or you just want to try ILIAS, you'll find
+ * us at:
+ * https://www.ilias.de
+ * https://github.com/ILIAS-eLearning
+ *
+ *********************************************************************/
 
 use ILIAS\Refinery\Factory as RefineryFactory;
 use ILIAS\HTTP\Services as HttpServices;
@@ -29,7 +24,7 @@ use ILIAS\HTTP\Services as HttpServices;
 /**
  * Consultation hours editor
  * @author      Stefan Meyer <smeyer.ilias@gmx.de>
- * @ilCtrl_Calls: ilConsultationHoursGUI ilPublicUserProfileGUI, ilRepositorySearchGUI
+ * @ilCtrl_Calls ilConsultationHoursGUI: ilPublicUserProfileGUI, ilRepositorySearchGUI
  */
 class ilConsultationHoursGUI
 {
@@ -90,6 +85,7 @@ class ilConsultationHoursGUI
         $this->help = $DIC->help();
         $this->tabs = $DIC->tabs();
         $this->toolbar = $DIC->toolbar();
+        $this->global_user = $DIC->user();
     }
 
     protected function initSearchAssignmentToAppointments($a_default = false): int
@@ -403,7 +399,7 @@ class ilConsultationHoursGUI
         if ($form->checkInput()) {
             $group = new ilConsultationHourGroup();
             $group->setTitle($form->getInput('title'));
-            $group->setMaxAssignments($form->getInput('multiple'));
+            $group->setMaxAssignments((int) $form->getInput('multiple'));
             $group->setUserId($this->getUserId());
             $group->save();
 
@@ -442,7 +438,7 @@ class ilConsultationHoursGUI
         if ($form->checkInput()) {
             $group = new ilConsultationHourGroup($group_id);
             $group->setTitle($form->getInput('title'));
-            $group->setMaxAssignments($form->getInput('multiple'));
+            $group->setMaxAssignments((int) $form->getInput('multiple'));
             $group->setUserId($this->getUserId());
             $group->update();
 
@@ -647,8 +643,8 @@ class ilConsultationHoursGUI
         $this->initFormSequence(self::MODE_CREATE);
 
         $this->booking = new ilBookingEntry();
-        $this->form->getItemByPostVar('bo')->setValue($this->booking->getNumberOfBookings());
-        $this->form->getItemByPostVar('ap')->setValue(1);
+        $this->form->getItemByPostVar('bo')->setValue((string) $this->booking->getNumberOfBookings());
+        $this->form->getItemByPostVar('ap')->setValue("1");
         $this->form->getItemByPostVar('du')->setMinutes(15);
         $this->form->getItemByPostVar('st')->setDate(
             new ilDateTime(mktime(8, 0, 0, (int) date('n', time()), (int) date('d', time()), (int) date('Y', time())), IL_CAL_UNIX)
@@ -778,7 +774,7 @@ class ilConsultationHoursGUI
 
             $booking = new ilBookingEntry();
             $booking->setObjId($this->getUserId());
-            $booking->setNumberOfBookings($this->form->getInput('bo'));
+            $booking->setNumberOfBookings((int) $this->form->getInput('bo'));
 
             $deadline = $this->form->getInput('dead');
             $deadline = $deadline['dd'] * 24 + $deadline['hh'];

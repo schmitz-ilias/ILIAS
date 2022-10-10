@@ -613,9 +613,22 @@ class ilRepositorySearchGUI
         $class = $this->callback['class'];
         $method = $this->callback['method'];
 
-        $post_selected_command = (string) ($this->http->request()->getParsedBody()['selectedCommand'] ?? '');
         $post_user = (array) ($this->http->request()->getParsedBody()['user'] ?? []);
-
+        $post_selected_command = '';
+        if (
+            $this->http->wrapper()->post()->has('table_top_cmd') &&
+            $this->http->wrapper()->post()->has('selectedCommand_2')
+        ) {
+            $post_selected_command = $this->http->wrapper()->post()->retrieve(
+                'selectedCommand_2',
+                $this->refinery->kindlyTo()->string()
+            );
+        } elseif ($this->http->wrapper()->post()->has('selectedCommand')) {
+            $post_selected_command = $this->http->wrapper()->post()->retrieve(
+                'selectedCommand',
+                $this->refinery->kindlyTo()->string()
+            );
+        }
         // Redirects if everything is ok
         if (!$class->$method($post_user, $post_selected_command)) {
             $this->showSearchResults();
@@ -1091,7 +1104,10 @@ class ilRepositorySearchGUI
     public function __appendToStoredResults(array $a_usr_ids): array
     {
         if (!ilSession::get('search_append')) {
-            ilSession::set('rep_search', ['usr' => $a_usr_ids]);
+            $rep_search = ilSession::get('rep_search') ?? [];
+            $rep_search['usr'] = $a_usr_ids;
+            ilSession::set('rep_search', $rep_search);
+            return $a_usr_ids;
         }
         $rep_search = ilSession::get('rep_search') ?? [];
         foreach ($a_usr_ids as $usr_id) {

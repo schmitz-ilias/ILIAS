@@ -142,7 +142,7 @@ class ilSCORMPresentationGUI
                 $this->tpl = new ilGlobalTemplate("tpl.sahs_pres_frameset_js_one_page.html", false, false, "Modules/ScormAicc");
             }
 
-            $this->ctrl->setParameter($this, "autolaunch", $items[0]);
+            $this->ctrl->setParameter($this, "autolaunch", $items[0] ?? "");
         }
         $api_link = $this->ctrl->getLinkTarget($this, "apiInitData");
         $this->tpl->setVariable("API_LINK", $api_link);
@@ -506,13 +506,10 @@ class ilSCORMPresentationGUI
         $certValidator = new ilCertificateDownloadValidator();
         $allowed = $certValidator->isCertificateDownloadable($ilUser->getId(), $obj_id);
         if ($allowed) {
-            $certificateLogger = $DIC->logger()->root();
-
             $ilUserCertificateRepository = new ilUserCertificateRepository();
-            $pdfGenerator = new ilPdfGenerator($ilUserCertificateRepository, $certificateLogger);
+            $pdfGenerator = new ilPdfGenerator($ilUserCertificateRepository);
 
             $pdfAction = new ilCertificatePdfAction(
-                $certificateLogger,
                 $pdfGenerator,
                 new ilCertificateUtilHelper(),
                 $this->lng->txt('error_creating_certificate_pdf')
