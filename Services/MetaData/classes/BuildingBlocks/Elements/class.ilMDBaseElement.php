@@ -78,12 +78,15 @@ abstract class ilMDBaseElement
     ): array {
         $res = [];
         foreach ($this->sub_elements as $sub_element) {
-            if ($name && $name !== $sub_element->getName()) {
+            if ($name !== '' && $name !== $sub_element->getName()) {
                 continue;
             }
             if (
-                $md_id &&
-                ($sub_element->isScaffold() || $md_id !== $sub_element->getMDID())
+                isset($md_id) &&
+                (
+                    $sub_element->isScaffold() ||
+                    $md_id !== $sub_element->getMDID()
+                )
             ) {
                 continue;
             }

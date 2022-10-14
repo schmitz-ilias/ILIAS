@@ -361,6 +361,27 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
         $structure
             ->movePointerToSubElement('rights')
             ->setTagAtPointer($this->getTag());
+        $this->setTagForNoRepSubElement(
+            $structure,
+            'cost',
+            ['value'],
+            false,
+            false
+        );
+        $this->setTagForNoRepSubElement(
+            $structure,
+            'copyrightAndOtherRestrictions',
+            ['value'],
+            false,
+            false
+        );
+        $this->setTagForNoRepSubElement(
+            $structure,
+            'description',
+            ['string'],
+            false,
+            false
+        );
         return $structure->movePointerToRoot();
     }
 
@@ -411,10 +432,37 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
         $structure
             ->movePointerToSubElement('annotation')
             ->setTagAtPointer(
-                $this->getTag()->withCollectionMode(
+                $this->getTag(
+                    $this->getRelativePath(
+                        'annotation',
+                        ['description', 'string']
+                    ),
+                    $this->getRelativePath('annotation', ['entity'])
+                )->withCollectionMode(
                     ilMDLOMEditorGUIDictionary::COLLECTION_TABLE
                 )
             );
+        $this->setTagForNoRepSubElement(
+            $structure,
+            'entity',
+            [],
+            false,
+            false
+        );
+        $this->setTagForNoRepSubElement(
+            $structure,
+            'date',
+            ['dateTime'],
+            false,
+            false
+        );
+        $this->setTagForNoRepSubElement(
+            $structure,
+            'description',
+            ['string'],
+            false,
+            false
+        );
         return $structure->movePointerToRoot();
     }
 
@@ -479,13 +527,16 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
      * @param string                    $name
      * @param string[]                  $steps_to_preview
      * @param bool                      $collected_as_table
+     * @param bool                      $in_tree
      * @return ilMDLOMEditorGUIStructure
+     * @throws ilMDStructureException
      */
     protected function setTagForNoRepSubElement(
         ilMDLOMEditorGUIStructure $structure,
         string $name,
         array $steps_to_preview,
-        bool $collected_as_table = false
+        bool $collected_as_table = false,
+        bool $in_tree = true
     ): ilMDLOMEditorGUIStructure {
         return $structure
             ->movePointerToSubElement($name)
@@ -498,6 +549,7 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
                         ilMDLOMEditorGUIDictionary::COLLECTION_TABLE :
                         ilMDLOMEditorGUIDictionary::NO_COLLECTION
                 )
+                ->withInTree($in_tree)
             )
             ->movePointerToSuperElement();
     }

@@ -28,6 +28,7 @@ use ILIAS\HTTP\GlobalHttpState;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use ILIAS\GlobalScreen\Services as GlobalScreen;
 use ILIAS\Data\URI;
+use ILIAS\Data\Factory as Data;
 
 /**
  * Meta Data editor
@@ -55,6 +56,9 @@ class ilMDEditorGUI
     protected ilMDLOMDataFactory $data_factory;
     protected ilMDMarkerFactory $marker_factory;
     protected ilMDLOMLibrary $library;
+    protected ilMDLOMPresenter $presenter;
+    protected ilObjUser $user;
+    protected Data $data;
 
     /**
      * @var ilMDTechnical|ilMDGeneral|ilMDLifecycle|ilMDEducational|ilMDRights|ilMDMetaMetadata|ilMDRelation|ilMDAnnotation|ilMDClassification $md_section
@@ -97,6 +101,9 @@ class ilMDEditorGUI
         $this->data_factory = new ilMDLOMDataFactory($this->refinery);
         $this->marker_factory = new ilMDMarkerFactory($this->data_factory);
         $this->library = new ilMDLOMLibrary(new ilMDTagFactory());
+        $this->presenter = new ilMDLOMPresenter($this->lng, $DIC->user());
+        $this->user = $DIC->user();
+        $this->data = new Data();
 
         $this->lng->loadLanguageModule('meta');
     }
@@ -528,6 +535,24 @@ class ilMDEditorGUI
             $this->ui_factory,
             $this->refinery,
             $this->lng
+        );
+    }
+
+    protected function getFullEditor(): ilMDFullEditorGUI
+    {
+        return new ilMDFullEditorGUI(
+            $this->repo,
+            $this->path_factory,
+            $this->data_factory,
+            $this->marker_factory,
+            $this->library,
+            $this->ui_factory,
+            $this->ui_renderer,
+            $this->refinery,
+            $this->lng,
+            $this->presenter,
+            $this->data,
+            $this->user
         );
     }
 
@@ -984,28 +1009,28 @@ class ilMDEditorGUI
 
         // add content for element
         $request_wrapper = $this->http->wrapper()->query();
-        $path_to_current_element = $this->path_factory->getPathFromRoot();
+        $path = $this->path_factory->getPathFromRoot();
         if ($request_wrapper->has('node_path')) {
             $current_path_string = $request_wrapper->retrieve(
                 'node_path',
                 $this->refinery->kindlyTo()->string()
             );
-            $path_to_current_element->setPathFromString($current_path_string);
-        }
-        $current_elements = $root->getSubElementsByPath($path_to_current_element);
-
-        // todo replace this with the actual content
-        $string = '';
-        foreach ($current_elements as $element) {
-            $string .= $element->getName() . ': ' . $element->getData()->getValue() . ' (';
-            foreach ($element->getSubElements() as $sub) {
-                $string .= ' ' . $sub->getName() . ': ' . $sub->getData()->getValue() . ',';
-            }
-            $string .= ' ); ';
+            $path->setPathFromString($current_path_string);
         }
 
+        $editor = $this->getFullEditor();
+        $root = $editor->prepareMD($root, $path);
+        $content = $editor->getContent($this, $root, $path);
+        if ($content instanceof ilTable2GUI) {
+            $content = $this->ui_factory->legacy(
+                $content->getHTML()
+            );
+        }
+        if ($tb_content = $editor->getToolbarContent($root, $path)) {
+            $this->toolbarGUI->addComponent($tb_content);
+        }
         $this->tpl->setContent(
-            $string
+            $this->ui_renderer->render($content)
         );
     }
 

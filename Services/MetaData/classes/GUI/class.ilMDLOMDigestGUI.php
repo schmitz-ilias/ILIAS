@@ -21,7 +21,7 @@ declare(strict_types=1);
 use ILIAS\UI\Component\Input\Container\Form\Standard as StandardForm;
 use ILIAS\UI\Factory as UIFactory;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use ILIAS\Refinery\Factory as RefineryFactory;
+use ILIAS\Refinery\Factory as Refinery;
 use ILIAS\UI\Component\Input\Field\Section;
 use ILIAS\UI\Component\Modal\Interruptive;
 use ILIAS\UI\Component\Signal;
@@ -36,7 +36,7 @@ class ilMDLOMDigestGUI
     protected ilMDLOMDataFactory $data_factory;
     protected ilMDMarkerFactory $marker_factory;
     protected UIFactory $factory;
-    protected RefineryFactory $refinery;
+    protected Refinery $refinery;
     protected ilLanguage $lng;
 
     protected ilMDVocabulary $role_vocab;
@@ -49,7 +49,7 @@ class ilMDLOMDigestGUI
         ilMDMarkerFactory $marker_factory,
         ilMDLOMLibrary $library,
         UIFactory $factory,
-        RefineryFactory $refinery,
+        Refinery $refinery,
         ilLanguage $lng
     ) {
         $this->repo = $repo;
@@ -228,50 +228,29 @@ class ilMDLOMDigestGUI
                 $matches,
                 PREG_UNMATCHED_AS_NULL
             );
-            $years = $ff
-                ->numeric(
-                    $this->lng->txt('md_years')
-                )
-                ->withAdditionalTransformation(
-                    $this->refinery->int()->isGreaterThan(0)
-                )
-                ->withValue($matches[1] ?? '');
-            $months = (clone $years)
-                ->withLabel(
-                    $this->lng->txt('md_months')
-                )
-                ->withValue($matches[2] ?? '');
-            $days = (clone $years)
-                ->withLabel(
-                    $this->lng->txt('md_days')
-                )
-                ->withValue($matches[3] ?? '');
-            $hours = (clone $years)
-                ->withLabel(
-                    $this->lng->txt('md_hours')
-                )
-                ->withValue($matches[4] ?? '');
-            $minutes = (clone $years)
-                ->withLabel(
-                    $this->lng->txt('md_minutes')
-                )
-                ->withValue($matches[5] ?? '');
-            $seconds = (clone $years)
-                ->withLabel(
-                    $this->lng->txt('md_seconds')
-                )
-                ->withValue($matches[6] ?? '');
+            $num = $ff
+                    ->numeric('placeholder')
+                    ->withAdditionalTransformation(
+                        $this->refinery->int()->isGreaterThan(0)
+                    );
+            $nums = [];
+            $labels = [
+                $this->lng->txt('md_years'),
+                $this->lng->txt('md_months'),
+                $this->lng->txt('md_days'),
+                $this->lng->txt('md_hours'),
+                $this->lng->txt('md_minutes'),
+                $this->lng->txt('md_seconds')
+            ];
+            foreach ($labels as $key => $label) {
+                $nums[] = (clone $num)
+                    ->withLabel($label)
+                    ->withValue($matches[$key + 1]);
+            }
 
             $tlt_sections[] = $ff
                 ->section(
-                    [
-                        'years' => $years,
-                        'months' => $months,
-                        'days' => $days,
-                        'hours' => $hours,
-                        'minutes' => $minutes,
-                        'seconds' => $seconds
-                    ],
+                    $nums,
                     $this->lng->txt('meta_typical_learning_time') .
                     (count($tlt_sections) > 0 ? count($tlt_sections) + 1 : '')
                 )
@@ -283,29 +262,18 @@ class ilMDLOMDigestGUI
                         ) {
                             return '';
                         }
-                        list($y, $m, $d, $h, $M, $s) = $vs;
                         $r = 'P';
-                        if (isset($y)) {
-                            $r .= $y . 'Y';
-                        }
-                        if (isset($m)) {
-                            $r .= $m . 'M';
-                        }
-                        if (isset($d)) {
-                            $r .= $d . 'D';
-                        }
-                        if (!isset($h) && !isset($M) && !isset($s)) {
-                            return $r;
-                        }
-                        $r .= 'T';
-                        if (isset($h)) {
-                            $r .= $h . 'H';
-                        }
-                        if (isset($M)) {
-                            $r .= $M . 'M';
-                        }
-                        if (isset($s)) {
-                            $r .= $s . 'S';
+                        $signifiers = ['Y', 'M', 'D', 'H', 'M', 'S'];
+                        foreach ($vs as $key => $int) {
+                            if (isset($int)) {
+                                $r .= $int . $signifiers[$key];
+                            }
+                            if ($key === 2 && count($vs) < 4) {
+                                return $r;
+                            }
+                            if ($key === 2) {
+                                $r .= 'T';
+                            }
                         }
                         return $r;
                     })

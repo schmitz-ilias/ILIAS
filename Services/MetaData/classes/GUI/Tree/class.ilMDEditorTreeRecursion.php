@@ -28,6 +28,9 @@ use ILIAS\Data\URI;
  */
 class ilMDEditorTreeRecursion implements TreeRecursion
 {
+    protected const MAX_LENGTH = 48;
+    protected const INDENT_LENGTH = 3;
+
     protected URI $link;
     protected ilMDRootElement $root;
 
@@ -36,15 +39,15 @@ class ilMDEditorTreeRecursion implements TreeRecursion
      */
     protected array $current_elements;
 
-    protected ilLanguage $lng;
     protected ilMDPathFactory $path_factory;
+    protected ilMDLOMPresenter $presenter;
 
     public function __construct(
         URI $link,
         ilMDRootElement $root,
         ilMDPathFromRoot $path_to_current_element,
-        ilLanguage $lng,
-        ilMDPathFactory $path_factory
+        ilMDPathFactory $path_factory,
+        ilMDLOMPresenter $converter
     ) {
         $this->link = $link;
         $this->root = $root;
@@ -77,8 +80,7 @@ class ilMDEditorTreeRecursion implements TreeRecursion
         $this->current_elements = $els;
 
         $this->path_factory = $path_factory;
-        $this->lng = $lng;
-        $this->lng->loadLanguageModule('meta');
+        $this->presenter = $converter;
     }
 
     public function getChildren($record, $environment = null): array
@@ -127,9 +129,16 @@ class ilMDEditorTreeRecursion implements TreeRecursion
          */
         $elements = is_array($record) ? $record : [$record];
         $tag = $this->getTagForElement($elements[0], $environment);
+        $mode = $tag->getCollectionMode();
 
         // expanded
         $is_expanded = $elements[0]->isRoot();
+        if (
+            $mode === ilMDLOMEditorGUIDictionary::COLLECTION_NODE &&
+            is_array($record)
+        ) {
+            $is_expanded = $elements === $this->current_elements;
+        }
         foreach ($elements as $el) {
             $is_expanded =
                 $is_expanded || in_array(
@@ -139,21 +148,18 @@ class ilMDEditorTreeRecursion implements TreeRecursion
         }
 
         //highlighted
-        $is_highlited = $elements === $this->current_elements;
-
-        //label and value
-        if (is_array($record)) {
-            $label = $this->lng->txt(
-                'meta_' . strtolower($record[0]->getName()) . '_plural'
-            );
-        } else {
-            $label = $this->lng->txt(
-                'meta_' . strtolower($record->getName())
-            );
+        $is_highlited = false;
+        if (
+            $mode !== ilMDLOMEditorGUIDictionary::COLLECTION_NODE ||
+            !is_array($record)
+        ) {
+            $is_highlited = $elements === $this->current_elements;
         }
 
+        //label and value
+        $label_and_value = $this->getLabelAndValue($record, $tag);
+
         //link
-        $mode = $tag->getCollectionMode();
         if (
             $mode !== ilMDLOMEditorGUIDictionary::COLLECTION_NODE ||
             !is_array($record)
@@ -162,7 +168,7 @@ class ilMDEditorTreeRecursion implements TreeRecursion
         }
 
         $node = $factory
-            ->simple($label)
+            ->keyValue(...$label_and_value)
             ->withExpanded($is_expanded)
             ->withHighlighted($is_highlited);
 
@@ -171,6 +177,63 @@ class ilMDEditorTreeRecursion implements TreeRecursion
         }
 
         return $node;
+    }
+
+    /**
+     * @param ilMDElement|ilMDElement[] $record
+     * @param ilMDEditorGUITag  $tag
+     * @return array{label: string, value: string}
+     */
+    protected function getLabelAndValue(
+        ilMDElement|array $record,
+        ilMDEditorGUITag $tag
+    ): array {
+        $repr_path = $tag->getPathToRepresentation();
+        $preview_path = $tag->getPathToPreview();
+        $elements = is_array($record) ? $record : [$record];
+
+        /*
+        * don't ever render labels and previews for direct sub-elements
+        * of root (looks cleaner).
+        */
+        if ($elements[0]->getSuperElement()?->isRoot()) {
+            $repr_path = null;
+            $preview_path = null;
+        }
+
+        $label = $this->presenter->getElementsLabel(
+            $elements,
+            $repr_path,
+            is_array($record)
+        );
+        $value = $this->presenter->getElementsPreview(
+            $elements,
+            $preview_path
+        );
+        $mode = $tag->getCollectionMode();
+        if (
+            $mode === ilMDLOMEditorGUIDictionary::COLLECTION_NODE &&
+            is_array($record)
+        ) {
+            $label = $this->presenter->getElementName(
+                $elements[0]->getName(),
+                true
+            );
+            $value = '';
+        }
+
+        $indent = (count(
+            $this->getAllSuperElements($elements[0])
+        ) + 1) * self::INDENT_LENGTH;
+        if (($len = strlen($label) + $indent - self::MAX_LENGTH) > 0) {
+            $value = '';
+            $label = substr($label, 0, -$len - 1) . "\xe2\x80\xa6";
+        }
+        if (($len = $len + strlen($value)) > 0) {
+            $value = substr($value, 0, -$len - 1) . "\xe2\x80\xa6";
+        }
+
+        return ['label' => $label, 'value' => $value];
     }
 
     protected function getLink(
@@ -257,7 +320,7 @@ class ilMDEditorTreeRecursion implements TreeRecursion
                 );
             }
             $tag = $this->getTagForElement($el, $structure);
-            if (!isset($tag)) {
+            if (!$tag?->isInTree()) {
                 continue;
             }
             switch ($tag->getCollectionMode()) {

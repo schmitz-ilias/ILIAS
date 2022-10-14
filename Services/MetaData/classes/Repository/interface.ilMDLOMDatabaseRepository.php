@@ -189,9 +189,10 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
     ): array {
         //navigate to element
         $name_path = [];
-        while (!($element instanceof ilMDRootElement)) {
-            array_unshift($name_path, $element->getName());
-            $element = $element->getSuperElement();
+        $el = $element;
+        while (!($el instanceof ilMDRootElement)) {
+            array_unshift($name_path, $el->getName());
+            $el = $el->getSuperElement();
         }
         $structure = $this->getNewDBStructure();
         foreach ($name_path as $next_name) {
@@ -718,12 +719,8 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                         $el = $el->getSuperElement();
                         continue;
                     }
-                    $struct->movePointerToSubElement(
-                        $path->getStep()
-                    );
-                    $els = $el->getSubElements(
-                        $path->getStep()
-                    );
+                    $struct->movePointerToSubElement($step);
+                    $els = $el->getSubElements($step);
                     if (count($els) > 1) {
                         throw new ilMDDatabaseException(
                             $error_intro . 'Path to condition element ' .

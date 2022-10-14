@@ -112,8 +112,11 @@ class ilMDEditorToolProvider extends AbstractDynamicToolProvider
             $link,
             $root,
             $path_to_current_element,
-            $this->dic->language(),
-            $path_factory
+            $path_factory,
+            new ilMDLOMPresenter(
+                $this->dic->language(),
+                $this->dic->user()
+            )
         );
         $f = $this->dic->ui()->factory();
 

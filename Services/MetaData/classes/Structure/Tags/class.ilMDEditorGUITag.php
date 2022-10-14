@@ -29,6 +29,7 @@ class ilMDEditorGUITag extends ilMDTag
     protected ?ilMDPathRelative $path_to_representation;
     protected ?ilMDPathRelative $path_to_preview;
     protected string $collection_mode = ilMDLOMEditorGUIDictionary::NO_COLLECTION;
+    protected bool $in_tree = true;
 
     public function __construct(
         ?ilMDPathRelative $path_to_preview = null,
@@ -58,5 +59,16 @@ class ilMDEditorGUITag extends ilMDTag
     public function getCollectionMode(): string
     {
         return $this->collection_mode;
+    }
+
+    public function isInTree(): bool
+    {
+        return $this->in_tree;
+    }
+
+    public function withInTree(bool $in_tree): ilMDEditorGUITag
+    {
+        $this->in_tree = $in_tree;
+        return $this;
     }
 }

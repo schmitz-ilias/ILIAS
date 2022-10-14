@@ -146,11 +146,6 @@ class ilMDLOMVocabulariesDictionary implements ilMDDictionary
             )
             ->movePointerToSuperElement()
             ->movePointerToSubElement('name');
-        /**
-         * Please note that according to LOM, the vocab for name should change
-         * based on the chosen value for type. For simplicity, I merge them
-         * here and implement the restriction on the GUI level.
-         */
         $this
             ->setTagsForVocabulary(
                 $structure,

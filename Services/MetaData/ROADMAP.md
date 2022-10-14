@@ -51,6 +51,9 @@ fields e.g. as a text input in a switchable group. This entails:
   the database.
 * Modify the VOCAB_SOURCE constraint in the MDDataFactory, probably
   making it conditional on the corresponding value.
+* Take greater care of vocabularies in the GUI (right now 
+  the source is not connected to the value). Note that 
+  conditional values need a special treatment.
 
 Please beware of 'type' and 'name' in technical>requirement>orComposite
 as a potential stumbling block.
