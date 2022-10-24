@@ -168,9 +168,13 @@ class ilMDLOMDataFactory
                  */
                 function (array $args) use ($values) {
                     return in_array(
-                        strtolower($args[0]),
+                        str_replace(' ', '', strtolower($args[0])),
                         array_map(
-                            'strtolower',
+                            fn (string $s) => str_replace(
+                                ' ',
+                                '',
+                                strtolower($s)
+                            ),
                             $values[$args[1]] ?? $values['']
                         )
                     );
@@ -227,8 +231,15 @@ class ilMDLOMDataFactory
                 return $this->factory->custom()->constraint(
                     function (string $arg) use ($values) {
                         return in_array(
-                            strtolower($arg),
-                            array_map('strtolower', $values)
+                            str_replace(' ', '', strtolower($arg)),
+                            array_map(
+                                fn (string $s) => str_replace(
+                                    ' ',
+                                    '',
+                                    strtolower($s)
+                                ),
+                                $values
+                            )
                         );
                     },
                     'Invalid vocabulary value'
@@ -273,7 +284,7 @@ class ilMDLOMDataFactory
             case(self::TYPE_NON_NEG_INT):
                 return $this->factory->custom()->constraint(
                     function (string $arg) {
-                        return preg_match('/^\d+$/', $arg);
+                        return (bool) preg_match('/^\d+$/', $arg);
                     },
                     'Invalid non-negative integer'
                 );
@@ -291,7 +302,7 @@ class ilMDLOMDataFactory
                         }
                         unset($matches[0]);
                         foreach ($matches as $match) {
-                            if (isset($match) && (int) $match <= 0) {
+                            if (isset($match) && (int) $match < 0) {
                                 return false;
                             }
                         }

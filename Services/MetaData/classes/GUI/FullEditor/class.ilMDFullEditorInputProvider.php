@@ -28,7 +28,7 @@ use ILIAS\Data\DateFormat\DateFormat;
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDDataGUIUtilities
+class ilMDFullEditorInputProvider
 {
     protected const COND_VALUE = 'md_cond_value';
     protected const VALUE = 'md_value';
@@ -211,7 +211,8 @@ class ilMDDataGUIUtilities
                 );
 
             case ilMDLOMDataFactory::TYPE_STRING:
-                if ($element->getName() === 'description') {
+                if ($current_element->getSuperElement()
+                                    ->getName() === 'description') {
                     $res = $factory->textarea('placeholder');
                 } else {
                     $res = $factory->text('placeholder');
@@ -239,7 +240,7 @@ class ilMDDataGUIUtilities
                         $v = $current_element->isScaffold() ?
                             '' : $this->getDataValueForInput(
                                 $current_element->getData(),
-                                $user
+                                $presenter
                             );
                         $v = in_array($v, $vocab->getValues()) ? $v : '';
                         $selects[$vocab->getConditionValue()] = $factory
@@ -311,21 +312,21 @@ class ilMDDataGUIUtilities
                 $res = $factory
                     ->numeric('placeholder')
                     ->withAdditionalTransformation(
-                        $refinery->int()->isGreaterThan(0)
+                        $refinery->int()->isGreaterThanOrEqual(0)
                     );
                 break;
 
             case ilMDLOMDataFactory::TYPE_DATETIME:
                 $res = $factory
                     ->dateTime('placeholder')
-                    ->withFormat($this->getUserFormat($user, $data));
+                    ->withFormat($this->getUserDateFormat($presenter, $data));
                 break;
 
             case ilMDLOMDataFactory::TYPE_DURATION:
                 $num = $factory
                     ->numeric('placeholder')
                     ->withAdditionalTransformation(
-                        $refinery->int()->isGreaterThan(0)
+                        $refinery->int()->isGreaterThanOrEqual(0)
                     );
                 $nums = [];
                 foreach ($presenter->getDurationLabels() as $label) {
@@ -334,7 +335,7 @@ class ilMDDataGUIUtilities
                 $res = $factory->group($nums)->withAdditionalTransformation(
                     $refinery->custom()->transformation(function ($vs) {
                         if (
-                            count(array_unique($vs)) &&
+                            count(array_unique($vs)) === 1 &&
                             array_unique($vs)[0] === null
                         ) {
                             return '';
@@ -345,7 +346,12 @@ class ilMDDataGUIUtilities
                             if (isset($int)) {
                                 $r .= $int . $signifiers[$key];
                             }
-                            if ($key === 2 && count($vs) < 4) {
+                            if (
+                                $key === 2 &&
+                                !isset($vs[3]) &&
+                                !isset($vs[4]) &&
+                                !isset($vs[3])
+                            ) {
                                 return $r;
                             }
                             if ($key === 2) {
@@ -368,7 +374,7 @@ class ilMDDataGUIUtilities
                 $current_element->isScaffold() ?
                     '' : $this->getDataValueForInput(
                         $current_element->getData(),
-                        $user
+                        $presenter
                     )
             )
             ->withLabel(
@@ -387,7 +393,7 @@ class ilMDDataGUIUtilities
      */
     public function getDataValueForInput(
         ilMDData $data,
-        ilObjUser $user
+        ilMDLOMPresenter $presenter
     ): string|array {
         switch ($data->getType()) {
             case ilMDLOMDataFactory::TYPE_DATETIME:
@@ -398,12 +404,14 @@ class ilMDDataGUIUtilities
                     PREG_UNMATCHED_AS_NULL
                 );
                 $date = new ilDate(
-                    $matches[1] . '-' . $matches[2] . '-' . $matches[3],
+                    ($matches[1] ?? '0000') . '-' .
+                    ($matches[2] ?? '01') . '-' .
+                    ($matches[3] ?? '01'),
                     IL_CAL_DATE
                 );
                 return $date->get(
-                    IL_CAL_FKT_GETDATE,
-                    $user->getDateFormat()
+                    IL_CAL_FKT_DATE,
+                    $presenter->getUserDateFormat()
                 );
 
             case ilMDLOMDataFactory::TYPE_DURATION:
@@ -413,27 +421,22 @@ class ilMDDataGUIUtilities
                     $matches,
                     PREG_UNMATCHED_AS_NULL
                 );
-                $res_array = [];
-                foreach (array_slice($matches, 1) as $key => $match) {
-                    if ($match) {
-                        $res_array[] = $match;
-                    }
-                }
-                return $res_array;
+                return array_slice($matches, 1);
 
             case ilMDLOMDataFactory::TYPE_VOCAB_VALUE:
-                return strtolower($data->getValue());
+                return $this->getDataValueForVocab($data->getValue());
 
             default:
                 return $data->getValue();
         }
     }
 
-    protected function getUserFormat(
-        ilObjUser $user,
+    protected function getUserDateFormat(
+        ilMDLOMPresenter $presenter,
         DataFactory $data
     ): DateFormat {
-        $array = explode('', $user->getDateFormat());
+        $format = $presenter->getUserDateFormat();
+        $array = str_split($format);
         $builder = $data->dateFormat()->custom();
         foreach ($array as $char) {
             switch ($char) {
@@ -496,5 +499,25 @@ class ilMDDataGUIUtilities
             $start_element = $els[0];
         }
         return $start_element;
+    }
+
+    protected function getDataValueForVocab(string $value): string
+    {
+        $value = strtolower(
+            preg_replace('/(?<=[a-z])(?=[A-Z])/', ' ', $value)
+        );
+        $exceptions = [
+            'is part of' => 'ispartof', 'has part' => 'haspart',
+            'is version of' => 'isversionof', 'has version' => 'hasversion',
+            'is format of' => 'isformatof', 'has format' => 'hasformat',
+            'references' => 'references',
+            'is referenced by' => 'isreferencedby',
+            'is based on' => 'isbasedon', 'is basis for' => 'isbasisfor',
+            'requires' => 'requires', 'is required by' => 'isrequiredby',
+        ];
+        if (array_key_exists($value, $exceptions)) {
+            $value = $exceptions[$value];
+        }
+        return $value;
     }
 }

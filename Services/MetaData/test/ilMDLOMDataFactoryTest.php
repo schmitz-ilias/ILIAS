@@ -297,7 +297,7 @@ class ilMDLOMDataFactoryTest extends TestCase
         $this->assertIsString($data->getError());
         $data = $factory->MDData(
             ilMDLOMDataFactory::TYPE_DURATION,
-            'P0M'
+            'P12S'
         );
         $this->assertIsString($data->getError());
     }

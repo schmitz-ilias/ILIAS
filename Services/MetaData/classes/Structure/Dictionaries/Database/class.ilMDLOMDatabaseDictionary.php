@@ -41,6 +41,13 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
     public const RES_MD_ID = 'md_id';
     public const RES_DATA = 'md_data';
 
+    /**
+     * These are needed to accomodate the special method
+     * of saving requirement types in the db.
+     */
+    public const MD_ID_BROWSER = 101;
+    public const MD_ID_OS = 102;
+
     public const TABLES = [
         'annotation' => 'il_meta_annotation',
         'classification' => 'il_meta_classification',
@@ -64,8 +71,6 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
         'taxon' => 'il_meta_taxon',
         'taxon_path' => 'il_meta_taxon_path',
         'technical' => 'il_meta_technical',
-        'coverage' => 'il_meta_coverage',
-        'schema' => 'il_meta_schema'
     ];
 
     public const ID_NAME = [
@@ -90,9 +95,7 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
         'tar' => 'meta_tar_id',
         'taxon' => 'meta_taxon_id',
         'taxon_path' => 'meta_taxon_path_id',
-        'technical' => 'meta_technical_id',
-        'coverage' => 'meta_coverage_id',
-        'schema' => 'meta_schema_id'
+        'technical' => 'meta_technical_id'
     ];
 
     protected ilMDTagFactory $factory;
@@ -136,10 +139,10 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
         $this->setTagsForGeneral($structure);
         $this->setTagsForLifeCycle($structure);
         $this->setTagsForMetaMetadata($structure);
-        //$this->setTagsForTechnical($structure);
-        //$this->setTagsForEducational($structure);
+        $this->setTagsForTechnical($structure);
+        $this->setTagsForEducational($structure);
         $this->setTagsForRights($structure);
-        //$this->setTagsForRelation($structure);
+        $this->setTagsForRelation($structure);
         $this->setTagsForAnnotation($structure);
         $this->setTagsForClassification($structure);
         return $structure->switchToReadMode()
@@ -220,15 +223,15 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             ->movePointerToSuperElement()
             ->movePointerToSubElement('coverage')
             ->setTagAtPointer(
-                $this->getTagForTableContainerWithParent(
-                    'coverage',
-                    'meta_general'
+                $this->getTagForNonTableContainer(
+                    'general',
+                    ['coverage', 'coverage_language']
                 )
             );
         $this
             ->setTagsForLangStringSubElements(
                 $structure,
-                'coverage',
+                'general',
                 'coverage',
                 'coverage_language'
             )
@@ -345,7 +348,6 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
                     'language'
                 )
             );
-        // TODO fix metadataSchema
         return $structure->movePointerToRoot();
     }
 
@@ -389,9 +391,159 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
                 $this->getTagForTableContainerWithParent(
                     'requirement',
                     'meta_technical'
+                )->withIsParent(true)
+            )
+            ->movePointerToSubElement('orComposite')
+            ->setTagAtPointer(
+                $this->getTagForOrComposite()
+            )
+            ->movePointerToSubElement('type')
+            ->setTagAtPointer(
+                $this->factory->databaseTag(
+                    '',
+                    'SELECT %s AS ' . self::RES_MD_ID,
+                    '',
+                    '',
+                    self::TABLES['requirement'],
+                    [self::EXP_SUPER_MD_ID]
+                )
+            )
+            ->movePointerToSubElement('value')
+            ->setTagAtPointer(
+                $this->factory->databaseTag(
+                    '',
+                    "SELECT '%s' AS " . self::RES_MD_ID .
+                    ', CASE %s WHEN ' . self::MD_ID_OS . ' THEN ' .
+                    "'operating system'" .
+                    ' WHEN ' . self::MD_ID_BROWSER . ' THEN ' .
+                    "'browser' END AS " . self::RES_DATA,
+                    '',
+                    '',
+                    self::TABLES['requirement'],
+                    [
+                        self::EXP_SUPER_MD_ID,
+                        self::EXP_SUPER_MD_ID
+                    ]
+                )
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('source')
+            ->setTagAtPointer(
+                $this->factory->databaseTag(
+                    '',
+                    "SELECT '" . ilMDLOMVocabulariesDictionary::SOURCE .
+                    "' AS " . self::RES_DATA . ', 0 AS ' . self::RES_MD_ID,
+                    '',
+                    '',
+                    '',
+                    []
+                )
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('name')
+            ->setTagAtPointer(
+                $this->getTagForOrCompositeName()
+            )
+            ->movePointerToSubElement('value')
+            ->setTagAtPointer(
+                $this->getTagForOrCompositeData(
+                    'operating_system_name',
+                    'browser_name'
+                )
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('source')
+            ->setTagAtPointer(
+                $this->factory->databaseTag(
+                    '',
+                    "SELECT '" . ilMDLOMVocabulariesDictionary::SOURCE .
+                    "' AS " . self::RES_DATA . ', 0 AS ' . self::RES_MD_ID,
+                    '',
+                    '',
+                    '',
+                    []
+                )
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('minimumVersion')
+            ->setTagAtPointer(
+                $this->getTagForOrCompositeData(
+                    'os_min_version',
+                    'browser_minimum_version'
+                )
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('maximumVersion')
+            ->setTagAtPointer(
+                $this->getTagForOrCompositeData(
+                    'os_max_version',
+                    'browser_maximum_version'
+                )
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSuperElement()
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('installationRemarks')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'technical',
+                    ['ir', 'ir_language']
                 )
             );
-        // TODO continue with orComposite
+        $this
+            ->setTagsForLangStringSubElements(
+                $structure,
+                'technical',
+                'ir',
+                'ir_language'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('otherPlatformRequirements')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'technical',
+                    ['opr', 'opr_language']
+                )
+            );
+        $this
+            ->setTagsForLangStringSubElements(
+                $structure,
+                'technical',
+                'opr',
+                'opr_language'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('duration')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'technical',
+                    ['duration', 'duration_descr', 'duration_descr_lang']
+                )
+            )
+            ->movePointerToSubElement('duration')
+            ->setTagAtPointer(
+                $this->getTagForData(
+                    'technical',
+                    'duration'
+                )
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('description')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'technical',
+                    ['duration_descr', 'duration_descr_lang'],
+                )
+            );
+        $this
+            ->setTagsForLangStringSubElements(
+                $structure,
+                'technical',
+                'duration_descr',
+                'duration_descr_lang',
+            );
         return $structure->movePointerToRoot();
     }
 
@@ -404,8 +556,176 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             ->setTagAtPointer(
                 $this->getTagForTableContainer('educational')
                      ->withIsParent(true)
+            )
+            ->movePointerToSubElement('interactivityType')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'educational',
+                    ['interactivity_type']
+                )
             );
-        // TODO continue with interactivityType
+        $this
+            ->setTagsForVocabSubElements(
+                $structure,
+                'educational',
+                'interactivity_type'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('learningResourceType')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'educational',
+                    ['learning_resource_type']
+                )
+            );
+        $this
+            ->setTagsForVocabSubElements(
+                $structure,
+                'educational',
+                'learning_resource_type'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('interactivityLevel')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'educational',
+                    ['interactivity_level']
+                )
+            );
+        $this
+            ->setTagsForVocabSubElements(
+                $structure,
+                'educational',
+                'interactivity_level'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('semanticDensity')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'educational',
+                    ['semantic_density']
+                )
+            );
+        $this
+            ->setTagsForVocabSubElements(
+                $structure,
+                'educational',
+                'semantic_density'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('intendedEndUserRole')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'educational',
+                    ['intended_end_user_role']
+                )
+            );
+        $this
+            ->setTagsForVocabSubElements(
+                $structure,
+                'educational',
+                'intended_end_user_role'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('context')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'educational',
+                    ['context']
+                )
+            );
+        $this
+            ->setTagsForVocabSubElements(
+                $structure,
+                'educational',
+                'context'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('typicalAgeRange')
+            ->setTagAtPointer(
+                $this->getTagForTableContainerWithParent(
+                    'tar',
+                    'meta_educational'
+                )
+            );
+        $this
+            ->setTagsForLangStringSubElements(
+                $structure,
+                'tar',
+                'typical_age_range',
+                'tar_language',
+                'meta_educational'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('difficulty')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'educational',
+                    ['difficulty']
+                )
+            );
+        $this
+            ->setTagsForVocabSubElements(
+                $structure,
+                'educational',
+                'difficulty'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('typicalLearningTime')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'educational',
+                    ['typical_learning_time', 'tlt_descr', 'tlt_descr_lang']
+                )
+            )
+            ->movePointerToSubElement('duration')
+            ->setTagAtPointer(
+                $this->getTagForData(
+                    'educational',
+                    'typical_learning_time'
+                )
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('description')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainer(
+                    'educational',
+                    ['tlt_descr', 'tlt_descr_lang'],
+                )
+            );
+        $this
+            ->setTagsForLangStringSubElements(
+                $structure,
+                'educational',
+                'tlt_descr',
+                'tlt_descr_lang',
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('description')
+            ->setTagAtPointer(
+                $this->getTagForTableContainerWithParent(
+                    'description',
+                    'meta_educational'
+                )
+            );
+        $this
+            ->setTagsForLangStringSubElements(
+                $structure,
+                'description',
+                'description',
+                'description_language',
+                'meta_educational'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('language')
+            ->setTagAtPointer(
+                $this->getTagForTableDataWithParent(
+                    'language',
+                    'language',
+                    'meta_educational'
+                )
+            );
         return $structure->movePointerToRoot();
     }
 
@@ -470,6 +790,7 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             ->movePointerToSubElement('relation')
             ->setTagAtPointer(
                 $this->getTagForTableContainer('relation')
+                     ->withIsParent(true)
             )
             ->movePointerToSubElement('kind')
             ->setTagAtPointer(
@@ -483,8 +804,39 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
                 $structure,
                 'relation',
                 'kind'
+            )
+            ->movePointerToSuperElement()
+            ->movePointerToSubElement('resource')
+            ->setTagAtPointer(
+                $this->getTagForNonTableContainerWithParentAcrossTwoTables(
+                    'identifier_',
+                    ['catalog', 'entry'],
+                    'description',
+                    ['description', 'description_language'],
+                    'meta_relation'
+                )
             );
-        // TODO continue with resource
+        $this
+            ->setTagsForIdentifier(
+                $structure,
+                'identifier_',
+                'meta_relation'
+            )
+            ->movePointerToSubElement('description')
+            ->setTagAtPointer(
+                $this->getTagForTableContainerWithParent(
+                    'description',
+                    'meta_relation'
+                )
+            );
+        $this
+            ->setTagsForLangStringSubElements(
+                $structure,
+                'description',
+                'description',
+                'description_language',
+                'meta_relation'
+            );
         return $structure->movePointerToRoot();
     }
 
@@ -1060,6 +1412,248 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             [
                 self::EXP_MD_ID,
                 self::EXP_SUPER_MD_ID,
+                $second_parent ?
+                    self::EXP_SECOND_PARENT_MD_ID :
+                    self::EXP_PARENT_MD_ID
+            ]
+        );
+    }
+
+    /**
+     * Returns the appropriate database tag for the technical: orComposite
+     * container element, which is a special case.
+     */
+    protected function getTagForOrComposite(): ilMDDatabaseTag
+    {
+        $read =
+            'SELECT ' . $this->db->quoteIdentifier(self::RES_MD_ID) .
+            " FROM ((SELECT '" . self::MD_ID_OS . "'" .
+            ' AS ' . $this->db->quoteIdentifier(self::RES_MD_ID) .
+            ', parent_type, parent_id, rbac_id, obj_id, obj_type, ' .
+            $this->db->quoteIdentifier(self::ID_NAME['requirement']) .
+            ' FROM ' . $this->db->quoteIdentifier(self::TABLES['requirement']) .
+            ' WHERE (CHAR_LENGTH(operating_system_name) > 0 OR' .
+            ' CHAR_LENGTH(os_min_version) > 0 OR CHAR_LENGTH(os_max_version) > 0)' .
+            ') UNION (' .
+            "SELECT '" . self::MD_ID_BROWSER . "'" .
+            ' AS ' . $this->db->quoteIdentifier(self::RES_MD_ID) .
+            ', parent_type, parent_id, rbac_id, obj_id, obj_type, ' .
+            $this->db->quoteIdentifier(self::ID_NAME['requirement']) .
+            ' FROM ' . $this->db->quoteIdentifier(self::TABLES['requirement']) .
+            ' WHERE (CHAR_LENGTH(browser_name) > 0 OR' .
+            ' CHAR_LENGTH(browser_minimum_version) > 0 OR CHAR_LENGTH(browser_maximum_version) > 0)))' .
+            " AS u WHERE u.parent_type = 'meta_technical' AND u." .
+            $this->db->quoteIdentifier(self::ID_NAME['requirement']) . ' = %s' .
+            ' AND u.parent_id = %s AND u.rbac_id = %s AND u.obj_id = %s AND u.obj_type = %s' .
+            ' ORDER BY u.' . $this->db->quoteIdentifier(self::ID_NAME['requirement']);
+        $delete =
+            'UPDATE ' . $this->db->quoteIdentifier(self::TABLES['requirement']) .
+            ' SET operating_system_name = CASE %s WHEN ' . self::MD_ID_OS . " THEN ''" .
+            ' ELSE operating_system_name END, ' .
+            ' os_min_version = CASE %s WHEN ' . self::MD_ID_OS . " THEN ''" .
+            ' ELSE os_min_version END, ' .
+            ' os_max_version = CASE %s WHEN ' . self::MD_ID_OS . " THEN ''" .
+            ' ELSE os_max_version END, ' .
+            ' browser_name = CASE %s WHEN ' . self::MD_ID_BROWSER . " THEN ''" .
+            ' ELSE browser_name END, ' .
+            ' browser_minimum_version = CASE %s WHEN ' . self::MD_ID_BROWSER . " THEN ''" .
+            ' ELSE browser_minimum_version END, ' .
+            ' browser_maximum_version = CASE %s WHEN ' . self::MD_ID_BROWSER . " THEN ''" .
+            ' ELSE browser_maximum_version END' .
+            " WHERE parent_type = 'meta_technical' AND " .
+            $this->db->quoteIdentifier(self::ID_NAME['requirement']) . ' = %s' .
+            ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
+
+        return $this->factory->databaseTag(
+            '',
+            $read,
+            '',
+            $delete,
+            self::TABLES['requirement'],
+            [
+                self::EXP_MD_ID,
+                self::EXP_MD_ID,
+                self::EXP_MD_ID,
+                self::EXP_MD_ID,
+                self::EXP_MD_ID,
+                self::EXP_MD_ID,
+                self::EXP_SUPER_MD_ID,
+                self::EXP_SECOND_PARENT_MD_ID
+            ]
+        );
+    }
+
+    /**
+     * Returns the appropriate database tag for the technical: orComposite:
+     * name container element, which is a special case.
+     */
+    protected function getTagForOrCompositeName(): ilMDDatabaseTag
+    {
+        $read =
+            "SELECT '%s' AS " . $this->db->quoteIdentifier(self::RES_MD_ID) .
+            ' FROM ' . $this->db->quoteIdentifier(self::TABLES['requirement']) .
+            ' WHERE CASE %s WHEN ' . self::MD_ID_OS . ' THEN CHAR_LENGTH(operating_system_name)' .
+            ' WHEN ' . self::MD_ID_BROWSER . ' THEN CHAR_LENGTH(browser_name) END > 0 ' .
+            " AND parent_type = 'meta_technical' AND " .
+            $this->db->quoteIdentifier(self::ID_NAME['requirement']) . ' = %s' .
+            ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s' .
+            ' ORDER BY ' . $this->db->quoteIdentifier(self::ID_NAME['requirement']);
+        $delete =
+            'UPDATE ' . $this->db->quoteIdentifier(self::TABLES['requirement']) .
+            ' SET operating_system_name = CASE %s WHEN ' . self::MD_ID_OS . " THEN ''" .
+            ' ELSE operating_system_name END, ' .
+            ' browser_name = CASE %s WHEN ' . self::MD_ID_BROWSER . " THEN ''" .
+            ' ELSE browser_name END' .
+            " WHERE parent_type = 'meta_technical' AND " .
+            $this->db->quoteIdentifier(self::ID_NAME['requirement']) . ' = %s' .
+            ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
+
+        return $this->factory->databaseTag(
+            '',
+            $read,
+            '',
+            $delete,
+            self::TABLES['requirement'],
+            [
+                self::EXP_SUPER_MD_ID,
+                self::EXP_SUPER_MD_ID,
+                self::EXP_PARENT_MD_ID,
+                self::EXP_SECOND_PARENT_MD_ID
+            ]
+        );
+    }
+
+    /**
+     * Returns the appropriate database tag for data-carrying sub-elements
+     * of technical: orComposite element, which are special cases.
+     */
+    protected function getTagForOrCompositeData(
+        string $field_os,
+        string $field_browser
+    ): ilMDDatabaseTag {
+        $read =
+            "SELECT '%s' AS " . $this->db->quoteIdentifier(self::RES_MD_ID) .
+            ', CASE %s WHEN ' . self::MD_ID_OS . ' THEN ' . $this->db->quoteIdentifier($field_os) .
+            ' WHEN ' . self::MD_ID_BROWSER . ' THEN  ' . $this->db->quoteIdentifier($field_browser) .
+            ' END AS ' . $this->db->quoteIdentifier(self::RES_DATA) .
+            ' FROM ' . $this->db->quoteIdentifier(self::TABLES['requirement']) .
+            " WHERE parent_type = 'meta_technical' AND " .
+            $this->db->quoteIdentifier(self::ID_NAME['requirement']) . ' = %s' .
+            ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s' .
+            ' ORDER BY ' . $this->db->quoteIdentifier(self::ID_NAME['requirement']);
+        $create_and_update =
+            'UPDATE ' . $this->db->quoteIdentifier(self::TABLES['requirement']) .
+            ' SET ' . $this->db->quoteIdentifier($field_os) . ' = CASE %s WHEN ' .
+            self::MD_ID_OS . ' THEN %s' .
+            ' ELSE ' . $this->db->quoteIdentifier($field_os) . ' END, ' .
+            $this->db->quoteIdentifier($field_browser) . ' = CASE %s WHEN ' .
+            self::MD_ID_BROWSER . ' THEN %s' .
+            ' ELSE ' . $this->db->quoteIdentifier($field_browser) . ' END' .
+            " WHERE parent_type = 'meta_technical' AND " .
+            $this->db->quoteIdentifier(self::ID_NAME['requirement']) . ' = %s' .
+            ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
+        $delete =
+            'UPDATE ' . $this->db->quoteIdentifier(self::TABLES['requirement']) .
+            ' SET ' . $this->db->quoteIdentifier($field_os) . ' = CASE %s WHEN ' .
+            self::MD_ID_OS . " THEN ''" .
+            ' ELSE ' . $this->db->quoteIdentifier($field_os) . ' END, ' .
+            $this->db->quoteIdentifier($field_browser) . ' = CASE %s WHEN ' .
+            self::MD_ID_BROWSER . " THEN ''" .
+            ' ELSE ' . $this->db->quoteIdentifier($field_browser) . ' END' .
+            " WHERE parent_type = 'meta_technical' AND " .
+            $this->db->quoteIdentifier(self::ID_NAME['requirement']) . ' = %s' .
+            ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
+
+        return $this->factory->databaseTag(
+            $create_and_update,
+            $read,
+            $create_and_update,
+            $delete,
+            self::TABLES['requirement'],
+            [
+                self::EXP_SUPER_MD_ID,
+                self::EXP_DATA,
+                self::EXP_SUPER_MD_ID,
+                self::EXP_DATA,
+                self::EXP_PARENT_MD_ID,
+                self::EXP_SECOND_PARENT_MD_ID
+            ]
+        );
+    }
+
+    /**
+     * Returns the appropriate database tag for a container element
+     * without its own table, but with a parent, where the corresponding
+     * fields are scattered across two tables.
+     * @param string   $first_table
+     * @param string[] $first_fields
+     * @param string   $second_table
+     * @param string[] $second_fields
+     * @param string   $parent_type
+     * @param bool     $second_parent
+     * @return ilMDDatabaseTag
+     */
+    protected function getTagForNonTableContainerWithParentAcrossTwoTables(
+        string $first_table,
+        array $first_fields,
+        string $second_table,
+        array $second_fields,
+        string $parent_type,
+        bool $second_parent = false
+    ): ilMDDatabaseTag {
+        $this->checkTable($first_table);
+        $this->checkTable($second_table);
+        if (empty($first_fields) || empty($second_fields)) {
+            throw new ilMDDatabaseException(
+                'A container element can not be empty.'
+            );
+        }
+        $read_fields = '(';
+        foreach ($first_fields as $field) {
+            $read_fields .= 'CHAR_LENGTH(t1.' . $this->db->quoteIdentifier($field) .
+                ') > 0 OR ';
+        }
+        foreach ($second_fields as $field) {
+            $read_fields .= 'CHAR_LENGTH(t2.' . $this->db->quoteIdentifier($field) .
+                ') > 0 OR ';
+        }
+        $read_fields = substr($read_fields, 0, -3) . ') AND ';
+        $read =
+            'SELECT t1.parent_id' .
+            ' AS ' . $this->db->quoteIdentifier(self::RES_MD_ID) .
+            ' FROM ' . $this->db->quoteIdentifier(self::TABLES[$first_table]) .
+            ' AS t1,' . $this->db->quoteIdentifier(self::TABLES[$second_table]) .
+            ' AS t2 WHERE ' . $read_fields . ' t1.parent_type = ' .
+            $this->db->quote($parent_type, ilDBConstants::T_TEXT) .
+            ' AND t1.parent_type = t2.parent_type' .
+            ' AND t1.parent_id = t2.parent_id AND t1.parent_id = %s' .
+            ' AND t1.rbac_id = %s AND t1.obj_id = %s AND t1.obj_type = %s' .
+            ' ORDER BY t1.parent_type';
+        $delete_fields = '';
+        foreach ($first_fields as $field) {
+            $delete_fields .= 't1.' . $this->db->quoteIdentifier($field) . " = '', ";
+        }
+        foreach ($first_fields as $field) {
+            $delete_fields .= 't2.' . $this->db->quoteIdentifier($field) . " = '', ";
+        }
+        $delete_fields = substr($delete_fields, 0, -2) . ' ';
+        $delete =
+            'UPDATE ' . $this->db->quoteIdentifier(self::TABLES[$first_table]) .
+            ' AS t1,' . $this->db->quoteIdentifier(self::TABLES[$second_table]) .
+            ' AS t2 SET ' . $delete_fields .
+            'WHERE t1.parent_type = ' .
+            $this->db->quote($parent_type, ilDBConstants::T_TEXT) .
+            ' AND t1.parent_type = t2.parent_type' .
+            ' AND t1.parent_id = t2.parent_id AND t1.parent_id = %s' .
+            ' AND t1.rbac_id = %s AND t1.obj_id = %s AND t1.obj_type = %s';
+
+        return $this->factory->databaseTag(
+            '',
+            $read,
+            '',
+            $delete,
+            '',
+            [
                 $second_parent ?
                     self::EXP_SECOND_PARENT_MD_ID :
                     self::EXP_PARENT_MD_ID

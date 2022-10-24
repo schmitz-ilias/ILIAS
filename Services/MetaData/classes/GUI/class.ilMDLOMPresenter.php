@@ -91,7 +91,7 @@ class ilMDLOMPresenter
         if ($plural) {
             $lang_key .= '_plural';
         }
-        return $this->lng->txt($lang_key);
+        return $this->txt($lang_key);
     }
 
     public function getElementNameWithParents(
@@ -132,12 +132,14 @@ class ilMDLOMPresenter
                     PREG_UNMATCHED_AS_NULL
                 );
                 $date = new ilDate(
-                    $matches[1] . '-' . $matches[2] . '-' . $matches[3],
+                    ($matches[1] ?? '0000') . '-' .
+                    ($matches[2] ?? '01') . '-' .
+                    ($matches[3] ?? '01'),
                     IL_CAL_DATE
                 );
                 return $date->get(
-                    IL_CAL_FKT_GETDATE,
-                    $this->user->getDateFormat()
+                    IL_CAL_FKT_DATE,
+                    $this->getUserDateFormat()
                 );
 
             case ilMDLOMDataFactory::TYPE_DURATION:
@@ -148,21 +150,21 @@ class ilMDLOMPresenter
                     PREG_UNMATCHED_AS_NULL
                 );
                 $labels = [
-                    1 => ['md_years', 'md_year'],
-                    2 => ['md_months', 'md_month'],
-                    3 => ['md_days', 'md_day'],
-                    4 => ['md_hours', 'md_hour'],
-                    5 => ['md_minutes', 'md_minute'],
-                    6 => ['md_seconds', 'md_second'],
+                    ['md_years', 'md_year'],
+                    ['md_months', 'md_month'],
+                    ['md_days', 'md_day'],
+                    ['md_hours', 'md_hour'],
+                    ['md_minutes', 'md_minute'],
+                    ['md_seconds', 'md_second'],
                 ];
                 $res_array = [];
                 foreach (array_slice($matches, 1) as $key => $match) {
                     if ($match) {
                         $res_array[] =
                             $match . ' ' .
-                            ($match === 1 ?
-                                $this->lng->txt($labels[$key][1]) :
-                                $this->lng->txt($labels[$key][0]));
+                            ($match === '1' ?
+                                $this->txt($labels[$key][1]) :
+                                $this->txt($labels[$key][0]));
                     }
                 }
                 return implode(', ', $res_array);
@@ -186,21 +188,29 @@ class ilMDLOMPresenter
 
     public function getVocabValue(string $value): string
     {
-        // for some reason, relation>kind is a special case
-        $kind = [
+        $value = $this->camelCaseToSpaces($value);
+        $exceptions = [
             'ispartof' => 'is_part_of', 'haspart' => 'has_part',
             'isversionof' => 'is_version_of', 'hasversion' => 'has_version',
             'isformatof' => 'is_format_of', 'hasformat' => 'has_format',
             'references' => 'references',
             'isreferencedby' => 'is_referenced_by',
             'isbasedon' => 'is_based_on', 'isbasisfor' => 'is_basis_for',
-            'requires' => 'requires', 'isrequiredby' => 'is_required_by'
+            'requires' => 'requires', 'isrequiredby' => 'is_required_by',
+            'graphical designer' => 'graphicaldesigner',
+            'technical implementer' => 'technicalimplementer',
+            'content provider' => 'contentprovider',
+            'technical validator' => 'technicalvalidator',
+            'educational validator' => 'educationalvalidator',
+            'script writer' => 'scriptwriter',
+            'instructional designer' => 'instructionaldesigner',
+            'subject matter expert' => 'subjectmatterexpert'
         ];
-        if (array_key_exists($value, $kind)) {
-            $value = $kind[$value];
+        if (array_key_exists($value, $exceptions)) {
+            $value = $exceptions[$value];
         }
 
-        return $this->lng->txt('meta_' . $this->fillSpaces($value));
+        return $this->txt('meta_' . $this->fillSpaces($value));
     }
 
     /**
@@ -209,25 +219,31 @@ class ilMDLOMPresenter
     public function getLanguages(): array
     {
         return array_map(
-            fn (string $arg) => $this->lng->txt('meta_l_' . $arg),
+            fn (string $arg) => $this->txt('meta_l_' . $arg),
             ilMDLOMDataFactory::LANGUAGES
         );
     }
 
     public function getLanguage(string $language): string
     {
-        return $this->lng->txt('meta_l_' . $language);
+        return $this->txt('meta_l_' . $language);
     }
 
     protected function fillSpaces(string $string): string
     {
-        $string = str_replace(' ', '', $string);
+        $string = str_replace(' ', '_', $string);
         return strtolower($string);
     }
 
     protected function camelCaseToSnakeCase(string $string): string
     {
         $string = preg_replace('/(?<=[a-z])(?=[A-Z])/', '_', $string);
+        return strtolower($string);
+    }
+
+    protected function camelCaseToSpaces(string $string): string
+    {
+        $string = preg_replace('/(?<=[a-z])(?=[A-Z])/', ' ', $string);
         return strtolower($string);
     }
 
@@ -275,12 +291,44 @@ class ilMDLOMPresenter
     public function getDurationLabels(): array
     {
         return [
-            $this->lng->txt('md_years'),
-            $this->lng->txt('md_months'),
-            $this->lng->txt('md_days'),
-            $this->lng->txt('md_hours'),
-            $this->lng->txt('md_minutes'),
-            $this->lng->txt('md_seconds')
+            $this->txt('md_years'),
+            $this->txt('md_months'),
+            $this->txt('md_days'),
+            $this->txt('md_hours'),
+            $this->txt('md_minutes'),
+            $this->txt('md_seconds')
         ];
+    }
+
+    public function getUserDateFormat(): string
+    {
+        switch ($this->user->getDateFormat()) {
+            case ilCalendarSettings::DATE_FORMAT_DMY:
+                return 'd.m.Y';
+
+            case ilCalendarSettings::DATE_FORMAT_MDY:
+                return 'm/d/Y';
+
+            case ilCalendarSettings::DATE_FORMAT_YMD:
+            default:
+                return 'Y-m-d';
+        }
+    }
+
+    public function txt(string $key): string
+    {
+        return $this->lng->txt($key);
+    }
+
+    /**
+     * @param string    $key
+     * @param string[]  $values
+     */
+    public function txtFill(string $key, array $values): string
+    {
+        if ($this->lng->exists($key)) {
+            return sprintf($this->lng->txt($key), ...$values);
+        }
+        return $key . ' ' . implode(',', $values);
     }
 }

@@ -39,6 +39,9 @@ class ilMDEditorGUI
 {
     public const MD_SET = 'md_set';
     public const MD_LINK = 'md_link';
+    public const MD_NODE_PATH = 'node_path';
+    public const MD_ACTION_PATH = 'action_path';
+    public const MD_ACTION = 'md_action';
 
     protected ilCtrl $ctrl;
     protected ilLanguage $lng;
@@ -506,7 +509,7 @@ class ilMDEditorGUI
         if (!$digest->update($root, $request)) {
             $this->tpl->setOnScreenMessage(
                 'failure',
-                $this->lng->txt('title_required'),
+                $this->lng->txt('msg_form_save_error'),
                 true
             );
             $this->listQuickEdit($request);
@@ -552,7 +555,11 @@ class ilMDEditorGUI
             $this->lng,
             $this->presenter,
             $this->data,
-            $this->user
+            $this->user,
+            new URI(
+                ILIAS_HTTP_PATH . '/' .
+                $this->ctrl->getLinkTarget($this, 'fullEditor')
+            )
         );
     }
 
@@ -1010,9 +1017,9 @@ class ilMDEditorGUI
         // add content for element
         $request_wrapper = $this->http->wrapper()->query();
         $path = $this->path_factory->getPathFromRoot();
-        if ($request_wrapper->has('node_path')) {
+        if ($request_wrapper->has(self::MD_NODE_PATH)) {
             $current_path_string = $request_wrapper->retrieve(
-                'node_path',
+                self::MD_NODE_PATH,
                 $this->refinery->kindlyTo()->string()
             );
             $path->setPathFromString($current_path_string);
@@ -1020,17 +1027,36 @@ class ilMDEditorGUI
 
         $editor = $this->getFullEditor();
         $root = $editor->prepareMD($root, $path);
-        $content = $editor->getContent($this, $root, $path);
+        $delete_modals = $editor->getDeleteModals($root, $path);
+        $delete_signals = array_map(
+            fn ($arg) => $arg->getShowSignal(),
+            $delete_modals
+        );
+        $content = $editor->getContent(
+            $root,
+            $path,
+            [],
+            [],
+            $delete_signals
+        );
         if ($content instanceof ilTable2GUI) {
             $content = $this->ui_factory->legacy(
                 $content->getHTML()
             );
         }
-        if ($tb_content = $editor->getToolbarContent($root, $path)) {
+        if ($tb_content = $editor->getToolbarContent(
+            $root,
+            $path,
+            [],
+            [],
+            $delete_signals
+        )) {
             $this->toolbarGUI->addComponent($tb_content);
         }
         $this->tpl->setContent(
-            $this->ui_renderer->render($content)
+            $this->ui_renderer->render(
+                array_merge([$content], $delete_modals)
+            )
         );
     }
 

@@ -18,6 +18,8 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+use ILIAS\UI\Component\Modal\Modal;
+use ILIAS\UI\Component\Signal;
 use ILIAS\UI\Component\Panel\Panel;
 use ILIAS\UI\Component\Button\Standard as StandardButton;
 use ILIAS\UI\Component\Dropdown\Standard as StandardDropdown;
@@ -26,6 +28,7 @@ use ILIAS\UI\Factory as UIFactory;
 use ILIAS\UI\Renderer;
 use ILIAS\Refinery\Factory as Refinery;
 use ILIAS\Data\Factory as Data;
+use ILIAS\Data\URI;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -50,6 +53,9 @@ class ilMDFullEditorGUI
     protected ilMDLOMPresenter $presenter;
     protected Data $data;
     protected ilObjUser $user;
+    protected ilMDFullEditorActionProvider $action_provider;
+    protected ilMDFullEditorInputProvider $input_provider;
+    protected URI $base_link;
 
     public function __construct(
         ilMDLOMDatabaseRepository $repo,
@@ -63,7 +69,8 @@ class ilMDFullEditorGUI
         ilLanguage $lng,
         ilMDLOMPresenter $presenter,
         Data $data,
-        ilObjUser $user
+        ilObjUser $user,
+        URI $base_link
     ) {
         $this->repo = $repo;
         $this->path_factory = $path_factory;
@@ -81,6 +88,9 @@ class ilMDFullEditorGUI
         $this->presenter = $presenter;
         $this->data = $data;
         $this->user = $user;
+        $this->action_provider = new ilMDFullEditorActionProvider();
+        $this->input_provider = new ilMDFullEditorInputProvider();
+        $this->base_link = $base_link;
     }
 
     public function prepareMD(
@@ -111,23 +121,50 @@ class ilMDFullEditorGUI
         return $root;
     }
 
+    /**
+     * @param ilMDRootElement  $root
+     * @param ilMDPathFromRoot $path
+     * @param Signal[]         $create_signals
+     * @param Signal[]         $update_signals
+     * @param Signal[]         $delete_signals
+     * @return ilTable2GUI|StandardForm|Panel
+     */
     public function getContent(
-        ilMDEditorGUI $editor,
         ilMDRootElement $root,
-        ilMDPathFromRoot $path
+        ilMDPathFromRoot $path,
+        array $create_signals,
+        array $update_signals,
+        array $delete_signals
     ): ilTable2GUI|StandardForm|Panel {
         switch ($this->decideContentType($root, $path)) {
             case self::FORM:
                 return $this->getForm($root, $path);
 
             case self::TABLE:
-                return $this->getTable($editor, $root, $path);
+                return $this->getTable(
+                    $root,
+                    $path,
+                    $create_signals,
+                    $update_signals,
+                    $delete_signals
+                );
 
             case self::PANEL:
-                return $this->getPanel($root, $path);
+                return $this->getPanel(
+                    $root,
+                    $path,
+                    $create_signals,
+                    $update_signals,
+                    $delete_signals
+                );
 
             case self::ROOT:
-                return $this->getRootPanel($root);
+                return $this->getRootPanel(
+                    $root,
+                    $create_signals,
+                    $update_signals,
+                    $delete_signals
+                );
 
             default:
                 throw new ilMDGUIException(
@@ -136,15 +173,121 @@ class ilMDFullEditorGUI
         }
     }
 
-    public function getToolbarContent(
+    /**
+     * @param ilMDRootElement  $root
+     * @param ilMDPathFromRoot $path
+     * @return Modal[]
+     */
+    public function getDeleteModals(
         ilMDRootElement $root,
         ilMDPathFromRoot $path
+    ): array {
+        switch ($this->decideContentType($root, $path)) {
+            case self::PANEL:
+                return [$path->getPathAsString() => $this->action_provider
+                    ->getDeleteModal(
+                        $this->factory,
+                        $this->presenter,
+                        $this->base_link,
+                        $path,
+                        $path,
+                        $root,
+                        $this->getPropertiesByPreview($root, $path)
+                    )
+                ];
+
+            case self::FORM:
+                return [$path->getPathAsString() => $this->action_provider
+                            ->getDeleteModal(
+                                $this->factory,
+                                $this->presenter,
+                                $this->base_link,
+                                $path,
+                                $path,
+                                $root,
+                                $this->getPropertiesByData($root, $path)
+                            )
+                ];
+
+            case self::TABLE:
+                $elements = $root->getSubElementsByPath($path);
+                $modals = [];
+                foreach ($elements as $element) {
+                    if ($element->isScaffold()) {
+                        continue;
+                    }
+                    $appended_path = (clone $path)
+                        ->addMDIDFilter($element->getMDID());
+                    $modals[$appended_path->getPathAsString()]
+                        = $this->action_provider->getDeleteModal(
+                            $this->factory,
+                            $this->presenter,
+                            $this->base_link,
+                            $path,
+                            $appended_path,
+                            $root,
+                            $this->getPropertiesByData($root, $appended_path)
+                        );
+                }
+                return $modals;
+
+            case self::ROOT:
+                $modals = [];
+                foreach ($root->getSubElements() as $element) {
+                    if ($element->isScaffold()) {
+                        continue;
+                    }
+                    $appended_path = (clone $path)
+                        ->addStep($element->getName())
+                        ->addMDIDFilter($element->getMDID());
+                    $modals[$appended_path->getPathAsString()] =
+                        $this->action_provider->getDeleteModal(
+                            $this->factory,
+                            $this->presenter,
+                            $this->base_link,
+                            $path,
+                            $appended_path,
+                            $root,
+                            $this->getPropertiesByPreview(
+                                $root,
+                                $appended_path
+                            )
+                        );
+                }
+                return $modals;
+
+            default:
+                throw new ilMDGUIException(
+                    'Invalid content type.'
+                );
+        }
+    }
+
+    /**
+     * @param ilMDRootElement  $root
+     * @param ilMDPathFromRoot $path
+     * @param Signal[]         $create_signals
+     * @param Signal[]         $update_signals
+     * @param Signal[]         $delete_signals
+     * @return StandardButton|StandardDropdown|null
+     */
+    public function getToolbarContent(
+        ilMDRootElement $root,
+        ilMDPathFromRoot $path,
+        array $create_signals,
+        array $update_signals,
+        array $delete_signals
     ): StandardButton|StandardDropdown|null {
         switch ($this->decideContentType($root, $path)) {
             case self::FORM:
-                return $this->factory->button()->standard(
-                    'delete me',
-                    '#'
+                if (!key_exists($path->getPathAsString(), $delete_signals)) {
+                    return null;
+                }
+                return $this->action_provider->getStandardDeleteButton(
+                    $delete_signals[$path->getPathAsString()],
+                    $this->factory,
+                    $this->presenter,
+                    true
                 );
 
             case self::TABLE:
@@ -173,7 +316,7 @@ class ilMDFullEditorGUI
 
     protected function decideContentType(
         ilMDRootElement $root,
-        ilMDPathFromRoot $path
+        ilMDPathFromRoot $path,
     ): string {
         // root panel for root
         if ($path->isAtStart()) {
@@ -201,41 +344,180 @@ class ilMDFullEditorGUI
         return self::FORM;
     }
 
+    /**
+     * @param ilMDRootElement  $root
+     * @param ilMDPathFromRoot $path
+     * @param Signal[]         $create_signals
+     * @param Signal[]         $update_signals
+     * @param Signal[]         $delete_signals
+     * @return ilTable2GUI
+     */
     protected function getTable(
-        ilMDEditorGUI $editor,
         ilMDRootElement $root,
-        ilMDPathFromRoot $path
+        ilMDPathFromRoot $path,
+        array $create_signals,
+        array $update_signals,
+        array $delete_signals
     ): ilTable2GUI {
-        //  TODO implement this
         $elements = $root->getSubElementsByPath($path);
         $table =  new ilMDFullEditorTableGUI(
-            $editor,
+            $this,
             $root,
             $path
         );
         $table->init(
             $this->ui_structure,
             $this->presenter,
-            new ilMDDataGUIUtilities()
+            $this->input_provider
         );
+        $delete_buttons = [];
+        foreach ($delete_signals as $path => $signal) {
+            $delete_buttons[$path] = $this->action_provider
+                ->getShyDeleteButton(
+                    $signal,
+                    $this->factory,
+                    $this->presenter
+                );
+        }
         $table->parse(
             $this->ui_structure,
             $this->presenter,
-            new ilMDDataGUIUtilities(),
+            $this->input_provider,
+            $delete_buttons,
             $this->factory,
             $this->renderer
         );
         return $table;
     }
 
+    /**
+     * @param ilMDRootElement  $root
+     * @param ilMDPathFromRoot $path
+     * @param Signal[]         $create_signals
+     * @param Signal[]         $update_signals
+     * @param Signal[]         $delete_signals
+     * @param bool             $subpanel
+     * @return Panel
+     */
     protected function getPanel(
         ilMDRootElement $root,
         ilMDPathFromRoot $path,
+        array $create_signals,
+        array $update_signals,
+        array $delete_signals,
         bool $subpanel = false
     ): Panel {
-        // TODO add actions
         $elements = $root->getSubElementsByPath($path);
         $struct = $this->getNewUIStructure()->movePointerToEndOfPath($path);
+        $properties = $this->getPropertiesByPreview($root, $path);
+
+        //actions
+        $buttons = [];
+        if (key_exists($path->getPathAsString(), $delete_signals)) {
+            $buttons[] = $this->action_provider->getShyDeleteButton(
+                $delete_signals[$path->getPathAsString()],
+                $this->factory,
+                $this->presenter,
+                true
+            );
+        }
+        $buttons[] = $this->factory->button()->shy('add something', '#');
+        $dropdown = $this->factory->dropdown()->standard($buttons);
+
+        if ($subpanel) {
+            $tag = $struct->getTagAtPointer();
+            $repr_path = $tag?->getPathToRepresentation();
+            return $this->factory->panel()->sub(
+                $this->presenter->getElementsLabel($elements, $repr_path),
+                !empty($properties) ?
+                    $this->factory->listing()->characteristicValue()
+                                             ->text($properties) :
+                    []
+            )->withActions($dropdown);
+        }
+        return $this->factory->panel()->standard(
+            $this->presenter->getElementNameWithParents($elements[0]),
+            !empty($properties) ?
+                $this->factory->listing()->characteristicValue()
+                              ->text($properties) :
+                []
+        )->withActions($dropdown);
+    }
+
+    /**
+     * @param ilMDRootElement $root
+     * @param Signal[]        $create_signals
+     * @param Signal[]        $update_signals
+     * @param Signal[]        $delete_signals
+     * @return Panel
+     */
+    protected function getRootPanel(
+        ilMDRootElement $root,
+        array $create_signals,
+        array $update_signals,
+        array $delete_signals
+    ): Panel {
+        $subpanels = [];
+        foreach ($root->getSubElements() as $key => $el) {
+            if ($el->isScaffold()) {
+                continue;
+            }
+            $path = $this->path_factory
+                ->getPathFromRoot()
+                ->addStep($el->getName())
+                ->addMDIDFilter($el->getMDID());
+            $delete = [];
+            if (key_exists($path->getPathAsString(), $delete_signals)) {
+                $delete[$path->getPathAsString()] =
+                    $delete_signals[$path->getPathAsString()];
+            }
+            $subpanels[] = $this->getPanel(
+                $root,
+                $path,
+                $create_signals,
+                $update_signals,
+                $delete,
+                true
+            );
+        }
+        return $this->factory->panel()->standard(
+            $this->presenter->getElementName($root->getName()),
+            $subpanels
+        );
+    }
+
+    protected function getForm(
+        ilMDRootElement $root,
+        ilMDPathFromRoot $path
+    ): StandardForm {
+        $section = $this->input_provider->getInputSection(
+            $root,
+            $path,
+            $this->getNewVocabStructure(),
+            $this->factory->input()->field(),
+            $this->refinery,
+            $this->presenter,
+            $this->user,
+            $this->data
+        );
+        return $this->factory->input()->container()->form()->standard(
+            '#',
+            [$section]
+        );
+    }
+
+    /**
+     * @param ilMDRootElement  $root
+     * @param ilMDPathFromRoot $path
+     * @return string[]
+     */
+    protected function getPropertiesByPreview(
+        ilMDRootElement $root,
+        ilMDPathFromRoot $path,
+    ): array {
+        $elements = $root->getSubElementsByPath($path);
+        $struct = $this->getNewUIStructure()->movePointerToEndOfPath($path);
+
         $sub_els = [];
         foreach ($elements as $element) {
             foreach ($element->getSubElements() as $sub_el) {
@@ -275,77 +557,40 @@ class ilMDFullEditorGUI
             $properties[$el[1]] = $value;
         }
 
-        //actions
-        $dropdown = $this->factory->dropdown()->standard(
-            [
-                $this->factory->button()->shy('delete me', '#'),
-                $this->factory->button()->shy('add something', '#')
-            ]
-        );
-
-        if ($subpanel) {
-            $tag = $struct->getTagAtPointer();
-            $repr_path = $tag?->getPathToRepresentation();
-            return $this->factory->panel()->sub(
-                $this->presenter->getElementsLabel($elements, $repr_path),
-                !empty($properties) ?
-                    $this->factory->listing()->characteristicValue()
-                                             ->text($properties) :
-                    []
-            )->withActions($dropdown);
-        }
-        return $this->factory->panel()->standard(
-            $this->presenter->getElementNameWithParents($elements[0]),
-            !empty($properties) ?
-                $this->factory->listing()->characteristicValue()
-                              ->text($properties) :
-                []
-        )->withActions($dropdown);
+        return $properties;
     }
 
-    protected function getRootPanel(
-        ilMDRootElement $root
-    ): Panel {
-        $subpanels = [];
-        foreach ($root->getSubElements() as $el) {
-            if ($el->isScaffold()) {
-                continue;
-            }
-            global $DIC;
-            $DIC->logger()->root()->dump($el->getName());
-            $subpanels[] = $this->getPanel(
-                $root,
-                $this->path_factory->getPathFromRoot()
-                                   ->addStep($el->getName())
-                                   ->addMDIDFilter($el->getMDID()),
-                true
-            );
-        }
-        return $this->factory->panel()->standard(
-            $this->presenter->getElementName($root->getName()),
-            $subpanels
-        );
-    }
-
-    protected function getForm(
+    /**
+     * @param ilMDRootElement  $root
+     * @param ilMDPathFromRoot $path
+     * @return string[]
+     */
+    protected function getPropertiesByData(
         ilMDRootElement $root,
-        ilMDPathFromRoot $path
-    ): StandardForm {
-        $utilities = new ilMDDataGUIUtilities();
-        $section = $utilities->getInputSection(
-            $root,
-            $path,
-            $this->getNewVocabStructure(),
-            $this->factory->input()->field(),
-            $this->refinery,
-            $this->presenter,
-            $this->user,
-            $this->data
-        );
-        return $this->factory->input()->container()->form()->standard(
-            '#',
-            [$section]
-        );
+        ilMDPathFromRoot $path,
+    ): array {
+        $elements = $root->getSubElementsByPath($path);
+        $properties = [];
+
+        if (empty($properties)) {
+            $data_els = $this->input_provider->getDataElements(
+                $elements[0],
+                $this->getNewUIStructure()
+            );
+            foreach ($data_els as $data_el) {
+                if ($data_el->isScaffold()) {
+                    continue;
+                }
+                $title = $this->presenter->getElementNameWithParents(
+                    $data_el,
+                    false,
+                    $elements[0]->getName()
+                );
+                $descr = $this->presenter->getDataValue($data_el->getData());
+                $properties[$title] = $descr;
+            }
+        }
+        return $properties;
     }
 
     protected function getNewUIStructure(): ilMDLOMEditorGUIStructure

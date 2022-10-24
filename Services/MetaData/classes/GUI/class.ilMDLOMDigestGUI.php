@@ -219,8 +219,7 @@ class ilMDLOMDigestGUI
         }
 
         // section(s) tlt
-        // TODO add this when educational is done in the db dictionary
-        /*$tlt_sections = [];
+        $tlt_sections = [];
         foreach ($this->getTltDurationElement($root) as $dur) {
             preg_match(
                 ilMDLOMDataFactory::DURATION_REGEX,
@@ -231,7 +230,7 @@ class ilMDLOMDigestGUI
             $num = $ff
                     ->numeric('placeholder')
                     ->withAdditionalTransformation(
-                        $this->refinery->int()->isGreaterThan(0)
+                        $this->refinery->int()->isGreaterThanOrEqual(0)
                     );
             $nums = [];
             $labels = [
@@ -245,7 +244,7 @@ class ilMDLOMDigestGUI
             foreach ($labels as $key => $label) {
                 $nums[] = (clone $num)
                     ->withLabel($label)
-                    ->withValue($matches[$key + 1]);
+                    ->withValue($matches[$key + 1] ?? null);
             }
 
             $tlt_sections[] = $ff
@@ -257,7 +256,7 @@ class ilMDLOMDigestGUI
                 ->withAdditionalTransformation(
                     $this->refinery->custom()->transformation(function ($vs) {
                         if (
-                            count(array_unique($vs)) &&
+                            count(array_unique($vs)) === 1 &&
                             array_unique($vs)[0] === null
                         ) {
                             return '';
@@ -268,7 +267,12 @@ class ilMDLOMDigestGUI
                             if (isset($int)) {
                                 $r .= $int . $signifiers[$key];
                             }
-                            if ($key === 2 && count($vs) < 4) {
+                            if (
+                                $key === 2 &&
+                                !isset($vs[3]) &&
+                                !isset($vs[4]) &&
+                                !isset($vs[3])
+                            ) {
                                 return $r;
                             }
                             if ($key === 2) {
@@ -279,7 +283,7 @@ class ilMDLOMDigestGUI
                     })
                 );
         }
-        $tlts = $ff->group($tlt_sections);*/
+        $tlts = $ff->group($tlt_sections);
 
         // Assemble the form
         $sections = [
@@ -289,8 +293,7 @@ class ilMDLOMDigestGUI
         if (isset($sec_rights)) {
             $sections['rights'] = $sec_rights;
         }
-        // TODO add this when educational is done in the db dictionary
-        //$sections['tlts'] = $tlts;
+        $sections['tlts'] = $tlts;
         $form = $this->factory->input()->container()->form()->standard(
             $post_url,
             $sections
@@ -639,8 +642,7 @@ class ilMDLOMDigestGUI
         }
 
         // section(s) tlt
-        // TODO add this when educational is done in the db dictionary
-        /*$index = 0;
+        $index = 0;
         foreach ($this->getTltDurationElement($root) as $el) {
             if ($data['tlts'][$index]) {
                 $el->leaveMarkerTrail(
@@ -662,7 +664,7 @@ class ilMDLOMDigestGUI
                     $this->marker_factory->NullMarker()
                 );
             $index += 1;
-        }*/
+        }
 
         // update and delete
         $this->repo->createAndUpdateMDElements($root);

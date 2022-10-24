@@ -95,9 +95,9 @@ class ilMDEditorToolProvider extends AbstractDynamicToolProvider
         $refinery = $this->dic->refinery();
         $request_wrapper = $this->dic->http()->wrapper()->query();
         $path_to_current_element = $path_factory->getPathFromRoot();
-        if ($request_wrapper->has('node_path')) {
+        if ($request_wrapper->has(ilMDEditorGUI::MD_NODE_PATH)) {
             $current_path_string = $request_wrapper->retrieve(
-                'node_path',
+                ilMDEditorGUI::MD_NODE_PATH,
                 $refinery->kindlyTo()->string()
             );
             $path_to_current_element->setPathFromString($current_path_string);

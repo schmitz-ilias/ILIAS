@@ -62,6 +62,9 @@ class ilMDVocabulariesTagBuilder
 
     public function getTag(): ilMDVocabulariesTag
     {
-        return new ilMDVocabulariesTag($this->vocabularies);
+        return new ilMDVocabulariesTag(
+            $this->vocabularies,
+            $this->condition_path
+        );
     }
 }

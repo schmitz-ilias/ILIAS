@@ -137,7 +137,7 @@ class ilMDEditorTreeRecursion implements TreeRecursion
             $mode === ilMDLOMEditorGUIDictionary::COLLECTION_NODE &&
             is_array($record)
         ) {
-            $is_expanded = $elements === $this->current_elements;
+            $is_expanded = in_array($this->current_elements[0], $elements);
         }
         foreach ($elements as $el) {
             $is_expanded =
@@ -191,15 +191,7 @@ class ilMDEditorTreeRecursion implements TreeRecursion
         $repr_path = $tag->getPathToRepresentation();
         $preview_path = $tag->getPathToPreview();
         $elements = is_array($record) ? $record : [$record];
-
-        /*
-        * don't ever render labels and previews for direct sub-elements
-        * of root (looks cleaner).
-        */
-        if ($elements[0]->getSuperElement()?->isRoot()) {
-            $repr_path = null;
-            $preview_path = null;
-        }
+        $mode = $tag->getCollectionMode();
 
         $label = $this->presenter->getElementsLabel(
             $elements,
@@ -210,10 +202,12 @@ class ilMDEditorTreeRecursion implements TreeRecursion
             $elements,
             $preview_path
         );
-        $mode = $tag->getCollectionMode();
+
         if (
-            $mode === ilMDLOMEditorGUIDictionary::COLLECTION_NODE &&
-            is_array($record)
+            ($mode === ilMDLOMEditorGUIDictionary::COLLECTION_NODE &&
+                is_array($record)) ||
+            ($mode === ilMDLOMEditorGUIDictionary::COLLECTION_TABLE &&
+                $elements[0]->getSuperElement()?->isRoot())
         ) {
             $label = $this->presenter->getElementName(
                 $elements[0]->getName(),
@@ -226,8 +220,8 @@ class ilMDEditorTreeRecursion implements TreeRecursion
             $this->getAllSuperElements($elements[0])
         ) + 1) * self::INDENT_LENGTH;
         if (($len = strlen($label) + $indent - self::MAX_LENGTH) > 0) {
-            $value = '';
             $label = substr($label, 0, -$len - 1) . "\xe2\x80\xa6";
+            return ['label' => $label, 'value' => ''];
         }
         if (($len = $len + strlen($value)) > 0) {
             $value = substr($value, 0, -$len - 1) . "\xe2\x80\xa6";
@@ -248,12 +242,12 @@ class ilMDEditorTreeRecursion implements TreeRecursion
         }
         if (!$element->isRoot()) {
             $path->addStep($element->getName());
-            if ($mode === ilMDLOMEditorGUIDictionary::NO_COLLECTION) {
+            if ($mode !== ilMDLOMEditorGUIDictionary::COLLECTION_TABLE) {
                 $path->addMDIDFilter($element->getMDID());
             }
         }
         return $this->link->withParameter(
-            'node_path',
+            ilMDEditorGUI::MD_NODE_PATH,
             $path->getPathAsString()
         );
     }

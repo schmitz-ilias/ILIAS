@@ -27,14 +27,17 @@ class ilMDVocabulariesTag extends ilMDTag
      * @var ilMDVocabulary[]
      */
     protected array $vocabularies;
-    protected ?ilMDPathRelative $condition_path = null;
+    protected ?ilMDPathRelative $condition_path;
 
     /**
      * @param ilMDVocabulary[] $vocabularies
      */
-    public function __construct(array $vocabularies)
-    {
+    public function __construct(
+        array $vocabularies,
+        ?ilMDPathRelative $condition_path = null
+    ) {
         $this->vocabularies = $vocabularies;
+        $this->condition_path = $condition_path;
     }
 
     /**

@@ -328,11 +328,6 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
 
         $sub_elements = [];
         foreach ($structure->getSubElementsAtPointer() as $sub_name) {
-            // TODO remove after testing
-            if (in_array($sub_name, ['technical', 'educational', 'relation']) && $depth === 1) {
-                continue;
-            }
-            // TODO up to here
             if (
                 isset($path) &&
                 $depth < $path->getPathLength() &&
@@ -739,7 +734,6 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                         '';
                 }
             }
-
             if ($error = $data->getError($condition_value ?? null)) {
                 if ($throw_exception) {
                     throw new ilMDDatabaseException($error_intro . $error);
@@ -945,7 +939,6 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 ilDBConstants::T_TEXT
             ]
         );
-
         return $this->db->queryF(
             $tag->getRead(),
             $param_types,

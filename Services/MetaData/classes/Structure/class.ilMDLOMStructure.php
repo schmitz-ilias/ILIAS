@@ -119,7 +119,8 @@ class ilMDLOMStructure implements ilMDStructure
             'sub' => self::STRUCTURE_LANGSTRING
         ],
         'coverage' => [
-            'unique' => false,
+            //'unique' => false,
+            'unique' => true,
             'type' => ilMDLOMDataFactory::TYPE_NONE,
             'sub' => self::STRUCTURE_LANGSTRING
         ],
@@ -208,7 +209,8 @@ class ilMDLOMStructure implements ilMDStructure
             ]
         ],
         'metadataSchema' => [
-            'unique' => false,
+            //'unique' => false,
+            'unique' => true,
             'type' => ilMDLOMDataFactory::TYPE_STRING,
             'sub' => []
         ],
@@ -291,7 +293,8 @@ class ilMDLOMStructure implements ilMDStructure
             'sub' => self::STRUCTURE_VOCAB
         ],
         'learningResourceType' => [
-            'unique' => false,
+            //'unique' => false,
+            'unique' => true,
             'type' => ilMDLOMDataFactory::TYPE_NONE,
             'sub' => self::STRUCTURE_VOCAB
         ],
@@ -306,12 +309,14 @@ class ilMDLOMStructure implements ilMDStructure
             'sub' => self::STRUCTURE_VOCAB
         ],
         'intendedEndUserRole' => [
-            'unique' => false,
+            //'unique' => false,
+            'unique' => true,
             'type' => ilMDLOMDataFactory::TYPE_NONE,
             'sub' => self::STRUCTURE_VOCAB
         ],
         'context' => [
-            'unique' => false,
+            //'unique' => false,
+            'unique' => true,
             'type' => ilMDLOMDataFactory::TYPE_NONE,
             'sub' => self::STRUCTURE_VOCAB
         ],

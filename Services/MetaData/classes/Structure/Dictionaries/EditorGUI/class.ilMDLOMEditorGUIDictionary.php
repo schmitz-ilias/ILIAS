@@ -106,7 +106,8 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
             $structure,
             'coverage',
             ['string'],
-            true
+            //true
+            false
         );
         $this->setTagForNoRepSubElement(
             $structure,
@@ -201,7 +202,8 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
             $structure,
             'metadataSchema',
             [],
-            true
+            //true
+            false
         );
         $this->setTagForNoRepSubElement(
             $structure,
@@ -300,7 +302,8 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
             $structure,
             'learningResourceType',
             ['value'],
-            true
+            //true
+            false
         );
         $this->setTagForNoRepSubElement(
             $structure,
@@ -316,13 +319,15 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
             $structure,
             'intendedEndUserRole',
             ['value'],
-            true
+            //true
+            false
         );
         $this->setTagForNoRepSubElement(
             $structure,
             'context',
             ['value'],
-            true
+            //true
+            false
         );
         $this->setTagForNoRepSubElement(
             $structure,

@@ -308,8 +308,8 @@ class ilMDGeneral extends ilMDBase
             'general_structure' => array('text', $this->getStructure()),
             'title' => array('text', $this->getTitle()),
             'title_language' => array('text', $this->getTitleLanguageCode()),
-            //'coverage' => array('text', $this->getCoverage()),
-            //'coverage_language' => array('text', $this->getCoverageLanguageCode())
+            'coverage' => array('text', $this->getCoverage()),
+            'coverage_language' => array('text', $this->getCoverageLanguageCode())
         );
     }
 
@@ -327,8 +327,8 @@ class ilMDGeneral extends ilMDBase
                 $this->setStructure((string) $row->general_structure);
                 $this->setTitle((string) $row->title);
                 $this->setTitleLanguage(new ilMDLanguageItem($row->title_language));
-                //$this->setCoverage((string) $row->coverage);
-                //$this->setCoverageLanguage(new ilMDLanguageItem($row->coverage_language));
+                $this->setCoverage((string) $row->coverage);
+                $this->setCoverageLanguage(new ilMDLanguageItem($row->coverage_language));
             }
         }
         return true;

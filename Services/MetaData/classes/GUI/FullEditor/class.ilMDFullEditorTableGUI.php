@@ -18,6 +18,7 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+use ILIAS\UI\Component\Button\Shy as ShyButton;
 use ILIAS\UI\Renderer;
 use ILIAS\UI\Factory;
 
@@ -48,13 +49,13 @@ class ilMDFullEditorTableGUI extends ilTable2GUI
             );
         }
         $this->root = $root;
-        $this->current_elements = $root->getSubElementsByPath($cmd_path);
+        $this->current_elements = $els;
     }
 
     public function init(
         ilMDLOMStructure $structure,
         ilMDLOMPresenter $presenter,
-        ilMDDataGUIUtilities $finder
+        ilMDFullEditorInputProvider $input_provider
     ): void {
         $this->setRowTemplate(
             'tpl.full_editor_row.html',
@@ -64,8 +65,9 @@ class ilMDFullEditorTableGUI extends ilTable2GUI
             $this->current_elements[0],
             true
         ));
+        $this->setExternalSegmentation(true);
 
-        foreach ($finder->getDataElements(
+        foreach ($input_provider->getDataElements(
             $this->current_elements[0],
             $structure
         ) as $data_el) {
@@ -78,17 +80,27 @@ class ilMDFullEditorTableGUI extends ilTable2GUI
         $this->addColumn('');
     }
 
+    /**
+     * @param ilMDLOMStructure            $structure
+     * @param ilMDLOMPresenter            $presenter
+     * @param ilMDFullEditorInputProvider $input_provider
+     * @param ShyButton[]                 $delete_buttons
+     * @param Factory                     $factory
+     * @param Renderer                    $renderer
+     * @return void
+     */
     public function parse(
         ilMDLOMStructure $structure,
         ilMDLOMPresenter $presenter,
-        ilMDDataGUIUtilities $finder,
+        ilMDFullEditorInputProvider $input_provider,
+        array $delete_buttons,
         Factory $factory,
         Renderer $renderer
     ): void {
         $data = [];
         foreach ($this->current_elements as $element) {
             $res = [];
-            foreach ($finder->getDataElements(
+            foreach ($input_provider->getDataElements(
                 $element,
                 $structure
             ) as $data_el) {
@@ -96,10 +108,12 @@ class ilMDFullEditorTableGUI extends ilTable2GUI
                     '' :
                     $presenter->getDataValue($data_el->getData());
             }
+            $appended_path = (clone $this->cmd_path)
+                ->addMDIDFilter($element->getMDID());
             $dropdown = $factory->dropdown()->standard(
                 [
-                    $factory->button()->shy('edit', '#'),
-                    $factory->button()->shy('delete', '#')
+                    $delete_buttons[$appended_path->getPathAsString()],
+                    $factory->button()->shy('edit', '#')
                 ]
             );
             $res['dropdown'] = $renderer->render($dropdown);
