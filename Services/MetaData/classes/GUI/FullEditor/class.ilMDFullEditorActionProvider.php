@@ -32,6 +32,9 @@ class ilMDFullEditorActionProvider
 {
     public const MAX_MODAL_CHARS = 150;
 
+    /**
+     * These constants correspond to method names in the ilMDFullEditorGUI.
+     */
     public const CREATE = 'fullEditorCreate';
     public const UPDATE = 'fullEditorUpdate';
     public const DELETE = 'fullEditorDelete';
@@ -163,5 +166,35 @@ class ilMDFullEditorActionProvider
                 'cmd',
                 $action_cmd
             );
+    }
+
+    public function isElementDeletable(
+        ilMDRootElement $root,
+        ilMDLOMEditorGUIQuirkStructure $quirk_structure,
+        ilMDPathFromRoot $path_to_element
+    ): bool {
+        // remove all filters from the path
+        $clean_path = clone $path_to_element;
+        $steps = [];
+        while (!$clean_path->isAtStart()) {
+            array_unshift($steps, $clean_path->getStep());
+            $clean_path->removeLastStep();
+        }
+        foreach ($steps as $step) {
+            $clean_path->addStep($step);
+        }
+
+        // find the index
+        $element = $root->getSubElementsByPath($path_to_element)[0];
+        $index = 1 + array_search(
+            $element,
+            $root->getSubElementsByPath($clean_path)
+        );
+
+        $indices_not_deletable = $quirk_structure
+            ->movePointerToEndOfPath($path_to_element)
+            ->getTagAtPointer()
+            ?->getIndicesNotDeletable() ?? [];
+        return !in_array($index, $indices_not_deletable);
     }
 }

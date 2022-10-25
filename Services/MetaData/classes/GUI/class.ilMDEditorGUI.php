@@ -41,7 +41,6 @@ class ilMDEditorGUI
     public const MD_LINK = 'md_link';
     public const MD_NODE_PATH = 'node_path';
     public const MD_ACTION_PATH = 'action_path';
-    public const MD_ACTION = 'md_action';
 
     protected ilCtrl $ctrl;
     protected ilLanguage $lng;
@@ -153,45 +152,14 @@ class ilMDEditorGUI
 
     public function debug(): bool
     {
-        //$xml_writer = new ilMD2XML($this->md_obj->getRBACId(), $this->md_obj->getObjId(), $this->md_obj->getObjType());
-        //$xml_writer->startExport();
+        $xml_writer = new ilMD2XML($this->md_obj->getRBACId(), $this->md_obj->getObjId(), $this->md_obj->getObjType());
+        $xml_writer->startExport();
 
-        //$this->tpl->addBlockFile('ADM_CONTENT', 'adm_content', 'tpl.md_editor.html', 'Services/MetaData');
+        $this->tpl->addBlockFile('ADM_CONTENT', 'adm_content', 'tpl.md_editor.html', 'Services/MetaData');
 
         $button = $this->renderButtonToFullEditor();
 
-        //$this->tpl->setVariable("MD_CONTENT", htmlentities($xml_writer->getXML()));
-
-        /**
-         * testing the new repo
-         */
-        global $DIC;
-        $data_factory = new ilMDLOMDataFactory($DIC->refinery());
-        $marker_factory = new ilMDMarkerFactory($data_factory);
-        $path = new ilMDPathFromRoot();
-        $path->addStep('lifeCycle')->addStep('contribute')->addStep('entity');
-        $string = '';
-        /*$array = $repo->getMDOnPath($path);
-        foreach ($array as $element) {
-            foreach ($element->getSubElements() as $subElement) {
-                $string .= $subElement->getName() . ': ' . $subElement->getData()->getValue() . ', ';
-            }
-        }*/
-        $root = $this->repo->getMD();
-        foreach ($root->getSubElementsByPath($path, $this->repo) as $i => $element) {
-            if (empty($roles = $element
-                ->getSuperElement()
-                ->getSubElements('role')
-            )) {
-                continue;
-            }
-            $string .= '(' . $i . ') ' . $element->getName() . ': ' . $element->getData()->getValue() . ', ';
-        }
-        $this->tpl->setContent($button . '</p>' . $string);
-        /**
-         * end of testing the new repo
-         */
-
+        $this->tpl->setVariable("MD_CONTENT", htmlentities($xml_writer->getXML()));
         return true;
     }
 
@@ -983,20 +951,84 @@ class ilMDEditorGUI
         }
     }
 
+    protected function fullEditorCreate(): void
+    {
+    }
+
+    protected function fullEditorUpdate(): void
+    {
+    }
+
+    protected function fullEditorDelete(): void
+    {
+        // get the MD
+        $root = $this->repo->getMD();
+
+        // get the paths from the http request
+        $request_wrapper = $this->http->wrapper()->query();
+        $node_path = $this->path_factory->getPathFromRoot();
+        if ($request_wrapper->has(self::MD_NODE_PATH)) {
+            $current_path_string = $request_wrapper->retrieve(
+                self::MD_NODE_PATH,
+                $this->refinery->kindlyTo()->string()
+            );
+            $node_path->setPathFromString($current_path_string);
+        }
+        $delete_path = $this->path_factory->getPathFromRoot();
+        if ($request_wrapper->has(self::MD_ACTION_PATH)) {
+            $current_path_string = $request_wrapper->retrieve(
+                self::MD_ACTION_PATH,
+                $this->refinery->kindlyTo()->string()
+            );
+            $delete_path->setPathFromString($current_path_string);
+        }
+
+        // delete
+        $els = $root->getSubElementsByPath($delete_path);
+        if (count($els = $root->getSubElementsByPath($delete_path)) < 1) {
+            throw new ilMDGUIException(
+                'The path to the to be deleted' .
+                ' element does not lead to an element.'
+            );
+        }
+        if (count($els = $root->getSubElementsByPath($delete_path)) > 1) {
+            throw new ilMDGUIException(
+                'The path to the to be deleted' .
+                ' element leads to multiple element.'
+            );
+        }
+        $els[0]->leaveMarkerTrail(
+            $this->marker_factory->NullMarker(),
+            $this->marker_factory->NullMarker()
+        );
+        $this->repo->deleteMDElements($root);
+
+        // call listeners
+        $this->callListenersFullEditor($delete_path);
+
+        // trim the node path if it leads only to the deleted element
+        $node_els = $root->getSubElementsByPath($node_path);
+        if (count($node_els) == 1 && $node_els[0] == $els[0]) {
+            $node_path->removeLastStep();
+        }
+
+        // redirect back to the full editor
+        $this->tpl->setOnScreenMessage(
+            'success',
+            $this->lng->txt('element_deleted_successfully'),
+            true
+        );
+        $this->ctrl->setParameter(
+            $this,
+            self::MD_NODE_PATH,
+            $node_path->getPathAsString()
+        );
+        $this->ctrl->redirect($this, 'fullEditor');
+    }
+
     protected function fullEditor(): void
     {
-        // sort out the tabs
-        $this->tabs_gui->clearSubTabs();
-        foreach ($this->tabs_gui->target as $tab) {
-            if (($tab['id'] ?? null) !== $this->tabs_gui->getActiveTab()) {
-                $this->tabs_gui->removeTab($tab['id']);
-            }
-        }
-        $this->tabs_gui->removeNonTabbedLinks();
-        $this->tabs_gui->setBackTarget(
-            $this->lng->txt('back'),
-            $this->ctrl->getLinkTarget($this, 'listSection')
-        );
+        $this->setTabsForFullEditor();
 
         // get the MD
         $root = $this->repo->getMD();
@@ -1058,6 +1090,63 @@ class ilMDEditorGUI
                 array_merge([$content], $delete_modals)
             )
         );
+    }
+
+    protected function setTabsForFullEditor(): void
+    {
+        $this->tabs_gui->clearSubTabs();
+        foreach ($this->tabs_gui->target as $tab) {
+            if (($tab['id'] ?? null) !== $this->tabs_gui->getActiveTab()) {
+                $this->tabs_gui->removeTab($tab['id']);
+            }
+        }
+        $this->tabs_gui->removeNonTabbedLinks();
+        $this->tabs_gui->setBackTarget(
+            $this->lng->txt('back'),
+            $this->ctrl->getLinkTarget($this, 'listSection')
+        );
+    }
+
+    protected function callListenersFullEditor(
+        ilMDPathFromRoot $action_path
+    ): void {
+        switch ($action_path->getStep(1)) {
+            case 'general':
+                $this->callListeners('General');
+                break;
+
+            case 'lifeCycle':
+                $this->callListeners('Lifecycle');
+                break;
+
+            case 'metaMetadata':
+                $this->callListeners('MetaMetaData');
+                break;
+
+            case 'technical':
+                $this->callListeners('Technical');
+                break;
+
+            case 'educational':
+                $this->callListeners('Educational');
+                break;
+
+            case 'rights':
+                $this->callListeners('Rights');
+                break;
+
+            case 'relation':
+                $this->callListeners('Relation');
+                break;
+
+            case 'annotation':
+                $this->callListeners('Annotation');
+                break;
+
+            case 'classification':
+                $this->callListeners('Classification');
+                break;
+        }
     }
 
     protected function renderButtonToFullEditor(): string

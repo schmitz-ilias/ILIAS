@@ -84,11 +84,11 @@ class ilMDFullEditorInputProvider
     public function getInputSection(
         ilMDRootElement $root,
         ilMDPathFromRoot $path,
-        ilMDLOMVocabulariesStructure $structure,
+        ilMDLOMVocabulariesStructure $vocab_structure,
+        ilMDLOMEditorGUIQuirkStructure $quirk_structure,
         Factory $factory,
         Refinery $refinery,
         ilMDLOMPresenter $presenter,
-        ilObjUser $user,
         DataFactory $data
     ): Section {
         if (empty($els = $root->getSubElementsByPath($path))) {
@@ -104,7 +104,7 @@ class ilMDFullEditorInputProvider
             );
         }
         $element = $els[0];
-        $data_els = $this->getDataElements($element, $structure);
+        $data_els = $this->getDataElements($element, $vocab_structure);
         $inputs = [];
         foreach ($data_els as $data_el) {
             $post_path = $this->appendPath(
@@ -116,11 +116,15 @@ class ilMDFullEditorInputProvider
                 $element,
                 $path,
                 $data_el,
-                $structure,
+                $this->getIndexOfElement(
+                    $root,
+                    $post_path
+                ),
+                $vocab_structure,
+                $quirk_structure,
                 $factory,
                 $refinery,
                 $presenter,
-                $user,
                 $data
             );
         }
@@ -136,6 +140,29 @@ class ilMDFullEditorInputProvider
                     }
                 }
             })
+        );
+    }
+
+    protected function getIndexOfElement(
+        ilMDRootElement $root,
+        ilMDPathFromRoot $path_to_element
+    ): int {
+        // remove all filters from the path
+        $clean_path = clone $path_to_element;
+        $steps = [];
+        while (!$clean_path->isAtStart()) {
+            array_unshift($steps, $clean_path->getStep());
+            $clean_path->removeLastStep();
+        }
+        foreach ($steps as $step) {
+            $clean_path->addStep($step);
+        }
+
+        // find the index
+        $element = $root->getSubElementsByPath($path_to_element)[0];
+        return 1 + array_search(
+            $element,
+            $root->getSubElementsByPath($clean_path)
         );
     }
 
@@ -176,6 +203,30 @@ class ilMDFullEditorInputProvider
         ilMDBaseElement $element,
         ilMDLOMVocabulariesStructure $structure,
     ): ?ilMDVocabulariesTag {
+        /** @var $tag ?ilMDVocabulariesTag */
+        $tag = $this->getElementTagFromStructure(
+            $element,
+            $structure
+        );
+        return $tag;
+    }
+
+    protected function getElementQuirkTagFromStructure(
+        ilMDBaseElement $element,
+        ilMDLOMEditorGUIQuirkStructure $structure,
+    ): ?ilMDEditorGUIQuirkTag {
+        /** @var $tag ?ilMDEditorGUIQuirkTag */
+        $tag = $this->getElementTagFromStructure(
+            $element,
+            $structure
+        );
+        return $tag;
+    }
+
+    protected function getElementTagFromStructure(
+        ilMDBaseElement $element,
+        ilMDLOMStructure $structure,
+    ): ?ilMDTag {
         $name_path = [];
         while (!($element instanceof ilMDRootElement)) {
             array_unshift($name_path, $element->getName());
@@ -192,16 +243,21 @@ class ilMDFullEditorInputProvider
         ilMDBaseElement $element,
         ilMDPathFromRoot $path,
         ilMDBaseElement $current_element,
-        ilMDLOMVocabulariesStructure $structure,
+        int $current_index,
+        ilMDLOMVocabulariesStructure $vocab_structure,
+        ilMDLOMEditorGUIQuirkStructure $quirk_structure,
         Factory $factory,
         Refinery $refinery,
         ilMDLOMPresenter $presenter,
-        ilObjUser $user,
         DataFactory $data
     ): FormInput {
         $type = $this->getElementDataTypeFromStructure(
             $current_element,
-            $structure
+            $vocab_structure
+        );
+        $quirk_tag = $this->getElementQuirkTagFromStructure(
+            $current_element,
+            $quirk_structure
         );
 
         switch ($type) {
@@ -211,8 +267,7 @@ class ilMDFullEditorInputProvider
                 );
 
             case ilMDLOMDataFactory::TYPE_STRING:
-                if ($current_element->getSuperElement()
-                                    ->getName() === 'description') {
+                if ($quirk_tag?->isLongInput()) {
                     $res = $factory->textarea('placeholder');
                 } else {
                     $res = $factory->text('placeholder');
@@ -232,7 +287,7 @@ class ilMDFullEditorInputProvider
             case ilMDLOMDataFactory::TYPE_VOCAB_VALUE:
                 $tag = $this->getElementVocabTagFromStructure(
                     $current_element,
-                    $structure
+                    $vocab_structure
                 );
                 if ($tag->getConditionPath()) {
                     $selects = [];
@@ -267,7 +322,7 @@ class ilMDFullEditorInputProvider
                     )->getPathAsString();
                     $cond_tag = $this->getElementVocabTagFromStructure(
                         $cond_el,
-                        $structure
+                        $vocab_structure
                     );
                     $vocab = $cond_tag->getVocabularies()[0];
                     $groups = [];
@@ -369,7 +424,7 @@ class ilMDFullEditorInputProvider
                 );
         }
 
-        return $res
+        $res = $res
             ->withValue(
                 $current_element->isScaffold() ?
                     '' : $this->getDataValueForInput(
@@ -384,6 +439,21 @@ class ilMDFullEditorInputProvider
                     $element->getName()
                 )
             );
+
+        $presets = $quirk_tag?->getPresetValues() ?? [];
+        if (key_exists($current_index, $presets)) {
+            $res = $res->withValue($presets[$current_index]);
+        }
+        $not_deletables = $quirk_tag?->getIndicesNotDeletable() ?? [];
+        if (in_array($current_index, $not_deletables)) {
+            $res = $res->withRequired(true);
+        }
+        $not_editables = $quirk_tag?->getIndicesNotEditable() ?? [];
+        if (in_array($current_index, $not_editables)) {
+            $res = $res->withDisabled(true);
+        }
+
+        return $res;
     }
 
     /**

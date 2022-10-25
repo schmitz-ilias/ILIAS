@@ -47,8 +47,9 @@ class ilMDLOMLibrary
         return clone $this->structure;
     }
 
-    public function getLOMDatabaseDictionary(ilDBInterface $db): ilMDLOMDatabaseDictionary
-    {
+    public function getLOMDatabaseDictionary(
+        ilDBInterface $db
+    ): ilMDLOMDatabaseDictionary {
         return new ilMDLOMDatabaseDictionary($this->factory, $db);
     }
 
@@ -68,5 +69,10 @@ class ilMDLOMLibrary
             $this->factory,
             $path_factory
         );
+    }
+
+    public function getLOMEditorGUIQuirkDictionary(): ilMDLOMEditorGUIQuirkDictionary
+    {
+        return new ilMDLOMEditorGUIQuirkDictionary($this->factory);
     }
 }

@@ -6,6 +6,13 @@ Check the performance of the repository, as a lot of cloning of
 structures is happening there. An easy first step towards improving
 performance should be unsetting the clones when appropriate.
 
+### Metadata Schema
+
+Check whether renaming the currently incorrect preset schema
+'LOM v 1.0' can be replaced with the correct 'LOMv1.0'. From
+a quick search for the old value it seems to be in use in a few 
+places.
+
 ### Location Type
 
 Check whether the field 'location_type' in the table 

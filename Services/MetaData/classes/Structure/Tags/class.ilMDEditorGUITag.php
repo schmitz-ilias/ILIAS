@@ -18,9 +18,6 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-use ILIAS\UI\Component\Component;
-use ILIAS\UI\Factory;
-
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
@@ -28,15 +25,19 @@ class ilMDEditorGUITag extends ilMDTag
 {
     protected ?ilMDPathRelative $path_to_representation;
     protected ?ilMDPathRelative $path_to_preview;
-    protected string $collection_mode = ilMDLOMEditorGUIDictionary::NO_COLLECTION;
-    protected bool $in_tree = true;
+    protected string $collection_mode;
+    protected bool $in_tree;
 
     public function __construct(
-        ?ilMDPathRelative $path_to_preview = null,
-        ?ilMDPathRelative $path_to_representation = null
+        ?ilMDPathRelative $path_to_preview,
+        ?ilMDPathRelative $path_to_representation,
+        string $collection_mode,
+        bool $in_tree
     ) {
         $this->path_to_preview = $path_to_preview;
         $this->path_to_representation = $path_to_representation;
+        $this->collection_mode = $collection_mode;
+        $this->in_tree = $in_tree;
     }
 
     public function getPathToRepresentation(): ?ilMDPathRelative
@@ -49,13 +50,6 @@ class ilMDEditorGUITag extends ilMDTag
         return $this->path_to_preview;
     }
 
-    public function withCollectionMode(
-        string $collection_mode
-    ): ilMDEditorGUITag {
-        $this->collection_mode = $collection_mode;
-        return $this;
-    }
-
     public function getCollectionMode(): string
     {
         return $this->collection_mode;
@@ -64,11 +58,5 @@ class ilMDEditorGUITag extends ilMDTag
     public function isInTree(): bool
     {
         return $this->in_tree;
-    }
-
-    public function withInTree(bool $in_tree): ilMDEditorGUITag
-    {
-        $this->in_tree = $in_tree;
-        return $this;
     }
 }

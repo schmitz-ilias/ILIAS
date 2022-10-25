@@ -53,7 +53,7 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
     protected function initStructureWithTags(): ilMDLOMEditorGUIStructure
     {
         $structure = new ilMDLOMEditorGUIStructure();
-        $structure->setTagAtPointer($this->getTag());
+        $structure->setTagAtPointer($this->getTagBuilder()->getTag());
         $this->setTagsForGeneral($structure);
         $this->setTagsForLifecycle($structure);
         $this->setTagsForMetaMetadata($structure);
@@ -72,7 +72,7 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
     ): ilMDLOMEditorGUIStructure {
         $structure
             ->movePointerToSubElement('general')
-            ->setTagAtPointer($this->getTag());
+            ->setTagAtPointer($this->getTagBuilder()->getTag());
         $this->setTagForNoRepSubElement(
             $structure,
             'identifier',
@@ -127,7 +127,7 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
     ): ilMDLOMEditorGUIStructure {
         $structure
             ->movePointerToSubElement('lifeCycle')
-            ->setTagAtPointer($this->getTag());
+            ->setTagAtPointer($this->getTagBuilder()->getTag());
         $this->setTagForNoRepSubElement(
             $structure,
             'version',
@@ -140,10 +140,17 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
         );
         $structure
             ->movePointerToSubElement('contribute')
-            ->setTagAtPointer($this->getTag(
-                $this->getRelativePath('contribute', ['entity']),
-                $this->getRelativePath('contribute', ['role', 'value'])
-            ));
+            ->setTagAtPointer(
+                $this
+                    ->getTagBuilder()
+                    ->setPathToPreview(
+                        $this->getRelativePath('contribute', ['entity'])
+                    )
+                    ->setPathToRepresentation(
+                        $this->getRelativePath('contribute', ['role', 'value'])
+                    )
+                    ->getTag()
+            );
         $this->setTagForNoRepSubElement(
             $structure,
             'role',
@@ -168,7 +175,7 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
     ): ilMDLOMEditorGUIStructure {
         $structure
             ->movePointerToSubElement('metaMetadata')
-            ->setTagAtPointer($this->getTag());
+            ->setTagAtPointer($this->getTagBuilder()->getTag());
         $this->setTagForNoRepSubElement(
             $structure,
             'identifier',
@@ -177,10 +184,17 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
         );
         $structure
             ->movePointerToSubElement('contribute')
-            ->setTagAtPointer($this->getTag(
-                $this->getRelativePath('contribute', ['entity']),
-                $this->getRelativePath('contribute', ['role', 'value'])
-            ));
+            ->setTagAtPointer(
+                $this
+                    ->getTagBuilder()
+                    ->setPathToPreview(
+                        $this->getRelativePath('contribute', ['entity'])
+                    )
+                    ->setPathToRepresentation(
+                        $this->getRelativePath('contribute', ['role', 'value'])
+                    )
+                    ->getTag()
+            );
         $this->setTagForNoRepSubElement(
             $structure,
             'role',
@@ -218,7 +232,7 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
     ): ilMDLOMEditorGUIStructure {
         $structure
             ->movePointerToSubElement('technical')
-            ->setTagAtPointer($this->getTag());
+            ->setTagAtPointer($this->getTagBuilder()->getTag());
         $this->setTagForNoRepSubElement(
             $structure,
             'format',
@@ -238,21 +252,37 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
         );
         $structure
             ->movePointerToSubElement('requirement')
-            ->setTagAtPointer($this->getTag(
-                $this->getRelativePath(
-                    'requirement',
-                    ['orComposite', 'name', 'value']
-                )
-            ))
+            ->setTagAtPointer(
+                $this
+                    ->getTagBuilder()
+                    ->setPathToPreview(
+                        $this->getRelativePath(
+                            'requirement',
+                            ['orComposite', 'name', 'value']
+                        )
+                    )
+                    ->getTag()
+            )
             ->movePointerToSubElement('orComposite')
             ->setTagAtPointer(
-                $this->getTag(
-                    $this->getRelativePath('orComposite', ['name', 'value']),
-                    $this->getRelativePath('orComposite', ['type', 'value'])
-                )
-                ->withCollectionMode(
-                    ilMDLOMEditorGUIDictionary::COLLECTION_TABLE
-                )
+                $this
+                    ->getTagBuilder()
+                    ->setPathToPreview(
+                        $this->getRelativePath(
+                            'orComposite',
+                            ['name', 'value']
+                        )
+                    )
+                    ->setPathToRepresentation(
+                        $this->getRelativePath(
+                            'orComposite',
+                            ['type', 'value']
+                        )
+                    )
+                    ->setCollectionMode(
+                        ilMDLOMEditorGUIDictionary::COLLECTION_TABLE
+                    )
+                    ->getTag()
             )
             ->movePointerToSuperElement()
             ->movePointerToSuperElement();
@@ -280,18 +310,24 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
         $structure
             ->movePointerToSubElement('educational')
             ->setTagAtPointer(
-                $this->getTag(
-                    $this->getRelativePath(
-                        'educational',
-                        ['typicalLearningTime', 'duration']
-                    ),
-                    $this->getRelativePath(
-                        'educational',
-                        ['interactivityType', 'value']
+                $this
+                    ->getTagBuilder()
+                    ->setPathToPreview(
+                        $this->getRelativePath(
+                            'educational',
+                            ['typicalLearningTime', 'duration']
+                        )
                     )
-                )->withCollectionMode(
-                    ilMDLOMEditorGUIDictionary::COLLECTION_NODE
-                )
+                    ->setPathToRepresentation(
+                        $this->getRelativePath(
+                            'educational',
+                            ['interactivityType', 'value']
+                        )
+                    )
+                    ->setCollectionMode(
+                        ilMDLOMEditorGUIDictionary::COLLECTION_NODE
+                    )
+                    ->getTag()
             );
         $this->setTagForNoRepSubElement(
             $structure,
@@ -365,7 +401,7 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
     ): ilMDLOMEditorGUIStructure {
         $structure
             ->movePointerToSubElement('rights')
-            ->setTagAtPointer($this->getTag());
+            ->setTagAtPointer($this->getTagBuilder()->getTag());
         $this->setTagForNoRepSubElement(
             $structure,
             'cost',
@@ -396,15 +432,21 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
         $structure
             ->movePointerToSubElement('relation')
             ->setTagAtPointer(
-                $this->getTag(
-                    $this->getRelativePath(
-                        'relation',
-                        ['resource', 'identifier', 'entry']
-                    ),
-                    $this->getRelativePath('relation', ['kind', 'value'])
-                )->withCollectionMode(
-                    ilMDLOMEditorGUIDictionary::COLLECTION_NODE
-                )
+                $this
+                    ->getTagBuilder()
+                    ->setPathToPreview(
+                        $this->getRelativePath(
+                            'relation',
+                            ['resource', 'identifier', 'entry']
+                        )
+                    )
+                    ->setPathToRepresentation(
+                        $this->getRelativePath('relation', ['kind', 'value'])
+                    )
+                    ->setCollectionMode(
+                        ilMDLOMEditorGUIDictionary::COLLECTION_NODE
+                    )
+                    ->getTag()
             );
         $this->setTagForNoRepSubElement(
             $structure,
@@ -413,9 +455,17 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
         );
         $structure
             ->movePointerToSubElement('resource')
-            ->setTagAtPointer($this->getTag(
-                $this->getRelativePath('resource', ['identifier', 'entry'])
-            ));
+            ->setTagAtPointer(
+                $this
+                    ->getTagBuilder()
+                    ->setPathToPreview(
+                        $this->getRelativePath(
+                            'resource',
+                            ['identifier', 'entry']
+                        )
+                    )
+                    ->getTag()
+            );
         $this->setTagForNoRepSubElement(
             $structure,
             'identifier',
@@ -437,15 +487,21 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
         $structure
             ->movePointerToSubElement('annotation')
             ->setTagAtPointer(
-                $this->getTag(
-                    $this->getRelativePath(
-                        'annotation',
-                        ['description', 'string']
-                    ),
-                    $this->getRelativePath('annotation', ['entity'])
-                )->withCollectionMode(
-                    ilMDLOMEditorGUIDictionary::COLLECTION_TABLE
-                )
+                $this
+                    ->getTagBuilder()
+                    ->setPathToPreview(
+                        $this->getRelativePath(
+                            'annotation',
+                            ['description', 'string']
+                        )
+                    )
+                    ->setPathToRepresentation(
+                        $this->getRelativePath('annotation', ['entity'])
+                    )
+                    ->setCollectionMode(
+                        ilMDLOMEditorGUIDictionary::COLLECTION_TABLE
+                    )
+                    ->getTag()
             );
         $this->setTagForNoRepSubElement(
             $structure,
@@ -477,15 +533,24 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
         $structure
             ->movePointerToSubElement('classification')
             ->setTagAtPointer(
-                $this->getTag(
-                    $this->getRelativePath(
-                        'classification',
-                        ['taxonPath', 'taxon', 'entry', 'string']
-                    ),
-                    $this->getRelativePath('classification', ['purpose', 'value'])
-                )->withCollectionMode(
-                    ilMDLOMEditorGUIDictionary::COLLECTION_NODE
-                )
+                $this
+                    ->getTagBuilder()
+                    ->setPathToPreview(
+                        $this->getRelativePath(
+                            'classification',
+                            ['taxonPath', 'taxon', 'entry', 'string']
+                        )
+                    )
+                    ->setPathToRepresentation(
+                        $this->getRelativePath(
+                            'classification',
+                            ['purpose', 'value']
+                        )
+                    )
+                    ->setCollectionMode(
+                        ilMDLOMEditorGUIDictionary::COLLECTION_NODE
+                    )
+                    ->getTag()
             );
         $this->setTagForNoRepSubElement(
             $structure,
@@ -494,13 +559,20 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
         );
         $structure
             ->movePointerToSubElement('taxonPath')
-            ->setTagAtPointer($this->getTag(
-                $this->getRelativePath('taxonPath', ['source', 'string']),
-                $this->getRelativePath(
-                    'taxonPath',
-                    ['taxon', 'entry', 'string']
-                )
-            ));
+            ->setTagAtPointer(
+                $this
+                    ->getTagBuilder()
+                    ->setPathToPreview(
+                        $this->getRelativePath('taxonPath', ['source', 'string'])
+                    )
+                    ->setPathToRepresentation(
+                        $this->getRelativePath(
+                            'taxonPath',
+                            ['taxon', 'entry', 'string']
+                        )
+                    )
+                    ->getTag()
+            );
         $this->setTagForNoRepSubElement(
             $structure,
             'source',
@@ -546,15 +618,18 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
         return $structure
             ->movePointerToSubElement($name)
             ->setTagAtPointer(
-                $this->getTag(
-                    $this->getRelativePath($name, $steps_to_preview)
-                )
-                ->withCollectionMode(
-                    $collected_as_table ?
-                        ilMDLOMEditorGUIDictionary::COLLECTION_TABLE :
-                        ilMDLOMEditorGUIDictionary::NO_COLLECTION
-                )
-                ->withInTree($in_tree)
+                $this
+                    ->getTagBuilder()
+                    ->setPathToPreview(
+                        $this->getRelativePath($name, $steps_to_preview)
+                    )
+                    ->setCollectionMode(
+                        $collected_as_table ?
+                            ilMDLOMEditorGUIDictionary::COLLECTION_TABLE :
+                            ilMDLOMEditorGUIDictionary::NO_COLLECTION
+                    )
+                    ->setInTree($in_tree)
+                    ->getTag()
             )
             ->movePointerToSuperElement();
     }
@@ -575,14 +650,8 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
         return $path;
     }
 
-    protected function getTag(
-        ?ilMDPathRelative $path_to_preview = null,
-        ?ilMDPathRelative $path_to_representation = null
-    ): ilMDEditorGUITag {
-        return $this->tag_factory
-            ->editorGUITag(
-                $path_to_preview,
-                $path_to_representation
-            );
+    protected function getTagBuilder(): ilMDEditorGUITagBuilder
+    {
+        return $this->tag_factory->editorGUITag();
     }
 }

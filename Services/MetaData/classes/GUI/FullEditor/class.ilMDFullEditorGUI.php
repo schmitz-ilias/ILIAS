@@ -48,8 +48,9 @@ class ilMDFullEditorGUI
     protected Renderer $renderer;
     protected Refinery $refinery;
     protected ilLanguage $lng;
-    protected ilMDLOMEditorGUIStructure $ui_structure;
-    protected ilMDLOMVocabulariesStructure $vocab_structure;
+    protected ilMDLOMEditorGUIDictionary $ui_dict;
+    protected ilMDLOMVocabulariesDictionary $vocab_dict;
+    protected ilMDLOMEditorGUIQuirkDictionary $quirk_dict;
     protected ilMDLOMPresenter $presenter;
     protected Data $data;
     protected ilObjUser $user;
@@ -81,10 +82,13 @@ class ilMDFullEditorGUI
         $this->refinery = $refinery;
         $this->lng = $lng;
         $this->lng->loadLanguageModule('meta');
-        $this->ui_structure = $library->getLOMEditorGUIDictionary($path_factory)
-                                      ->getStructureWithTags();
-        $this->vocab_structure = $library->getLOMVocabulariesDictionary($path_factory)
-                                         ->getStructureWithTags();
+        $this->ui_dict = $library->getLOMEditorGUIDictionary(
+            $this->path_factory
+        );
+        $this->vocab_dict = $library->getLOMVocabulariesDictionary(
+            $this->path_factory
+        );
+        $this->quirk_dict = $library->getLOMEditorGUIQuirkDictionary();
         $this->presenter = $presenter;
         $this->data = $data;
         $this->user = $user;
@@ -184,6 +188,13 @@ class ilMDFullEditorGUI
     ): array {
         switch ($this->decideContentType($root, $path)) {
             case self::PANEL:
+                if (!$this->action_provider->isElementDeletable(
+                    $root,
+                    $this->getNewUIQuirkStructure(),
+                    $path
+                )) {
+                    return [];
+                }
                 return [$path->getPathAsString() => $this->action_provider
                     ->getDeleteModal(
                         $this->factory,
@@ -197,6 +208,13 @@ class ilMDFullEditorGUI
                 ];
 
             case self::FORM:
+                if (!$this->action_provider->isElementDeletable(
+                    $root,
+                    $this->getNewUIQuirkStructure(),
+                    $path
+                )) {
+                    return [];
+                }
                 return [$path->getPathAsString() => $this->action_provider
                             ->getDeleteModal(
                                 $this->factory,
@@ -218,6 +236,13 @@ class ilMDFullEditorGUI
                     }
                     $appended_path = (clone $path)
                         ->addMDIDFilter($element->getMDID());
+                    if (!$this->action_provider->isElementDeletable(
+                        $root,
+                        $this->getNewUIQuirkStructure(),
+                        $appended_path
+                    )) {
+                        continue;
+                    }
                     $modals[$appended_path->getPathAsString()]
                         = $this->action_provider->getDeleteModal(
                             $this->factory,
@@ -240,6 +265,13 @@ class ilMDFullEditorGUI
                     $appended_path = (clone $path)
                         ->addStep($element->getName())
                         ->addMDIDFilter($element->getMDID());
+                    if (!$this->action_provider->isElementDeletable(
+                        $root,
+                        $this->getNewUIQuirkStructure(),
+                        $appended_path
+                    )) {
+                        continue;
+                    }
                     $modals[$appended_path->getPathAsString()] =
                         $this->action_provider->getDeleteModal(
                             $this->factory,
@@ -366,7 +398,7 @@ class ilMDFullEditorGUI
             $path
         );
         $table->init(
-            $this->ui_structure,
+            $this->getNewUIStructure(),
             $this->presenter,
             $this->input_provider
         );
@@ -380,7 +412,7 @@ class ilMDFullEditorGUI
                 );
         }
         $table->parse(
-            $this->ui_structure,
+            $this->getNewUIStructure(),
             $this->presenter,
             $this->input_provider,
             $delete_buttons,
@@ -494,10 +526,10 @@ class ilMDFullEditorGUI
             $root,
             $path,
             $this->getNewVocabStructure(),
+            $this->getNewUIQuirkStructure(),
             $this->factory->input()->field(),
             $this->refinery,
             $this->presenter,
-            $this->user,
             $this->data
         );
         return $this->factory->input()->container()->form()->standard(
@@ -595,11 +627,16 @@ class ilMDFullEditorGUI
 
     protected function getNewUIStructure(): ilMDLOMEditorGUIStructure
     {
-        return clone $this->ui_structure;
+        return $this->ui_dict->getStructureWithTags();
     }
 
     protected function getNewVocabStructure(): ilMDLOMVocabulariesStructure
     {
-        return clone $this->vocab_structure;
+        return clone $this->vocab_dict->getStructureWithTags();
+    }
+
+    protected function getNewUIQuirkStructure(): ilMDLOMEditorGUIQuirkStructure
+    {
+        return $this->quirk_dict->getStructureWithTags();
     }
 }

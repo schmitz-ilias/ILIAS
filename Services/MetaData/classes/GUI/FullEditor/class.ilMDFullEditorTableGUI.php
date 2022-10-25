@@ -110,12 +110,12 @@ class ilMDFullEditorTableGUI extends ilTable2GUI
             }
             $appended_path = (clone $this->cmd_path)
                 ->addMDIDFilter($element->getMDID());
-            $dropdown = $factory->dropdown()->standard(
-                [
-                    $delete_buttons[$appended_path->getPathAsString()],
-                    $factory->button()->shy('edit', '#')
-                ]
-            );
+            $action_buttons = [];
+            if ($b = $delete_buttons[$appended_path->getPathAsString()] ?? null) {
+                $action_buttons[] = $b;
+            }
+            $action_buttons[] = $factory->button()->shy('edit', '#');
+            $dropdown = $factory->dropdown()->standard($action_buttons);
             $res['dropdown'] = $renderer->render($dropdown);
 
             $data[] = $res;
