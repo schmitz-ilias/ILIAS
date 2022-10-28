@@ -522,7 +522,6 @@ class ilMDEditorGUI
             $this->library,
             $this->ui_factory,
             $this->presenter,
-
             new ilMDFullEditorUtilitiesCollection(
                 $this->data->uri(
                     ILIAS_HTTP_PATH . '/' .

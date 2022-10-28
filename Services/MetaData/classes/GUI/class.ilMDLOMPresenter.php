@@ -365,5 +365,4 @@ class ilMDLOMPresenter
         }
         return $structure->getTypeAtPointer();
     }
-
 }
