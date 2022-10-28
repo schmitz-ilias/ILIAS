@@ -63,7 +63,7 @@ class ilMDLOMDigestGUI
 
         $this->role_vocab = $library
             ->getLOMVocabulariesDictionary($path_factory)
-            ->getStructureWithTags()
+            ->getStructure()
             ->movePointerToEndOfPath(
                 $this->path_factory
                     ->getPathFromRoot()
@@ -77,7 +77,7 @@ class ilMDLOMDigestGUI
 
         $this->cp_vocab = $library
             ->getLOMVocabulariesDictionary($path_factory)
-            ->getStructureWithTags()
+            ->getStructure()
             ->movePointerToEndOfPath(
                 $this->path_factory
                     ->getPathFromRoot()
@@ -404,7 +404,6 @@ class ilMDLOMDigestGUI
     }
 
     public function prepareChangeCopyrightModal(
-        ilGlobalTemplateInterface $tpl,
         string $post_url
     ): ?Interruptive {
         if (!$this->isCPSelectionActive()) {
@@ -415,10 +414,6 @@ class ilMDLOMDigestGUI
             $this->lng->txt("meta_copyright_change_warning_title"),
             $this->lng->txt("meta_copyright_change_info"),
             $post_url
-        );
-
-        $tpl->addJavaScript(
-            'Services/MetaData/js/ilMetaCopyrightListener.js'
         );
 
         return $modal;

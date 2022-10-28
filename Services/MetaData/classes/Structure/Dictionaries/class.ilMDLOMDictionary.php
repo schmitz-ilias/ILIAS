@@ -21,10 +21,27 @@ declare(strict_types=1);
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface ilMDDictionary
+class ilMDLOMDictionary implements ilMDDictionary
 {
+    protected ilMDLOMStructure $structure;
+
+    public function __construct()
+    {
+        $this->structure = $this->initStructureWithTags();
+    }
+
     /**
-     * Returns a structure in read mode, decorated with tags.
+     * Returns a LOM structure in read mode, without any tags.
      */
-    public function getStructure(): ilMDStructure;
+    public function getStructure(): ilMDLOMStructure
+    {
+        return clone $this->structure;
+    }
+
+    protected function initStructureWithTags(): ilMDLOMStructure
+    {
+        $structure = new ilMDLOMVocabulariesStructure();
+        return $structure->switchToReadMode()
+                         ->movePointerToRoot();
+    }
 }

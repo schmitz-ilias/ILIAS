@@ -90,9 +90,6 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
         ): int {
             $marker = $element->getMarker();
             $tag = $structure->getTagAtPointer();
-            if ($error = $marker->getData()->getError()) {
-                throw new ilMDDatabaseException($error);
-            }
 
             //update non-scaffold elements
             if ($element instanceof ilMDElement) {
@@ -101,10 +98,6 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                         break;
 
                     case $element->getData()->getType():
-                        if ($error = $marker->getData()->getError()) {
-                            throw new ilMDDatabaseException($error);
-                        }
-
                         $this->executeManip(
                             self::MANIP_UPDATE,
                             $tag,
@@ -729,6 +722,10 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     $el = $els[0];
                 }
                 if (!isset($condition_value)) {
+                    $condition_value =
+                        $el->getMarker()?->getData()->getValue();
+                }
+                if (!isset($condition_value)) {
                     $condition_value = ($el instanceof ilMDElement) ?
                         $el->getData()->getValue() :
                         '';
@@ -948,11 +945,11 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
 
     protected function getNewDBStructure(): ilMDLOMDatabaseStructure
     {
-        return $this->db_dictionary->getStructureWithTags();
+        return $this->db_dictionary->getStructure();
     }
 
     protected function getNewVocabStructure(): ilMDLOMVocabulariesStructure
     {
-        return $this->vocab_dictionary->getStructureWithTags();
+        return $this->vocab_dictionary->getStructure();
     }
 }

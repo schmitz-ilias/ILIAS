@@ -32,19 +32,9 @@ class ilMDLOMLibrary
         $this->factory = $factory;
     }
 
-    /**
-     * Returns a LOM structure in read mode and the pointer at root,
-     * without any tags.
-     */
-    public function getLOMStructure(): ilMDLOMStructure
+    public function getLOMDictionary(): ilMDLOMDictionary
     {
-        if (!isset($this->structure)) {
-            $this->structure = new ilMDLOMStructure();
-            $this->structure
-                ->movePointerToRoot()
-                ->switchToReadMode();
-        }
-        return clone $this->structure;
+        return new ilMDLOMDictionary();
     }
 
     public function getLOMDatabaseDictionary(

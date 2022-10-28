@@ -39,7 +39,7 @@ class ilMDLOMEditorGUIQuirkDictionary implements ilMDDictionary
      * Returns a LOM structure in read mode, with a editorGUI
      * tag on every element.
      */
-    public function getStructureWithTags(): ilMDLOMEditorGUIQuirkStructure
+    public function getStructure(): ilMDLOMEditorGUIQuirkStructure
     {
         return clone $this->structure;
     }

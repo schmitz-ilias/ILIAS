@@ -106,7 +106,7 @@ class ilMDEditorToolProvider extends AbstractDynamicToolProvider
         $library = new ilMDLOMLibrary(new ilMDTagFactory());
         $structure = $library
             ->getLOMEditorGUIDictionary($path_factory)
-            ->getStructureWithTags();
+            ->getStructure();
 
         $recursion = new ilMDEditorTreeRecursion(
             $link,
@@ -115,7 +115,8 @@ class ilMDEditorToolProvider extends AbstractDynamicToolProvider
             $path_factory,
             new ilMDLOMPresenter(
                 $this->dic->language(),
-                $this->dic->user()
+                $this->dic->user(),
+                $library->getLOMDictionary()
             )
         );
         $f = $this->dic->ui()->factory();

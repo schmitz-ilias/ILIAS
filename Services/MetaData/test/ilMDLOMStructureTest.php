@@ -215,7 +215,7 @@ class ilMDLOMStructureTest extends TestCase
         $db = $this->createMock(ilDBInterface::class);
 
         $dictionary = new ilMDLOMDatabaseDictionary($tag_factory, $db);
-        $structure = $dictionary->getStructureWithTags();
+        $structure = $dictionary->getStructure();
 
         $this->assertInstanceOf(
             ilMDDatabaseTag::class,
@@ -275,7 +275,7 @@ class ilMDLOMStructureTest extends TestCase
             $path_factory
         );
         $structure = $dictionary
-            ->getStructureWithTags()
+            ->getStructure()
             ->movePointerToSubElement('lifeCycle')
             ->movePointerToSubElement('contribute')
             ->movePointerToSubElement('role')

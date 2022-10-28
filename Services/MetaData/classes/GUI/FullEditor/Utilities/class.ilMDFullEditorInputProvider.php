@@ -33,112 +33,60 @@ class ilMDFullEditorInputProvider
     protected const COND_VALUE = 'md_cond_value';
     protected const VALUE = 'md_value';
 
-    /**
-     * @return ilMDBaseElement[]
-     */
-    public function getDataElements(
-        ilMDBaseElement $start_element,
-        ilMDLOMStructure $structure
-    ): array {
-        $elements = [];
-        $this->addDataElements($elements, $start_element, $structure, 0);
-        return $elements;
-    }
+    protected Factory $factory;
+    protected Refinery $refinery;
+    protected DataFactory $data;
+    protected ilMDLOMPresenter $presenter;
+    protected ilMDLOMVocabulariesDictionary $vocab_dict;
+    protected ilMDLOMEditorGUIQuirkDictionary $quirk_dict;
+    protected ilMDFullEditorDataFinder $data_finder;
 
-    /**
-     * @param ilMDBaseElement[] $elements
-     * @param ilMDBaseElement   $current_element
-     * @param ilMDLOMStructure  $structure
-     * @param int               $depth
-     */
-    protected function addDataElements(
-        array &$elements,
-        ilMDBaseElement $current_element,
-        ilMDLOMStructure $structure,
-        int $depth
-    ): void {
-        //stop the recursion after a while, just to be safe.
-        if ($depth >= 20) {
-            throw new ilMDGUIException(
-                'Recursion reached its maximum depth'
-            );
-        }
-
-        $type = $this->getElementDataTypeFromStructure(
-            $current_element,
-            $structure
-        );
-        if ($type !== ilMDLOMDataFactory::TYPE_NONE) {
-            $elements[] = $current_element;
-        }
-        foreach ($current_element->getSubElements() as $sub) {
-            $this->addDataElements(
-                $elements,
-                $sub,
-                $structure->movePointerToRoot(),
-                $depth + 1
-            );
-        }
+    public function __construct(
+        Factory $factory,
+        Refinery $refinery,
+        DataFactory $data,
+        ilMDLOMPresenter $presenter,
+        ilMDLOMVocabulariesDictionary $vocab_dict,
+        ilMDLOMEditorGUIQuirkDictionary $quirk_dict,
+        ilMDFullEditorDataFinder $data_finder
+    ) {
+        $this->factory = $factory;
+        $this->refinery = $refinery;
+        $this->data = $data;
+        $this->presenter = $presenter;
+        $this->vocab_dict = $vocab_dict;
+        $this->quirk_dict = $quirk_dict;
+        $this->data_finder = $data_finder;
     }
 
     public function getInputSection(
         ilMDRootElement $root,
-        ilMDPathFromRoot $path,
-        ilMDLOMVocabulariesStructure $vocab_structure,
-        ilMDLOMEditorGUIQuirkStructure $quirk_structure,
-        Factory $factory,
-        Refinery $refinery,
-        ilMDLOMPresenter $presenter,
-        DataFactory $data
+        ilMDPathFromRoot $path
     ): Section {
-        if (empty($els = $root->getSubElementsByPath($path))) {
-            throw new ilMDGUIException(
-                'The path to the current' .
-                ' element does not lead to an element.'
-            );
-        }
-        if (count($els) > 1) {
-            throw new ilMDGUIException(
-                'The path to the current' .
-                ' element leads to multiple elements.'
-            );
-        }
-        $element = $els[0];
-        $data_els = $this->getDataElements($element, $vocab_structure);
+        $element = $this->getUniqueElement($root, $path);
+        $data_els = $this->data_finder->getDataElements($element);
         $inputs = [];
         foreach ($data_els as $data_el) {
-            $post_path = $this->appendPath(
-                $path,
-                $element,
-                $data_el
-            );
-            $inputs[$post_path->getPathAsString()] = $this->getInputForElement(
-                $element,
+            $arr = $this->getInputForElement(
+                $root,
                 $path,
                 $data_el,
-                $this->getIndexOfElement(
-                    $root,
-                    $post_path
-                ),
-                $vocab_structure,
-                $quirk_structure,
-                $factory,
-                $refinery,
-                $presenter,
-                $data
             );
+            $inputs[$arr['path']->getPathAsString()] = $arr['input'];
         }
-        return $factory->section(
+        return $this->factory->section(
             $inputs,
-            $presenter->getElementNameWithParents($element, false)
+            $this->presenter->getElementNameWithParents($element, false)
+        // flatten the output of conditional inputs
         )->withAdditionalTransformation(
-            $refinery->custom()->transformation(function ($vs) {
+            $this->refinery->custom()->transformation(function ($vs) {
                 foreach ($vs as $key => $v) {
                     if (is_array($v)) {
-                        $vs[$key] = $v[self::VALUE];
-                        $vs[$v[self::COND_VALUE][0]] = $v[self::COND_VALUE][1];
+                        $vs[$key] = $v[self::COND_VALUE]['value'];
+                        $vs[$v[self::COND_VALUE]['path']] = $v[self::VALUE];
                     }
                 }
+                return $vs;
             })
         );
     }
@@ -174,7 +122,7 @@ class ilMDFullEditorInputProvider
         $res = clone $path;
         $steps = [];
         while (!$new_path_end->isRoot() && $new_path_end !== $old_path_end) {
-            $steps[] = $new_path_end->getName();
+            array_unshift($steps, $new_path_end->getName());
             $new_path_end = $new_path_end->getSuperElement();
         }
         foreach ($steps as $step) {
@@ -184,14 +132,14 @@ class ilMDFullEditorInputProvider
     }
 
     protected function getElementDataTypeFromStructure(
-        ilMDBaseElement $element,
-        ilMDLOMStructure $structure,
+        ilMDBaseElement $element
     ): string {
         $name_path = [];
         while (!($element instanceof ilMDRootElement)) {
             array_unshift($name_path, $element->getName());
             $element = $element->getSuperElement();
         }
+        $structure = $this->vocab_dict->getStructure();
         $structure->movePointerToRoot();
         foreach ($name_path as $next_name) {
             $structure->movePointerToSubElement($next_name);
@@ -200,25 +148,23 @@ class ilMDFullEditorInputProvider
     }
 
     protected function getElementVocabTagFromStructure(
-        ilMDBaseElement $element,
-        ilMDLOMVocabulariesStructure $structure,
+        ilMDBaseElement $element
     ): ?ilMDVocabulariesTag {
         /** @var $tag ?ilMDVocabulariesTag */
         $tag = $this->getElementTagFromStructure(
             $element,
-            $structure
+            $this->vocab_dict->getStructure()
         );
         return $tag;
     }
 
     protected function getElementQuirkTagFromStructure(
-        ilMDBaseElement $element,
-        ilMDLOMEditorGUIQuirkStructure $structure,
+        ilMDBaseElement $element
     ): ?ilMDEditorGUIQuirkTag {
         /** @var $tag ?ilMDEditorGUIQuirkTag */
         $tag = $this->getElementTagFromStructure(
             $element,
-            $structure
+            $this->quirk_dict->getStructure()
         );
         return $tag;
     }
@@ -239,25 +185,20 @@ class ilMDFullEditorInputProvider
         return $structure->getTagAtPointer();
     }
 
+    /**
+     * @return array{input: FormInput, path: ilMDPathFromRoot}
+     */
     protected function getInputForElement(
-        ilMDBaseElement $element,
+        ilMDRootElement $root,
         ilMDPathFromRoot $path,
         ilMDBaseElement $current_element,
-        int $current_index,
-        ilMDLOMVocabulariesStructure $vocab_structure,
-        ilMDLOMEditorGUIQuirkStructure $quirk_structure,
-        Factory $factory,
-        Refinery $refinery,
-        ilMDLOMPresenter $presenter,
-        DataFactory $data
-    ): FormInput {
+    ): array {
+        $element = $this->getUniqueElement($root, $path);
         $type = $this->getElementDataTypeFromStructure(
-            $current_element,
-            $vocab_structure
+            $current_element
         );
         $quirk_tag = $this->getElementQuirkTagFromStructure(
-            $current_element,
-            $quirk_structure
+            $current_element
         );
 
         switch ($type) {
@@ -268,26 +209,25 @@ class ilMDFullEditorInputProvider
 
             case ilMDLOMDataFactory::TYPE_STRING:
                 if ($quirk_tag?->isLongInput()) {
-                    $res = $factory->textarea('placeholder');
+                    $res = $this->factory->textarea('placeholder');
                 } else {
-                    $res = $factory->text('placeholder');
+                    $res = $this->factory->text('placeholder');
                 }
                 break;
 
             case ilMDLOMDataFactory::TYPE_LANG:
-                $res = $factory->select(
+                $res = $this->factory->select(
                     'placeholder',
                     array_combine(
                         ilMDLOMDataFactory::LANGUAGES,
-                        $presenter->getLanguages()
+                        $this->presenter->getLanguages()
                     )
                 );
                 break;
 
             case ilMDLOMDataFactory::TYPE_VOCAB_VALUE:
                 $tag = $this->getElementVocabTagFromStructure(
-                    $current_element,
-                    $vocab_structure
+                    $current_element
                 );
                 if ($tag->getConditionPath()) {
                     $selects = [];
@@ -295,19 +235,19 @@ class ilMDFullEditorInputProvider
                         $v = $current_element->isScaffold() ?
                             '' : $this->getDataValueForInput(
                                 $current_element->getData(),
-                                $presenter
+                                $this->presenter
                             );
                         $v = in_array($v, $vocab->getValues()) ? $v : '';
-                        $selects[$vocab->getConditionValue()] = $factory
+                        $selects[$vocab->getConditionValue()] = $this->factory
                             ->select(
-                                $presenter->getElementNameWithParents(
+                                $this->presenter->getElementNameWithParents(
                                     $current_element,
                                     false,
                                     $element->getName()
                                 ),
                                 array_combine(
                                     $vocab->getValues(),
-                                    $presenter->getVocab($vocab)
+                                    $this->presenter->getVocab($vocab)
                                 )
                             )->withValue($v);
                     }
@@ -315,32 +255,31 @@ class ilMDFullEditorInputProvider
                         $current_element,
                         $tag->getConditionPath()
                     );
-                    $absolute_cond_path = $this->appendPath(
+                    $stored_path = $this->appendPath(
                         $path,
                         $element,
-                        $cond_el
+                        $current_element
                     )->getPathAsString();
                     $cond_tag = $this->getElementVocabTagFromStructure(
-                        $cond_el,
-                        $vocab_structure
+                        $cond_el
                     );
                     $vocab = $cond_tag->getVocabularies()[0];
                     $groups = [];
                     foreach ($vocab->getValues() as $value) {
-                        $groups[$value] = $factory->group(
+                        $groups[$value] = $this->factory->group(
                             isset($selects[$value]) ? [$selects[$value]] : [],
-                            $presenter->getVocabValue($value)
+                            $this->presenter->getVocabValue($value)
                         );
                     }
-                    $res = $factory->switchableGroup(
+                    $res = $this->factory->switchableGroup(
                         $groups,
                         'placeholder'
                     )->withAdditionalTransformation(
-                        $refinery->custom()->transformation(
-                            function ($vs) use ($absolute_cond_path) {
+                        $this->refinery->custom()->transformation(
+                            function ($vs) use ($stored_path) {
                                 $r[self::COND_VALUE] = [
-                                    $absolute_cond_path,
-                                    $vs[0]
+                                    'path' => $stored_path,
+                                    'value' => $vs[0]
                                 ];
                                 $r[self::VALUE] = $vs[1][0];
                                 return $r;
@@ -349,46 +288,49 @@ class ilMDFullEditorInputProvider
                     );
                     $current_element = $cond_el;
                 } else {
-                    $res = $factory->select(
+                    $res = $this->factory->select(
                         'placeholder',
                         array_combine(
                             $tag->getVocabularies()[0]->getValues(),
-                            $presenter->getVocab($tag->getVocabularies()[0])
+                            $this->presenter->getVocab($tag->getVocabularies()[0])
                         )
                     );
                 }
                 break;
 
             case ilMDLOMDataFactory::TYPE_VOCAB_SOURCE:
-                $res = $factory->hidden();
+                $res = $this->factory->hidden();
                 break;
 
             case ilMDLOMDataFactory::TYPE_NON_NEG_INT:
-                $res = $factory
+                $res = $this->factory
                     ->numeric('placeholder')
                     ->withAdditionalTransformation(
-                        $refinery->int()->isGreaterThanOrEqual(0)
+                        $this->refinery->int()->isGreaterThanOrEqual(0)
                     );
                 break;
 
             case ilMDLOMDataFactory::TYPE_DATETIME:
-                $res = $factory
+                $res = $this->factory
                     ->dateTime('placeholder')
-                    ->withFormat($this->getUserDateFormat($presenter, $data));
+                    ->withFormat($this->getUserDateFormat(
+                        $this->presenter,
+                        $this->data
+                    ));
                 break;
 
             case ilMDLOMDataFactory::TYPE_DURATION:
-                $num = $factory
+                $num = $this->factory
                     ->numeric('placeholder')
                     ->withAdditionalTransformation(
-                        $refinery->int()->isGreaterThanOrEqual(0)
+                        $this->refinery->int()->isGreaterThanOrEqual(0)
                     );
                 $nums = [];
-                foreach ($presenter->getDurationLabels() as $label) {
+                foreach ($this->presenter->getDurationLabels() as $label) {
                     $nums[] = (clone $num)->withLabel($label);
                 }
-                $res = $factory->group($nums)->withAdditionalTransformation(
-                    $refinery->custom()->transformation(function ($vs) {
+                $res = $this->factory->group($nums)->withAdditionalTransformation(
+                    $this->refinery->custom()->transformation(function ($vs) {
                         if (
                             count(array_unique($vs)) === 1 &&
                             array_unique($vs)[0] === null
@@ -429,17 +371,26 @@ class ilMDFullEditorInputProvider
                 $current_element->isScaffold() ?
                     '' : $this->getDataValueForInput(
                         $current_element->getData(),
-                        $presenter
+                        $this->presenter
                     )
             )
             ->withLabel(
-                $presenter->getElementNameWithParents(
+                $this->presenter->getElementNameWithParents(
                     $current_element,
                     false,
                     $element->getName()
                 )
             );
 
+        $res_path = $this->appendPath(
+            $path,
+            $element,
+            $current_element
+        );
+        $current_index = $this->getIndexOfElement(
+            $root,
+            $res_path
+        );
         $presets = $quirk_tag?->getPresetValues() ?? [];
         if (key_exists($current_index, $presets)) {
             $res = $res->withValue($presets[$current_index]);
@@ -453,7 +404,7 @@ class ilMDFullEditorInputProvider
             $res = $res->withDisabled(true);
         }
 
-        return $res;
+        return ['input' => $res, 'path' => $res_path];
     }
 
     /**
@@ -461,7 +412,7 @@ class ilMDFullEditorInputProvider
      * @param ilObjUser $user
      * @return string|string[]
      */
-    public function getDataValueForInput(
+    protected function getDataValueForInput(
         ilMDData $data,
         ilMDLOMPresenter $presenter
     ): string|array {
@@ -589,5 +540,25 @@ class ilMDFullEditorInputProvider
             $value = $exceptions[$value];
         }
         return $value;
+    }
+
+    protected function getUniqueElement(
+        ilMDRootElement $root,
+        ilMDPathFromRoot $path
+    ): ilMDBaseElement {
+        $els = $root->getSubElementsByPath($path);
+        if (count($els = $root->getSubElementsByPath($path)) < 1) {
+            throw new ilMDGUIException(
+                'The path to the to be deleted' .
+                ' element does not lead to an element.'
+            );
+        }
+        if (count($els = $root->getSubElementsByPath($path)) > 1) {
+            throw new ilMDGUIException(
+                'The path to the to be deleted' .
+                ' element leads to multiple element.'
+            );
+        }
+        return $els[0];
     }
 }

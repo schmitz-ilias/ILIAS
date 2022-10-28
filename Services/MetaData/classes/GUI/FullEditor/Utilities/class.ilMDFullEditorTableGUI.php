@@ -18,7 +18,7 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-use ILIAS\UI\Component\Button\Shy as ShyButton;
+use ILIAS\UI\Component\Button\Button;
 use ILIAS\UI\Renderer;
 use ILIAS\UI\Factory;
 
@@ -30,6 +30,11 @@ class ilMDFullEditorTableGUI extends ilTable2GUI
     protected ilMDPathFromRoot $cmd_path;
     protected ilMDRootElement $root;
 
+    protected Factory $factory;
+    protected Renderer $renderer;
+    protected ilMDLOMPresenter $presenter;
+    protected ilMDFullEditorDataFinder $data_finder;
+
     /**
      * @var ilMDElement[]
      */
@@ -39,6 +44,10 @@ class ilMDFullEditorTableGUI extends ilTable2GUI
         ?object $parent_obj,
         ilMDRootElement $root,
         ilMDPathFromRoot $cmd_path,
+        Factory $factory,
+        Renderer $renderer,
+        ilMDLOMPresenter $presenter,
+        ilMDFullEditorDataFinder $data_finder,
     ) {
         parent::__construct($parent_obj);
         $this->cmd_path = $cmd_path;
@@ -50,28 +59,30 @@ class ilMDFullEditorTableGUI extends ilTable2GUI
         }
         $this->root = $root;
         $this->current_elements = $els;
+
+        $this->factory = $factory;
+        $this->renderer = $renderer;
+        $this->presenter = $presenter;
+        $this->data_finder = $data_finder;
     }
 
-    public function init(
-        ilMDLOMStructure $structure,
-        ilMDLOMPresenter $presenter,
-        ilMDFullEditorInputProvider $input_provider
-    ): void {
+    public function init(): void
+    {
         $this->setRowTemplate(
             'tpl.full_editor_row.html',
             'Services/MetaData'
         );
-        $this->setTitle($presenter->getElementNameWithParents(
+        $this->setTitle($this->presenter->getElementNameWithParents(
             $this->current_elements[0],
             true
         ));
         $this->setExternalSegmentation(true);
 
-        foreach ($input_provider->getDataElements(
+        foreach ($this->data_finder->getDataElements(
             $this->current_elements[0],
-            $structure
+            true
         ) as $data_el) {
-            $this->addColumn($presenter->getElementNameWithParents(
+            $this->addColumn($this->presenter->getElementNameWithParents(
                 $data_el,
                 false,
                 $this->current_elements[0]->getName()
@@ -81,32 +92,23 @@ class ilMDFullEditorTableGUI extends ilTable2GUI
     }
 
     /**
-     * @param ilMDLOMStructure            $structure
-     * @param ilMDLOMPresenter            $presenter
-     * @param ilMDFullEditorInputProvider $input_provider
-     * @param ShyButton[]                 $delete_buttons
-     * @param Factory                     $factory
-     * @param Renderer                    $renderer
-     * @return void
+     * @param Button[]                  $update_buttons
+     * @param Button[]                  $delete_buttons
      */
     public function parse(
-        ilMDLOMStructure $structure,
-        ilMDLOMPresenter $presenter,
-        ilMDFullEditorInputProvider $input_provider,
+        array $update_buttons,
         array $delete_buttons,
-        Factory $factory,
-        Renderer $renderer
     ): void {
         $data = [];
         foreach ($this->current_elements as $element) {
             $res = [];
-            foreach ($input_provider->getDataElements(
+            foreach ($this->data_finder->getDataElements(
                 $element,
-                $structure
+                true
             ) as $data_el) {
                 $res[] = $data_el->isScaffold() ?
                     '' :
-                    $presenter->getDataValue($data_el->getData());
+                    $this->presenter->getDataValue($data_el->getData());
             }
             $appended_path = (clone $this->cmd_path)
                 ->addMDIDFilter($element->getMDID());
@@ -114,9 +116,11 @@ class ilMDFullEditorTableGUI extends ilTable2GUI
             if ($b = $delete_buttons[$appended_path->getPathAsString()] ?? null) {
                 $action_buttons[] = $b;
             }
-            $action_buttons[] = $factory->button()->shy('edit', '#');
-            $dropdown = $factory->dropdown()->standard($action_buttons);
-            $res['dropdown'] = $renderer->render($dropdown);
+            if ($b = $update_buttons[$appended_path->getPathAsString()] ?? null) {
+                $action_buttons[] = $b;
+            }
+            $dropdown = $this->factory->dropdown()->standard($action_buttons);
+            $res['dropdown'] = $this->renderer->render($dropdown);
 
             $data[] = $res;
         }

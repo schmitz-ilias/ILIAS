@@ -29,6 +29,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use ILIAS\GlobalScreen\Services as GlobalScreen;
 use ILIAS\Data\URI;
 use ILIAS\Data\Factory as Data;
+use ILIAS\UI\Component\Input\Container\Form\Standard as StandardForm;
 
 /**
  * Meta Data editor
@@ -103,7 +104,11 @@ class ilMDEditorGUI
         $this->data_factory = new ilMDLOMDataFactory($this->refinery);
         $this->marker_factory = new ilMDMarkerFactory($this->data_factory);
         $this->library = new ilMDLOMLibrary(new ilMDTagFactory());
-        $this->presenter = new ilMDLOMPresenter($this->lng, $DIC->user());
+        $this->presenter = new ilMDLOMPresenter(
+            $this->lng,
+            $DIC->user(),
+            $this->library->getLOMDictionary()
+        );
         $this->user = $DIC->user();
         $this->data = new Data();
 
@@ -451,12 +456,12 @@ class ilMDEditorGUI
         $modal_content = '';
         $modal_signal = null;
         $link = $this->ctrl->getLinkTarget($this, 'updateQuickEdit');
-        if ($modal = $digest->prepareChangeCopyrightModal(
-            $this->tpl,
-            $link
-        )) {
+        if ($modal = $digest->prepareChangeCopyrightModal($link)) {
             $modal_content = $this->ui_renderer->render($modal);
             $modal_signal = $modal->getShowSignal();
+            $this->tpl->addJavaScript(
+                'Services/MetaData/js/ilMetaCopyrightListener.js'
+            );
         }
 
         $this->tpl->setContent(
@@ -514,19 +519,25 @@ class ilMDEditorGUI
         return new ilMDFullEditorGUI(
             $this->repo,
             $this->path_factory,
-            $this->data_factory,
-            $this->marker_factory,
             $this->library,
             $this->ui_factory,
-            $this->ui_renderer,
-            $this->refinery,
-            $this->lng,
             $this->presenter,
-            $this->data,
-            $this->user,
-            new URI(
-                ILIAS_HTTP_PATH . '/' .
-                $this->ctrl->getLinkTarget($this, 'fullEditor')
+
+            new ilMDFullEditorUtilitiesCollection(
+                $this->data->uri(
+                    ILIAS_HTTP_PATH . '/' .
+                    $this->ctrl->getLinkTarget($this, 'fullEditor')
+                ),
+                $this->ui_factory,
+                $this->ui_renderer,
+                $this->refinery,
+                $this->data,
+                $this->repo,
+                $this->presenter,
+                $this->library,
+                $this->path_factory,
+                $this->marker_factory,
+                $this->data_factory
             )
         );
     }
@@ -951,64 +962,103 @@ class ilMDEditorGUI
         }
     }
 
+    protected function getUniqueElement(
+        ilMDRootElement $root,
+        ilMDPathFromRoot $path
+    ): ilMDBaseElement {
+        $els = $root->getSubElementsByPath($path);
+        if (count($els = $root->getSubElementsByPath($path)) < 1) {
+            throw new ilMDGUIException(
+                'The path to the to be deleted' .
+                ' element does not lead to an element.'
+            );
+        }
+        if (count($els = $root->getSubElementsByPath($path)) > 1) {
+            throw new ilMDGUIException(
+                'The path to the to be deleted' .
+                ' element leads to multiple element.'
+            );
+        }
+        return $els[0];
+    }
+
     protected function fullEditorCreate(): void
     {
     }
 
     protected function fullEditorUpdate(): void
     {
+        // get the paths from the http request
+        $node_path = $this->getNodePathFromRequest();
+        $update_path = $this->getActionPathFromRequest();
+
+        // get and prepare the MD
+        $root = $this->repo->getMD();
+        $editor = $this->getFullEditor();
+        $root = $editor->manipulateMD()->prepare($root, $update_path);
+
+        // update
+        $request = $this->http->request();
+        $success = $editor->manipulateMD()->update(
+            $root,
+            $node_path,
+            $update_path,
+            $request
+        );
+        if (!$success) {
+            if (
+                $editor->decideContentType($root, $node_path) ===
+                ilMDFullEditorGUI::FORM
+            ) {
+                $this->tpl->setOnScreenMessage(
+                    'failure',
+                    $this->lng->txt('msg_form_save_error'),
+                    true
+                );
+            }
+            $this->fullEditor($request, $update_path);
+            return;
+        }
+
+        // call listeners
+        $this->callListenersFullEditor($update_path);
+
+        // redirect back to the full editor
+        $this->tpl->setOnScreenMessage(
+            'success',
+            $this->lng->txt('element_updated_successfully'),
+            true
+        );
+        $this->ctrl->setParameter(
+            $this,
+            self::MD_NODE_PATH,
+            $node_path->getPathAsString()
+        );
+        $this->ctrl->redirect($this, 'fullEditor');
     }
 
     protected function fullEditorDelete(): void
     {
+        // get the paths from the http request
+        $node_path = $this->getNodePathFromRequest();
+        $delete_path = $this->getActionPathFromRequest();
+
         // get the MD
+        $editor = $this->getFullEditor();
         $root = $this->repo->getMD();
 
-        // get the paths from the http request
-        $request_wrapper = $this->http->wrapper()->query();
-        $node_path = $this->path_factory->getPathFromRoot();
-        if ($request_wrapper->has(self::MD_NODE_PATH)) {
-            $current_path_string = $request_wrapper->retrieve(
-                self::MD_NODE_PATH,
-                $this->refinery->kindlyTo()->string()
-            );
-            $node_path->setPathFromString($current_path_string);
-        }
-        $delete_path = $this->path_factory->getPathFromRoot();
-        if ($request_wrapper->has(self::MD_ACTION_PATH)) {
-            $current_path_string = $request_wrapper->retrieve(
-                self::MD_ACTION_PATH,
-                $this->refinery->kindlyTo()->string()
-            );
-            $delete_path->setPathFromString($current_path_string);
-        }
-
         // delete
-        $els = $root->getSubElementsByPath($delete_path);
-        if (count($els = $root->getSubElementsByPath($delete_path)) < 1) {
-            throw new ilMDGUIException(
-                'The path to the to be deleted' .
-                ' element does not lead to an element.'
-            );
-        }
-        if (count($els = $root->getSubElementsByPath($delete_path)) > 1) {
-            throw new ilMDGUIException(
-                'The path to the to be deleted' .
-                ' element leads to multiple element.'
-            );
-        }
-        $els[0]->leaveMarkerTrail(
-            $this->marker_factory->NullMarker(),
-            $this->marker_factory->NullMarker()
+        $trim_path = $editor->manipulateMD()->delete(
+            $root,
+            $node_path,
+            $delete_path
         );
-        $this->repo->deleteMDElements($root);
 
         // call listeners
         $this->callListenersFullEditor($delete_path);
 
         // trim the node path if it leads only to the deleted element
-        $node_els = $root->getSubElementsByPath($node_path);
-        if (count($node_els) == 1 && $node_els[0] == $els[0]) {
+        if ($trim_path) {
             $node_path->removeLastStep();
         }
 
@@ -1026,9 +1076,14 @@ class ilMDEditorGUI
         $this->ctrl->redirect($this, 'fullEditor');
     }
 
-    protected function fullEditor(): void
-    {
+    protected function fullEditor(
+        ?Request $request = null,
+        ?ilMDPathFromRoot $path_for_request = null
+    ): void {
         $this->setTabsForFullEditor();
+        $this->tpl->addJavaScript(
+            'Services/MetaData/js/ilMetaModalFormButtonHandler.js'
+        );
 
         // get the MD
         $root = $this->repo->getMD();
@@ -1040,25 +1095,37 @@ class ilMDEditorGUI
         );
         $this->global_screen->tool()->context()->current()->addAdditionalData(
             self::MD_LINK,
-            new URI(
+            $this->data->uri(
                 ILIAS_HTTP_PATH . '/' .
                 $this->ctrl->getLinkTarget($this, 'fullEditor')
             )
         );
 
         // add content for element
-        $request_wrapper = $this->http->wrapper()->query();
-        $path = $this->path_factory->getPathFromRoot();
-        if ($request_wrapper->has(self::MD_NODE_PATH)) {
-            $current_path_string = $request_wrapper->retrieve(
-                self::MD_NODE_PATH,
-                $this->refinery->kindlyTo()->string()
-            );
-            $path->setPathFromString($current_path_string);
-        }
+        $path = $this->getNodePathFromRequest();
 
         $editor = $this->getFullEditor();
-        $root = $editor->prepareMD($root, $path);
+        $root = $editor->manipulateMD()->prepare($root, $path);
+        $create_modals = $editor->getCreateModals(
+            $root,
+            $path,
+            $request,
+            $path_for_request
+        );
+        $create_signals = array_map(
+            fn ($arg) => $arg->getShowSignal(),
+            $create_modals
+        );
+        $update_modals = $editor->getUpdateModals(
+            $root,
+            $path,
+            $request,
+            $path_for_request
+        );
+        $update_signals = array_map(
+            fn ($arg) => $arg->getShowSignal(),
+            $update_modals
+        );
         $delete_modals = $editor->getDeleteModals($root, $path);
         $delete_signals = array_map(
             fn ($arg) => $arg->getShowSignal(),
@@ -1067,8 +1134,8 @@ class ilMDEditorGUI
         $content = $editor->getContent(
             $root,
             $path,
-            [],
-            [],
+            $create_signals,
+            $update_signals,
             $delete_signals
         );
         if ($content instanceof ilTable2GUI) {
@@ -1076,18 +1143,26 @@ class ilMDEditorGUI
                 $content->getHTML()
             );
         }
+        if ($request && $content instanceof StandardForm) {
+            $content = $content->withRequest($request);
+        }
         if ($tb_content = $editor->getToolbarContent(
             $root,
             $path,
-            [],
-            [],
+            $create_signals,
+            $update_signals,
             $delete_signals
         )) {
             $this->toolbarGUI->addComponent($tb_content);
         }
         $this->tpl->setContent(
             $this->ui_renderer->render(
-                array_merge([$content], $delete_modals)
+                array_merge(
+                    [$content],
+                    array_values($create_modals),
+                    array_values($update_modals),
+                    array_values($delete_modals)
+                )
             )
         );
     }
@@ -1105,6 +1180,30 @@ class ilMDEditorGUI
             $this->lng->txt('back'),
             $this->ctrl->getLinkTarget($this, 'listSection')
         );
+    }
+
+    protected function getNodePathFromRequest(): ilMDPathFromRoot
+    {
+        return $this->getPathFromRequest(self::MD_NODE_PATH);
+    }
+
+    protected function getActionPathFromRequest(): ilMDPathFromRoot
+    {
+        return $this->getPathFromRequest(self::MD_ACTION_PATH);
+    }
+
+    protected function getPathFromRequest(string $key): ilMDPathFromRoot
+    {
+        $request_wrapper = $this->http->wrapper()->query();
+        $path = $this->path_factory->getPathFromRoot();
+        if ($request_wrapper->has($key)) {
+            $path_string = $request_wrapper->retrieve(
+                $key,
+                $this->refinery->kindlyTo()->string()
+            );
+            $path->setPathFromString($path_string);
+        }
+        return $path;
     }
 
     protected function callListenersFullEditor(

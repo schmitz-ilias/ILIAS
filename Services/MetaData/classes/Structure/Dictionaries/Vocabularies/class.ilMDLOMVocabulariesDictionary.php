@@ -42,7 +42,7 @@ class ilMDLOMVocabulariesDictionary implements ilMDDictionary
      * Returns a LOM structure in read mode, with a vocabulary
      * tag on every vocabulary value or source.
      */
-    public function getStructureWithTags(): ilMDLOMVocabulariesStructure
+    public function getStructure(): ilMDLOMVocabulariesStructure
     {
         return clone $this->structure;
     }

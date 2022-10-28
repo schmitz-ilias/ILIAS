@@ -210,7 +210,7 @@ class ilMDEditorTreeRecursion implements TreeRecursion
                 $elements[0]->getSuperElement()?->isRoot())
         ) {
             $label = $this->presenter->getElementName(
-                $elements[0]->getName(),
+                $elements[0],
                 true
             );
             $value = '';

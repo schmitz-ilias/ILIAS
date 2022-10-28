@@ -116,7 +116,7 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
      * Returns a LOM structure in read mode, with a database
      * tag on every element.
      */
-    public function getStructureWithTags(): ilMDLOMDatabaseStructure
+    public function getStructure(): ilMDLOMDatabaseStructure
     {
         return clone $this->structure;
     }

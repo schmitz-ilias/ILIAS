@@ -45,7 +45,7 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
      * Returns a LOM structure in read mode, with a editorGUI
      * tag on every element.
      */
-    public function getStructureWithTags(): ilMDLOMEditorGUIStructure
+    public function getStructure(): ilMDLOMEditorGUIStructure
     {
         return clone $this->structure;
     }

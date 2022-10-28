@@ -28,14 +28,17 @@ class ilMDLOMPresenter
 
     protected ilLanguage $lng;
     protected ilObjUser $user;
+    protected ilMDLOMDictionary $dict;
 
     public function __construct(
         ilLanguage $lng,
-        ilObjUser $user
+        ilObjUser $user,
+        ilMDLOMDictionary $dict
     ) {
         $this->lng = $lng;
         $this->lng->loadLanguageModule('meta');
         $this->user = $user;
+        $this->dict = $dict;
     }
 
     /**
@@ -49,7 +52,7 @@ class ilMDLOMPresenter
         ?ilMDPathRelative $path_to_representation = null,
         bool $plural = false
     ): string {
-        $label = $this->getElementName($elements[0]->getName(), $plural);
+        $label = $this->getElementName($elements[0], $plural);
         if (isset($path_to_representation) &&
             ($string = $this->getDataValueStringByPath(
                 $elements,
@@ -77,9 +80,10 @@ class ilMDLOMPresenter
     }
 
     public function getElementName(
-        string $name,
+        ilMDBaseElement $element,
         bool $plural = false
     ): string {
+        $name = $element->getName();
         $exceptions = [
             'metadataSchema' => 'metadatascheme', 'lifeCycle' => 'lifecycle'
         ];
@@ -99,18 +103,31 @@ class ilMDLOMPresenter
         bool $plural = false,
         string $parent_cutoff = ''
     ): string {
-        $res = $this->getElementName($element->getName(), $plural);
-        if ($element->getName() === $parent_cutoff) {
-            return $res;
+        $res = '';
+        $el = $element;
+
+        //skip the name of the element if it does not add any information
+        $skip_arr = [
+            ilMDLOMDataFactory::TYPE_VOCAB_VALUE,
+            ilMDLOMDataFactory::TYPE_DURATION,
+            ilMDLOMDataFactory::TYPE_DATETIME,
+            ilMDLOMDataFactory::TYPE_STRING
+        ];
+        $type = $this->getElementDataTypeFromStructure($el);
+        if (in_array($type, $skip_arr) && !$el->isRoot()) {
+            $el = $el->getSuperElement();
         }
-        $element = $element->getSuperElement();
-        while (!$element->isRoot()) {
-            if ($element->getName() === $parent_cutoff) {
+
+        while (!$el->isRoot()) {
+            if ($el->getName() === $parent_cutoff) {
                 break;
             }
-            $res = $this->getElementName($element->getName()) .
-                self::SEPARATOR . $res;
-            $element = $element->getSuperElement();
+            $res = $this->getElementName($el) .
+                ($res === '' ? '' : self::SEPARATOR) . $res;
+            $el = $el->getSuperElement();
+        }
+        if ($res === '') {
+            return $this->getElementName($element);
         }
         return $res;
     }
@@ -321,8 +338,9 @@ class ilMDLOMPresenter
     }
 
     /**
-     * @param string    $key
-     * @param string[]  $values
+     * @param string   $key
+     * @param string[] $values
+     * @return string
      */
     public function txtFill(string $key, array $values): string
     {
@@ -331,4 +349,21 @@ class ilMDLOMPresenter
         }
         return $key . ' ' . implode(',', $values);
     }
+
+    protected function getElementDataTypeFromStructure(
+        ilMDBaseElement $element
+    ): string {
+        $name_path = [];
+        while (!($element instanceof ilMDRootElement)) {
+            array_unshift($name_path, $element->getName());
+            $element = $element->getSuperElement();
+        }
+        $structure = $this->dict->getStructure();
+        $structure->movePointerToRoot();
+        foreach ($name_path as $next_name) {
+            $structure->movePointerToSubElement($next_name);
+        }
+        return $structure->getTypeAtPointer();
+    }
+
 }
