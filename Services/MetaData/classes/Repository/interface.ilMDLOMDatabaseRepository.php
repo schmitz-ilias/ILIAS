@@ -149,6 +149,28 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                         $marker->getData()->getType() . '.'
                     );
             }
+
+            /**
+             * This is specifically for updating/creating orComposites,
+             * since they are a special case.
+             */
+            if ($element->getName() === 'orComposite') {
+                $value_el = ($element->getSubElements('type')[0] ?? null)
+                                ?->getSubElements('value')[0] ?? null;
+                $type = '';
+                if (!$value_el?->isScaffold()) {
+                    $type = $value_el?->getData()?->getValue();
+                }
+                if ($marker = $value_el?->getMarker()) {
+                    $type = $marker->getData()->getValue();
+                }
+                if ($type === 'browser') {
+                    $next_id = ilMDLOMDatabaseDictionary::MD_ID_BROWSER;
+                }
+                if ($type === 'operating system') {
+                    $next_id = ilMDLOMDatabaseDictionary::MD_ID_OS;
+                }
+            }
             return $next_id;
         };
 
@@ -817,6 +839,21 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     $param_types[] = ilDBConstants::T_INTEGER;
                     break;
 
+                case ilMDLOMDatabaseDictionary::EXP_OBJ_IDS:
+                    $params = array_merge(
+                        $params,
+                        [$this->rbac_id, $this->obj_id, $this->obj_type]
+                    );
+                    $param_types = array_merge(
+                        $param_types,
+                        [
+                            ilDBConstants::T_INTEGER,
+                            ilDBConstants::T_INTEGER,
+                            ilDBConstants::T_TEXT
+                        ]
+                    );
+                    break;
+
                 default:
                     throw new ilMDDatabaseException(
                         'Invalid expected parameter'
@@ -914,6 +951,21 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     $param_types[] = ilDBConstants::T_INTEGER;
                     break;
 
+                case ilMDLOMDatabaseDictionary::EXP_OBJ_IDS:
+                    $params = array_merge(
+                        $params,
+                        [$this->rbac_id, $this->obj_id, $this->obj_type]
+                    );
+                    $param_types = array_merge(
+                        $param_types,
+                        [
+                            ilDBConstants::T_INTEGER,
+                            ilDBConstants::T_INTEGER,
+                            ilDBConstants::T_TEXT
+                        ]
+                    );
+                    break;
+
                 case ilMDLOMDatabaseDictionary::EXP_MD_ID:
                 case ilMDLOMDatabaseDictionary::EXP_DATA:
                     break;
@@ -924,18 +976,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     );
             }
         }
-        $params = array_merge(
-            $params,
-            [$this->rbac_id, $this->obj_id, $this->obj_type]
-        );
-        $param_types = array_merge(
-            $param_types,
-            [
-                ilDBConstants::T_INTEGER,
-                ilDBConstants::T_INTEGER,
-                ilDBConstants::T_TEXT
-            ]
-        );
+
         return $this->db->queryF(
             $tag->getRead(),
             $param_types,

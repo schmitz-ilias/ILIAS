@@ -101,7 +101,8 @@ class ilMDLOMPresenter
     public function getElementNameWithParents(
         ilMDBaseElement $element,
         bool $plural = false,
-        string $parent_cutoff = ''
+        string $parent_cutoff = '',
+        bool $skip_initial = true
     ): string {
         $res = '';
         $el = $element;
@@ -114,7 +115,12 @@ class ilMDLOMPresenter
             ilMDLOMDataFactory::TYPE_STRING
         ];
         $type = $this->getElementDataTypeFromStructure($el);
-        if (in_array($type, $skip_arr) && !$el->isRoot()) {
+        if (
+            $skip_initial &&
+            in_array($type, $skip_arr) &&
+            !$el->isRoot() &&
+            $el->getName() !== $parent_cutoff
+        ) {
             $el = $el->getSuperElement();
         }
 

@@ -59,10 +59,19 @@ class ilMDFullEditorUtilitiesCollection
             $this->data_finder
         );
         $this->action_provider = new ilMDFullEditorActionProvider(
-            $base_link,
-            $factory,
-            $presenter,
-            $this->prop_provider
+            $link_provider = new ilMDFullEditorActionLinkProvider(
+                $base_link
+            ),
+            new ilMDFullEditorActionButtonProvider(
+                $factory,
+                $presenter
+            ),
+            new ilMDFullEditorActionModalProvider(
+                $link_provider,
+                $factory,
+                $presenter,
+                $this->prop_provider
+            )
         );
         $this->input_provider = new ilMDFullEditorInputProvider(
             $factory->input()->field(),
@@ -73,12 +82,19 @@ class ilMDFullEditorUtilitiesCollection
                 $path_factory
             ),
             $library->getLOMEditorGUIQuirkDictionary(),
-            $this->data_finder
+            $library->getLOMEditorGUIDictionary(
+                $path_factory
+            ),
+            $this->data_finder,
+            $library->getLOMDatabaseDictionary(null)
         );
         $this->form_provider = new ilMDFullEditorFormProvider(
             $factory,
             $this->action_provider,
-            $this->input_provider
+            $this->input_provider,
+            $library->getLOMEditorGUIDictionary(
+                $path_factory
+            )
         );
         $this->table_provider = new ilMDFullEditorTableProvider(
             $factory,

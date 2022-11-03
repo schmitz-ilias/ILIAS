@@ -51,14 +51,11 @@ class ilMDFullEditorTableGUI extends ilTable2GUI
     ) {
         parent::__construct($parent_obj);
         $this->cmd_path = $cmd_path;
-        if (count($els = $root->getSubElementsByPath($cmd_path)) < 1) {
-            throw new ilMDGUIException(
-                'The path to the current' .
-                ' element does not lead to an element.'
-            );
-        }
         $this->root = $root;
-        $this->current_elements = $els;
+        $this->current_elements = $this->getElementsByPath(
+            $root,
+            $cmd_path
+        );
 
         $this->factory = $factory;
         $this->renderer = $renderer;
@@ -140,5 +137,30 @@ class ilMDFullEditorTableGUI extends ilTable2GUI
         $this->tpl->setCurrentBlock('action_column');
         $this->tpl->setVariable('ACTION_HTML', $a_set['dropdown']);
         $this->tpl->parse('action_column');
+    }
+
+    /**
+     * @param ilMDRootElement  $root
+     * @param ilMDPathFromRoot $path
+     * @return ilMDElement[]
+     */
+    protected function getElementsByPath(
+        ilMDRootElement $root,
+        ilMDPathFromRoot $path
+    ): array {
+        $els = $root->getSubElementsByPath($path);
+        $res = [];
+        foreach ($els as $el) {
+            if (!$el->isScaffold()) {
+                $res[] = $el;
+            }
+        }
+        if (count($res) < 1) {
+            throw new ilMDGUIException(
+                'The path to the current' .
+                ' element does not lead to an element.'
+            );
+        }
+        return $res;
     }
 }

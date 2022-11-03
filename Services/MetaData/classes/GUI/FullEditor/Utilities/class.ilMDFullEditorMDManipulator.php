@@ -53,11 +53,18 @@ class ilMDFullEditorMDManipulator
         ilMDPathFromRoot $path
     ): ilMDRootElement {
         $root = clone $root;
-        if (count($elements = $root->getSubElementsByPath($path)) < 1) {
+        if (count($path_els = $root->getSubElementsByPath($path)) < 1) {
             throw new ilMDGUIException(
                 'The path to the current' .
                 ' element does not lead to an element.'
             );
+        }
+        $elements = [];
+        foreach ($path_els as $el) {
+            $super = $el->getSuperElement() ?? $el;
+            if (!in_array($super, $elements, true)) {
+                $elements[] = $super;
+            }
         }
         while (!empty($elements)) {
             $next_elements = [];
@@ -79,13 +86,76 @@ class ilMDFullEditorMDManipulator
     /**
      * Returns false if the data from the request is invalid.
      */
+    public function create(
+        ilMDRootElement $root,
+        ilMDPathFromRoot $node_path,
+        ilMDPathFromRoot $create_path,
+        Request $request
+    ): bool {
+        $form = $this->form_provider->getCreateForm(
+            $root,
+            $create_path,
+            $node_path
+        );
+        $data = [];
+        if (
+            !empty($form->getInputs()) &&
+            !($data = $form->withRequest($request)->getData())
+        ) {
+            return false;
+        }
+        $data = $data[0] ?? [];
+        $vocab_struct = $this->vocab_dict->getStructure();
+        foreach ($data as $path_string => $value) {
+            $path = $this->path_factory
+                ->getPathFromRoot()
+                ->setPathFromString($path_string);
+            if ($value !== '') {
+                $el = $this->getUniqueElement($root, $path);
+                $el->leaveMarkerTrail(
+                    $this->marker_factory->Marker(
+                        $this->data_factory->MDData(
+                            $vocab_struct
+                                ->movePointerToEndOfPath($path)
+                                ->getTypeAtPointer(),
+                            $value,
+                            $vocab_struct
+                                ->getTagAtPointer()
+                                ?->getVocabularies() ?? [],
+                            $vocab_struct
+                                ->getTagAtPointer()
+                                ?->getConditionPath()
+                        )
+                    ),
+                    $this->marker_factory->NullMarker()
+                );
+            }
+        }
+        /**
+         * Leave a marker on the initial to-be-created element, to make
+         * sure it is created even when the form is left empty.
+         */
+        $element = $this->getUniqueElement($root, $create_path);
+        if (!$element->getMarker()) {
+            $element->leaveMarkerTrail(
+                $this->marker_factory->NullMarker(),
+                $this->marker_factory->NullMarker()
+            );
+        }
+        $this->repo->createAndUpdateMDElements($root);
+        return true;
+    }
+
+    /**
+     * Returns false if the data from the request is invalid.
+     */
     public function update(
         ilMDRootElement $root,
         ilMDPathFromRoot $node_path,
         ilMDPathFromRoot $update_path,
         Request $request
     ): bool {
-        $form = $this->form_provider->getFormForElement(
+        $form = $this->form_provider->getUpdateForm(
             $root,
             $update_path,
             $node_path
@@ -155,6 +225,10 @@ class ilMDFullEditorMDManipulator
         return false;
     }
 
+    /**
+     * If the supplied path leads to multiple elements,
+     * it takes the first scaffold.
+     */
     protected function getUniqueElement(
         ilMDRootElement $root,
         ilMDPathFromRoot $path
@@ -167,11 +241,25 @@ class ilMDFullEditorMDManipulator
             );
         }
         if (count($els = $root->getSubElementsByPath($path)) > 1) {
-            throw new ilMDGUIException(
-                'The path to the to be deleted' .
-                ' element leads to multiple element.'
-            );
+            foreach ($els as $element) {
+                if ($element->isScaffold()) {
+                    return $element;
+                }
+            }
         }
         return $els[0];
+    }
+
+    public function getScaffoldByPath(
+        ilMDRootElement $root,
+        ilMDPathFromRoot $path
+    ): ?ilMDScaffoldElement {
+        $elements = $root->getSubElementsByPath($path);
+        foreach ($elements as $element) {
+            if ($element instanceof ilMDScaffoldElement) {
+                return $element;
+            }
+        }
+        return null;
     }
 }

@@ -24,6 +24,7 @@ use ILIAS\UI\Component\Modal\RoundTrip as RoundtripModal;
 use ILIAS\UI\Component\Input\Container\Form\Standard as StandardForm;
 use ILIAS\Data\URI;
 use ILIAS\UI\Component\Signal as Signal;
+use Psr\Http\Message\ServerRequestInterface as Request;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -32,18 +33,18 @@ class ilMDFullEditorActionModalProvider
 {
     public const MAX_MODAL_CHARS = 150;
 
-    protected ilMDFullEditorActionProvider $action_provider;
+    protected ilMDFullEditorActionLinkProvider $link_provider;
     protected Factory $factory;
     protected ilMDLOMPresenter $presenter;
     protected ilMDFullEditorPropertiesProvider $prop_provider;
 
     public function __construct(
-        ilMDFullEditorActionProvider $action_provider,
+        ilMDFullEditorActionLinkProvider $link_provider,
         Factory $factory,
         ilMDLOMPresenter $presenter,
         ilMDFullEditorPropertiesProvider $prop_provider
     ) {
-        $this->action_provider = $action_provider;
+        $this->link_provider = $link_provider;
         $this->factory = $factory;
         $this->presenter = $presenter;
         $this->prop_provider = $prop_provider;
@@ -54,11 +55,10 @@ class ilMDFullEditorActionModalProvider
         ilMDPathFromRoot $delete_path,
         ilMDRootElement $root,
         bool $props_from_data = false
-    ): InterruptiveModal {
-        $action = $this->action_provider->getActionLink(
+    ): ilMDFullEditorFlexibleModal {
+        $action = $this->link_provider->delete(
             $base_path,
-            $delete_path,
-            ilMDFullEditorActionProvider::DELETE
+            $delete_path
         );
         $elements = $root->getSubElementsByPath($delete_path);
 
@@ -85,7 +85,7 @@ class ilMDFullEditorActionModalProvider
             $index++;
         }
 
-        return $this->factory->modal()->interruptive(
+        $modal = $this->factory->modal()->interruptive(
             $this->getModalTitle(
                 ilMDFullEditorActionProvider::DELETE,
                 $elements[0]
@@ -93,39 +93,57 @@ class ilMDFullEditorActionModalProvider
             $this->presenter->txt('delete_confirm'),
             (string) $action
         )->withAffectedItems($items);
+
+        return new ilMDFullEditorFlexibleModal($modal);
     }
 
     public function update(
         ilMDPathFromRoot $update_path,
         ilMDRootElement $root,
-        StandardForm $form
-    ): RoundtripModal {
-        return $this->getRoundtripModal(
+        StandardForm $form,
+        ?Request $request = null
+    ): ilMDFullEditorFlexibleModal {
+        $modal =  $this->getRoundtripModal(
             $update_path,
             $root,
             $form,
-            ilMDFullEditorActionProvider::UPDATE
+            ilMDFullEditorActionProvider::UPDATE,
+            $request
         );
+
+        return new ilMDFullEditorFlexibleModal($modal);
     }
 
     public function create(
-        ilMDPathFromRoot $update_path,
+        ilMDPathFromRoot $create_path,
         ilMDRootElement $root,
-        StandardForm $form
-    ): RoundtripModal {
-        return $this->getRoundtripModal(
-            $update_path,
+        StandardForm $form,
+        ?Request $request = null
+    ): ilMDFullEditorFlexibleModal {
+        // if the modal is empty, directly return the form action
+        if (empty($form->getInputs())) {
+            global $DIC;
+            $DIC->logger()->root()->dump('test');
+            return new ilMDFullEditorFlexibleModal(null, $form->getPostURL());
+        }
+
+        $modal = $this->getRoundtripModal(
+            $create_path,
             $root,
             $form,
-            ilMDFullEditorActionProvider::CREATE
+            ilMDFullEditorActionProvider::CREATE,
+            $request
         );
+
+        return new ilMDFullEditorFlexibleModal($modal);
     }
 
     protected function getRoundtripModal(
         ilMDPathFromRoot $action_path,
         ilMDRootElement $root,
         StandardForm $form,
-        string $action_cmd
+        string $action_cmd,
+        ?Request $request = null
     ): RoundtripModal {
         $elements = $root->getSubElementsByPath($action_path);
         $button = $this->factory->button()->standard(
@@ -134,10 +152,23 @@ class ilMDFullEditorActionModalProvider
         )->withOnLoadCode(function ($id) {
             return 'il.MetaModalFormButtonHandler.init("' . $id . '");';
         });
-        return $this->factory->modal()->roundtrip(
+
+        // For error handling, pass the request to the form
+        if ($request) {
+            $form = $form->withRequest($request);
+        }
+
+        $modal = $this->factory->modal()->roundtrip(
             $this->getModalTitle($action_cmd, $elements[0]),
             $form
         )->withActionButtons([$button]);
+
+        // For error handling, make the modal open on load
+        if ($request) {
+            $modal = $modal->withOnLoad($modal->getShowSignal());
+        }
+
+        return $modal;
     }
 
     protected function getModalTitle(
@@ -164,7 +195,12 @@ class ilMDFullEditorActionModalProvider
         }
         return $this->presenter->txtFill(
             $title_key,
-            [$this->presenter->getElementNameWithParents($element)]
+            [$this->presenter->getElementNameWithParents(
+                $element,
+                false,
+                '',
+                false
+            )]
         );
     }
 }

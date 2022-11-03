@@ -983,9 +983,15 @@ class ilMDEditorGUI
 
     protected function fullEditorCreate(): void
     {
+        $this->fullEditorEdit(true);
     }
 
     protected function fullEditorUpdate(): void
+    {
+        $this->fullEditorEdit(false);
+    }
+
+    protected function fullEditorEdit(bool $create): void
     {
         // get the paths from the http request
         $node_path = $this->getNodePathFromRequest();
@@ -994,16 +1000,25 @@ class ilMDEditorGUI
         // get and prepare the MD
         $root = $this->repo->getMD();
         $editor = $this->getFullEditor();
-        $root = $editor->manipulateMD()->prepare($root, $update_path);
+        $root = $editor->manipulateMD()->prepare($root, $node_path);
 
-        // update
+        // update or create
         $request = $this->http->request();
-        $success = $editor->manipulateMD()->update(
-            $root,
-            $node_path,
-            $update_path,
-            $request
-        );
+        if ($create) {
+            $success = $editor->manipulateMD()->create(
+                $root,
+                $node_path,
+                $update_path,
+                $request
+            );
+        } else {
+            $success = $editor->manipulateMD()->update(
+                $root,
+                $node_path,
+                $update_path,
+                $request
+            );
+        }
         if (!$success) {
             if (
                 $editor->decideContentType($root, $node_path) ===
@@ -1100,11 +1115,12 @@ class ilMDEditorGUI
             )
         );
 
-        // add content for element
-        $path = $this->getNodePathFromRequest();
-
+        // prepare MD by adding scaffolds
         $editor = $this->getFullEditor();
+        $path = $this->getNodePathFromRequest();
         $root = $editor->manipulateMD()->prepare($root, $path);
+
+        // add content for element
         $create_modals = $editor->getCreateModals(
             $root,
             $path,
@@ -1112,7 +1128,7 @@ class ilMDEditorGUI
             $path_for_request
         );
         $create_signals = array_map(
-            fn ($arg) => $arg->getShowSignal(),
+            fn ($arg) => $arg->getFlexibleSignal(),
             $create_modals
         );
         $update_modals = $editor->getUpdateModals(
@@ -1122,12 +1138,12 @@ class ilMDEditorGUI
             $path_for_request
         );
         $update_signals = array_map(
-            fn ($arg) => $arg->getShowSignal(),
+            fn ($arg) => $arg->getFlexibleSignal(),
             $update_modals
         );
         $delete_modals = $editor->getDeleteModals($root, $path);
         $delete_signals = array_map(
-            fn ($arg) => $arg->getShowSignal(),
+            fn ($arg) => $arg->getFlexibleSignal(),
             $delete_modals
         );
         $content = $editor->getContent(
@@ -1158,9 +1174,18 @@ class ilMDEditorGUI
             $this->ui_renderer->render(
                 array_merge(
                     [$content],
-                    array_values($create_modals),
-                    array_values($update_modals),
-                    array_values($delete_modals)
+                    array_filter(array_values(array_map(
+                        fn ($arg) => $arg->getModal(),
+                        $create_modals
+                    ))),
+                    array_filter(array_values(array_map(
+                        fn ($arg) => $arg->getModal(),
+                        $update_modals
+                    ))),
+                    array_filter(array_values(array_map(
+                        fn ($arg) => $arg->getModal(),
+                        $delete_modals
+                    )))
                 )
             )
         );

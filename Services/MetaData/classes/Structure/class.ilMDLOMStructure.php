@@ -342,8 +342,8 @@ class ilMDLOMStructure implements ilMDStructure
         ],
         'language' => [
             'unique' => false,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
-            'sub' => self::STRUCTURE_LANGSTRING
+            'type' => ilMDLOMDataFactory::TYPE_LANG,
+            'sub' => []
         ]
     ];
 

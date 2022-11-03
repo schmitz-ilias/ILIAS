@@ -132,13 +132,7 @@ class ilMDEditorTreeRecursion implements TreeRecursion
         $mode = $tag->getCollectionMode();
 
         // expanded
-        $is_expanded = $elements[0]->isRoot();
-        if (
-            $mode === ilMDLOMEditorGUIDictionary::COLLECTION_NODE &&
-            is_array($record)
-        ) {
-            $is_expanded = in_array($this->current_elements[0], $elements);
-        }
+        $is_expanded = in_array($this->current_elements[0], $elements);
         foreach ($elements as $el) {
             $is_expanded =
                 $is_expanded || in_array(

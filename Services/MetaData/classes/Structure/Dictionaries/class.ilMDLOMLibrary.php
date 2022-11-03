@@ -37,10 +37,25 @@ class ilMDLOMLibrary
         return new ilMDLOMDictionary();
     }
 
+    /**
+     * The DB interface is only allowed to be null here because the
+     * editor needs to know which elements can be created (meaning
+     * have a non-null create query), so the editor needs this
+     * dictionary, but I don't want to pass the DB interface there.
+     * This should be changed when we change the DB structure to
+     * something that can work better with the new editor.
+     */
     public function getLOMDatabaseDictionary(
-        ilDBInterface $db
+        ?ilDBInterface $db
     ): ilMDLOMDatabaseDictionary {
-        return new ilMDLOMDatabaseDictionary($this->factory, $db);
+        return new ilMDLOMDatabaseDictionary(
+            $this->factory,
+            $db,
+            new ilMDLOMDatabaseQueryProvider(
+                $this->factory,
+                $db
+            )
+        );
     }
 
     public function getLOMVocabulariesDictionary(

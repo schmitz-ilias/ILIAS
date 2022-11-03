@@ -25,8 +25,10 @@ class ilMDEditorGUITagBuilder
 {
     protected ?ilMDPathRelative $path_to_representation = null;
     protected ?ilMDPathRelative $path_to_preview = null;
+    protected ?ilMDPathRelative $path_to_forward = null;
     protected string $collection_mode = ilMDLOMEditorGUIDictionary::NO_COLLECTION;
     protected bool $in_tree = true;
+    protected bool $label_important = false;
 
     public function setPathToRepresentation(
         ?ilMDPathRelative $path
@@ -39,6 +41,13 @@ class ilMDEditorGUITagBuilder
         ?ilMDPathRelative $path
     ): ilMDEditorGUITagBuilder {
         $this->path_to_preview = $path;
+        return $this;
+    }
+
+    public function setPathToForward(
+        ?ilMDPathRelative $path
+    ): ilMDEditorGUITagBuilder {
+        $this->path_to_forward = $path;
         return $this;
     }
 
@@ -55,13 +64,22 @@ class ilMDEditorGUITagBuilder
         return $this;
     }
 
+    public function setLabelImportant(
+        bool $label_important
+    ): ilMDEditorGUITagBuilder {
+        $this->label_important = $label_important;
+        return $this;
+    }
+
     public function getTag(): ilMDEditorGUITag
     {
         return new ilMDEditorGUITag(
             $this->path_to_preview,
             $this->path_to_representation,
+            $this->path_to_forward,
             $this->collection_mode,
-            $this->in_tree
+            $this->in_tree,
+            $this->label_important
         );
     }
 }

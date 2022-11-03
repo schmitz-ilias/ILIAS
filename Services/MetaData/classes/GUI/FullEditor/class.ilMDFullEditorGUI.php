@@ -82,11 +82,11 @@ class ilMDFullEditorGUI
     }
 
     /**
-     * @param ilMDRootElement  $root
-     * @param ilMDPathFromRoot $path
-     * @param Signal[]         $create_signals
-     * @param Signal[]         $update_signals
-     * @param Signal[]         $delete_signals
+     * @param ilMDRootElement                   $root
+     * @param ilMDPathFromRoot                  $path
+     * @param ilMDFullEditorFlexibleSignal[]    $create_signals
+     * @param ilMDFullEditorFlexibleSignal[]    $update_signals
+     * @param ilMDFullEditorFlexibleSignal[]    $delete_signals
      * @return ilTable2GUI|StandardForm|Panel
      */
     public function getContent(
@@ -138,7 +138,7 @@ class ilMDFullEditorGUI
      * @param ilMDPathFromRoot      $path
      * @param Request|null          $request
      * @param ilMDPathFromRoot|null $path_for_request
-     * @return Modal[]
+     * @return ilMDFullEditorFlexibleModal[]
      */
     public function getCreateModals(
         ilMDRootElement $root,
@@ -148,8 +148,63 @@ class ilMDFullEditorGUI
     ): array {
         switch ($this->decideContentType($root, $path)) {
             case self::TABLE:
-            case self::ROOT:
+                $form = $this->form_provider->getCreateForm(
+                    $root,
+                    $path,
+                    $path
+                );
+                $req = null;
+                if (
+                    $path->getPathAsString() ===
+                    $path_for_request?->getPathAsString()
+                ) {
+                    $req = $request;
+                }
+                return [$path->getPathAsString() =>
+                    $this->action_provider->getModal()->create(
+                        $path,
+                        $root,
+                        $form,
+                        $req
+                    )];
+
             case self::PANEL:
+                return $this->getCreateModalsForPanel(
+                    $root,
+                    $path,
+                    $path,
+                    $request,
+                    $path_for_request
+                );
+
+            case self::ROOT:
+                $modals = $this->getCreateModalsForPanel(
+                    $root,
+                    $path,
+                    $path,
+                    $request,
+                    $path_for_request
+                );
+                foreach ($root->getSubElements() as $sub) {
+                    if ($sub->isScaffold()) {
+                        continue;
+                    }
+                    $appended_path = (clone $path)
+                        ->addStep($sub->getName())
+                        ->addMDIDFilter($sub->getMDID());
+                    $modals = array_merge(
+                        $modals,
+                        $this->getCreateModalsForPanel(
+                            $root,
+                            $path,
+                            $appended_path,
+                            $request,
+                            $path_for_request
+                        )
+                    );
+                }
+                return $modals;
+
             case self::FORM:
                 return [];
 
@@ -162,10 +217,58 @@ class ilMDFullEditorGUI
 
     /**
      * @param ilMDRootElement       $root
+     * @param ilMDPathFromRoot      $base_path
      * @param ilMDPathFromRoot      $path
      * @param Request|null          $request
      * @param ilMDPathFromRoot|null $path_for_request
-     * @return Modal[]
+     * @return ilMDFullEditorFlexibleModal[]
+     */
+    protected function getCreateModalsForPanel(
+        ilMDRootElement $root,
+        ilMDPathFromRoot $base_path,
+        ilMDPathFromRoot $path,
+        ?Request $request = null,
+        ?ilMDPathFromRoot $path_for_request = null
+    ): array {
+        $element = $root->getSubElementsByPath($path)[0];
+        $modals = [];
+        foreach ($element->getSubElements() as $sub) {
+            if (!$sub->isScaffold()) {
+                continue;
+            }
+            $appended_path = (clone $path)->addStep(
+                $sub->getName()
+            );
+            $req = null;
+            if (
+                $appended_path->getPathAsString() ===
+                $path_for_request?->getPathAsString()
+            ) {
+                $req = $request;
+            }
+            $form = $this->form_provider->getCreateForm(
+                $root,
+                $appended_path,
+                $base_path
+            );
+
+            $modals[$appended_path->getPathAsString()] =
+                $this->action_provider->getModal()->create(
+                    $appended_path,
+                    $root,
+                    $form,
+                    $req
+                );
+        }
+        return $modals;
+    }
+
+    /**
+     * @param ilMDRootElement       $root
+     * @param ilMDPathFromRoot      $path
+     * @param Request|null          $request
+     * @param ilMDPathFromRoot|null $path_for_request
+     * @return ilMDFullEditorFlexibleModal[]
      */
     public function getUpdateModals(
         ilMDRootElement $root,
@@ -183,29 +286,25 @@ class ilMDFullEditorGUI
                     }
                     $appended_path = (clone $path)
                         ->addMDIDFilter($element->getMDID());
-                    $form = $this->form_provider->getFormForElement(
+                    $form = $this->form_provider->getUpdateForm(
                         $root,
                         $appended_path,
                         $path
                     );
-                    $opened = false;
+                    $req = null;
                     if (
-                        $request &&
                         $appended_path->getPathAsString() ===
                         $path_for_request?->getPathAsString()
                     ) {
-                        $form = $form->withRequest($request);
-                        $opened = true;
+                        $req = $request;
                     }
-                    $modal = $this->action_provider->getModal()->update(
-                        $appended_path,
-                        $root,
-                        $form
-                    );
-                    if ($opened) {
-                        $modal = $modal->withOnLoad($modal->getShowSignal());
-                    }
-                    $modals[$appended_path->getPathAsString()] = $modal;
+                    $modals[$appended_path->getPathAsString()] =
+                        $this->action_provider->getModal()->update(
+                            $appended_path,
+                            $root,
+                            $form,
+                            $req
+                        );
                 }
                 return $modals;
 
@@ -224,7 +323,7 @@ class ilMDFullEditorGUI
     /**
      * @param ilMDRootElement  $root
      * @param ilMDPathFromRoot $path
-     * @return Modal[]
+     * @return ilMDFullEditorFlexibleModal[]
      */
     public function getDeleteModals(
         ilMDRootElement $root,
@@ -319,11 +418,11 @@ class ilMDFullEditorGUI
     }
 
     /**
-     * @param ilMDRootElement  $root
-     * @param ilMDPathFromRoot $path
-     * @param Signal[]         $create_signals
-     * @param Signal[]         $update_signals
-     * @param Signal[]         $delete_signals
+     * @param ilMDRootElement                   $root
+     * @param ilMDPathFromRoot                  $path
+     * @param ilMDFullEditorFlexibleSignal[]    $create_signals
+     * @param ilMDFullEditorFlexibleSignal[]    $update_signals
+     * @param ilMDFullEditorFlexibleSignal[]    $delete_signals
      * @return Button|StandardDropdown|null
      */
     public function getToolbarContent(
@@ -345,21 +444,43 @@ class ilMDFullEditorGUI
                 );
 
             case self::TABLE:
-                return $this->factory->button()->standard(
-                    'add row',
-                    '#'
+                if (!key_exists($path->getPathAsString(), $create_signals)) {
+                    return null;
+                }
+                return $this->action_provider->getButton()->create(
+                    $create_signals[$path->getPathAsString()],
+                    $this->manipulator->getScaffoldByPath($root, $path)
                 );
 
             case self::PANEL:
                 return null;
 
             case self::ROOT:
-                return $this->factory->dropdown()->standard(
-                    [$this->factory->button()->shy(
-                        'something',
-                        '#'
-                    )]
-                )->withLabel('add');
+                $buttons = [];
+                foreach ($root->getSubElements() as $sub) {
+                    if (!$sub instanceof ilMDScaffoldElement) {
+                        continue;
+                    }
+                    $appended_path = (clone $path)->addStep(
+                        $sub->getName()
+                    );
+                    if (!key_exists(
+                        $appended_path->getPathAsString(),
+                        $create_signals
+                    )) {
+                        continue;
+                    }
+                    $buttons[$appended_path->getPathAsString()] =
+                        $this->action_provider->getButton()->create(
+                            $create_signals[$appended_path->getPathAsString()],
+                            $sub,
+                            true
+                        );
+                }
+                return $this->factory
+                    ->dropdown()
+                    ->standard($buttons)
+                    ->withLabel($this->presenter->txt('add_at_root'));
 
             default:
                 throw new ilMDGUIException(
@@ -399,11 +520,11 @@ class ilMDFullEditorGUI
     }
 
     /**
-     * @param ilMDRootElement  $root
-     * @param ilMDPathFromRoot $path
-     * @param Signal[]         $create_signals
-     * @param Signal[]         $update_signals
-     * @param Signal[]         $delete_signals
+     * @param ilMDRootElement                   $root
+     * @param ilMDPathFromRoot                  $path
+     * @param ilMDFullEditorFlexibleSignal[]    $create_signals
+     * @param ilMDFullEditorFlexibleSignal[]    $update_signals
+     * @param ilMDFullEditorFlexibleSignal[]    $delete_signals
      * @return ilTable2GUI
      */
     protected function getTable(
@@ -438,12 +559,12 @@ class ilMDFullEditorGUI
     }
 
     /**
-     * @param ilMDRootElement  $root
-     * @param ilMDPathFromRoot $path
-     * @param Signal[]         $create_signals
-     * @param Signal[]         $update_signals
-     * @param Signal[]         $delete_signals
-     * @param bool             $subpanel
+     * @param ilMDRootElement                   $root
+     * @param ilMDPathFromRoot                  $path
+     * @param ilMDFullEditorFlexibleSignal[]    $create_signals
+     * @param ilMDFullEditorFlexibleSignal[]    $update_signals
+     * @param ilMDFullEditorFlexibleSignal[]    $delete_signals
+     * @param bool                              $subpanel
      * @return Panel
      */
     protected function getPanel(
@@ -468,7 +589,25 @@ class ilMDFullEditorGUI
                 true
             );
         }
-        $buttons[] = $this->factory->button()->shy('add something', '#');
+        $element = $root->getSubElementsByPath($path)[0];
+        foreach ($element->getSubElements() as $sub) {
+            if (!$sub instanceof ilMDScaffoldElement) {
+                continue;
+            }
+            $appended_path = (clone $path)->addStep(
+                $sub->getName()
+            );
+            if (key_exists(
+                $appended_path->getPathAsString(),
+                $create_signals
+            )) {
+                $buttons[] = $this->action_provider->getButton()->create(
+                    $create_signals[$appended_path->getPathAsString()],
+                    $sub,
+                    true
+                );
+            }
+        }
         $dropdown = $this->factory->dropdown()->standard($buttons);
 
         if ($subpanel) {
@@ -492,10 +631,10 @@ class ilMDFullEditorGUI
     }
 
     /**
-     * @param ilMDRootElement $root
-     * @param Signal[]        $create_signals
-     * @param Signal[]        $update_signals
-     * @param Signal[]        $delete_signals
+     * @param ilMDRootElement                   $root
+     * @param ilMDFullEditorFlexibleSignal[]    $create_signals
+     * @param ilMDFullEditorFlexibleSignal[]    $update_signals
+     * @param ilMDFullEditorFlexibleSignal[]    $delete_signals
      * @return Panel
      */
     protected function getRootPanel(
@@ -537,7 +676,7 @@ class ilMDFullEditorGUI
         ilMDRootElement $root,
         ilMDPathFromRoot $path
     ): StandardForm {
-        return $this->form_provider->getFormForElement(
+        return $this->form_provider->getUpdateForm(
             $root,
             $path,
             $path

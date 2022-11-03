@@ -33,67 +33,33 @@ class ilMDFullEditorActionProvider
     public const UPDATE = 'fullEditorUpdate';
     public const DELETE = 'fullEditorDelete';
 
-    protected Factory $factory;
-    protected ilMDLOMPresenter $presenter;
-    protected ilMDFullEditorPropertiesProvider $prop_provider;
-
-    protected URI $base_link;
+    protected ilMDFullEditorActionButtonProvider $button_provider;
+    protected ilMDFullEditorActionModalProvider $modal_provider;
+    protected ilMDFullEditorActionLinkProvider $link_provider;
 
     public function __construct(
-        URI $base_link,
-        Factory $factory,
-        ilMDLOMPresenter $presenter,
-        ilMDFullEditorPropertiesProvider $prop_provider
+        ilMDFullEditorActionLinkProvider $link_provider,
+        ilMDFullEditorActionButtonProvider $button_provider,
+        ilMDFullEditorActionModalProvider $modal_provider
     ) {
-        $this->base_link = $base_link;
-        $this->factory = $factory;
-        $this->presenter = $presenter;
-        $this->prop_provider = $prop_provider;
+        $this->link_provider = $link_provider;
+        $this->button_provider = $button_provider;
+        $this->modal_provider = $modal_provider;
     }
 
     public function getModal(): ilMDFullEditorActionModalProvider
     {
-        return new ilMDFullEditorActionModalProvider(
-            $this,
-            $this->factory,
-            $this->presenter,
-            $this->prop_provider
-        );
+        return $this->modal_provider;
     }
 
     public function getButton(): ilMDFullEditorActionButtonProvider
     {
-        return new ilMDFullEditorActionButtonProvider(
-            $this->factory,
-            $this->presenter
-        );
+        return $this->button_provider;
     }
 
-    public function getActionLink(
-        ilMDPathFromRoot $base_path,
-        ilMDPathFromRoot $action_path,
-        string $action_cmd
-    ): URI {
-        $actions = [self::CREATE, self::DELETE, self::UPDATE];
-        if (!in_array($action_cmd, $actions)) {
-            throw new ilMDGUIException(
-                'Invalid action: ' . $action_cmd
-            );
-        }
-
-        return $this->base_link
-            ->withParameter(
-                ilMDEditorGUI::MD_NODE_PATH,
-                $base_path->getPathAsString()
-            )
-            ->withParameter(
-                ilMDEditorGUI::MD_ACTION_PATH,
-                $action_path->getPathAsString()
-            )
-            ->withParameter(
-                'cmd',
-                $action_cmd
-            );
+    public function getLink(): ilMDFullEditorActionLinkProvider
+    {
+        return $this->link_provider;
     }
 
     public function isElementDeletable(

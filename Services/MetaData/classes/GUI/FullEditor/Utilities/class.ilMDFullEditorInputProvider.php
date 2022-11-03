@@ -39,7 +39,18 @@ class ilMDFullEditorInputProvider
     protected ilMDLOMPresenter $presenter;
     protected ilMDLOMVocabulariesDictionary $vocab_dict;
     protected ilMDLOMEditorGUIQuirkDictionary $quirk_dict;
+    protected ilMDLOMEditorGUIDictionary $ui_dict;
     protected ilMDFullEditorDataFinder $data_finder;
+
+    /**
+     * This is only here because the
+     * editor needs to know which elements can be created (meaning
+     * have a non-null create query), but this does not contain
+     * actually functioning queries.
+     * This should be changed when we change the DB structure to
+     * something that can work better with the new editor.
+     */
+    protected ilMDLOMDatabaseDictionary $db_dict;
 
     public function __construct(
         Factory $factory,
@@ -48,7 +59,9 @@ class ilMDFullEditorInputProvider
         ilMDLOMPresenter $presenter,
         ilMDLOMVocabulariesDictionary $vocab_dict,
         ilMDLOMEditorGUIQuirkDictionary $quirk_dict,
-        ilMDFullEditorDataFinder $data_finder
+        ilMDLOMEditorGUIDictionary $ui_dict,
+        ilMDFullEditorDataFinder $data_finder,
+        ilMDLOMDatabaseDictionary $db_dict
     ) {
         $this->factory = $factory;
         $this->refinery = $refinery;
@@ -56,25 +69,42 @@ class ilMDFullEditorInputProvider
         $this->presenter = $presenter;
         $this->vocab_dict = $vocab_dict;
         $this->quirk_dict = $quirk_dict;
+        $this->ui_dict = $ui_dict;
         $this->data_finder = $data_finder;
+        $this->db_dict = $db_dict;
     }
 
     public function getInputSection(
         ilMDRootElement $root,
-        ilMDPathFromRoot $path
+        ilMDPathFromRoot $path,
+        ilMDPathFromRoot $action_path
     ): Section {
         $element = $this->getUniqueElement($root, $path);
         $data_els = $this->data_finder->getDataElements($element);
         $inputs = [];
+        $exclude_required = [];
         foreach ($data_els as $data_el) {
+            global $DIC;
             $arr = $this->getInputForElement(
                 $root,
                 $path,
-                $data_el,
+                $action_path,
+                $data_el
             );
             $inputs[$arr['path']->getPathAsString()] = $arr['input'];
+
+            /**
+             * If a data element can't be created, it needs to be excluded
+             * from checking whether at least one input field is not empty.
+             */
+            $data_create = $this
+                ->getElementDBTagFromStructure($data_el)
+                ->getCreate();
+            if ($data_create === '') {
+                $exclude_required[] = $arr['path']->getPathAsString();
+            }
         }
-        return $this->factory->section(
+        $section = $this->factory->section(
             $inputs,
             $this->presenter->getElementNameWithParents($element, false)
         // flatten the output of conditional inputs
@@ -89,6 +119,42 @@ class ilMDFullEditorInputProvider
                 return $vs;
             })
         );
+
+        /**
+         * If the current element can't be created on its own due to the db
+         * structure, the editor has to require that at least one of the
+         * inputs is not empty.
+         */
+        $tag = $this->db_dict
+            ->getStructure()
+            ->movePointerToEndOfPath($action_path)
+            ->getTagAtPointer();
+        $create = $tag->getCreate();
+        $needs_data = in_array(
+            ilMDLOMDatabaseDictionary::EXP_DATA,
+            $tag->getExpectedParams()
+        );
+
+        if ($create === '' || $needs_data) {
+            $section = $section->withAdditionalTransformation(
+                $this->refinery->custom()->constraint(
+                    function ($vs) use ($exclude_required) {
+                        foreach ($vs as $p => $v) {
+                            if (in_array($p, $exclude_required)) {
+                                continue;
+                            }
+                            if ($v !== '' && $v !== null) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    },
+                    $this->presenter->txt('error_empty_input')
+                )
+            );
+        }
+
+        return $section;
     }
 
     protected function getIndexOfElement(
@@ -107,10 +173,11 @@ class ilMDFullEditorInputProvider
         }
 
         // find the index
-        $element = $root->getSubElementsByPath($path_to_element)[0];
+        $element = $this->getUniqueElement($root, $path_to_element);
         return 1 + array_search(
             $element,
-            $root->getSubElementsByPath($clean_path)
+            $root->getSubElementsByPath($clean_path),
+            true
         );
     }
 
@@ -147,6 +214,17 @@ class ilMDFullEditorInputProvider
         return $structure->getTypeAtPointer();
     }
 
+    protected function getElementDBTagFromStructure(
+        ilMDBaseElement $element
+    ): ilMDDatabaseTag {
+        /** @var $tag ilMDDatabaseTag */
+        $tag = $this->getElementTagFromStructure(
+            $element,
+            $this->db_dict->getStructure()
+        );
+        return $tag;
+    }
+
     protected function getElementVocabTagFromStructure(
         ilMDBaseElement $element
     ): ?ilMDVocabulariesTag {
@@ -165,6 +243,17 @@ class ilMDFullEditorInputProvider
         $tag = $this->getElementTagFromStructure(
             $element,
             $this->quirk_dict->getStructure()
+        );
+        return $tag;
+    }
+
+    protected function getElementUITagFromStructure(
+        ilMDBaseElement $element
+    ): ?ilMDEditorGUITag {
+        /** @var $tag ?ilMDEditorGUITag */
+        $tag = $this->getElementTagFromStructure(
+            $element,
+            $this->ui_dict->getStructure()
         );
         return $tag;
     }
@@ -191,9 +280,11 @@ class ilMDFullEditorInputProvider
     protected function getInputForElement(
         ilMDRootElement $root,
         ilMDPathFromRoot $path,
+        ilMDPathFromRoot $action_path,
         ilMDBaseElement $current_element,
     ): array {
         $element = $this->getUniqueElement($root, $path);
+        $action_element = $this->getUniqueElement($root, $action_path);
         $type = $this->getElementDataTypeFromStructure(
             $current_element
         );
@@ -201,6 +292,7 @@ class ilMDFullEditorInputProvider
             $current_element
         );
 
+        $default = '';
         switch ($type) {
             case ilMDLOMDataFactory::TYPE_NONE:
                 throw new ilMDGUIException(
@@ -232,6 +324,9 @@ class ilMDFullEditorInputProvider
                 if ($tag->getConditionPath()) {
                     $selects = [];
                     foreach ($tag->getVocabularies() as $vocab) {
+                        if ($default === '') {
+                            $default = $vocab->getConditionValue();
+                        }
                         $v = $current_element->isScaffold() ?
                             '' : $this->getDataValueForInput(
                                 $current_element->getData(),
@@ -366,10 +461,14 @@ class ilMDFullEditorInputProvider
                 );
         }
 
+        $skip_initial = !$this->getElementUITagFromStructure(
+            $current_element
+        )?->isLabelImportant();
+
         $res = $res
             ->withValue(
                 $current_element->isScaffold() ?
-                    '' : $this->getDataValueForInput(
+                    $default : $this->getDataValueForInput(
                         $current_element->getData(),
                         $this->presenter
                     )
@@ -378,7 +477,8 @@ class ilMDFullEditorInputProvider
                 $this->presenter->getElementNameWithParents(
                     $current_element,
                     false,
-                    $element->getName()
+                    $action_element->getName(),
+                    $skip_initial
                 )
             );
 
@@ -542,6 +642,10 @@ class ilMDFullEditorInputProvider
         return $value;
     }
 
+    /**
+     * If the supplied path leads to multiple elements,
+     * it takes the first scaffold.
+     */
     protected function getUniqueElement(
         ilMDRootElement $root,
         ilMDPathFromRoot $path
@@ -549,15 +653,15 @@ class ilMDFullEditorInputProvider
         $els = $root->getSubElementsByPath($path);
         if (count($els = $root->getSubElementsByPath($path)) < 1) {
             throw new ilMDGUIException(
-                'The path to the to be deleted' .
-                ' element does not lead to an element.'
+                'The path does not lead to an element.'
             );
         }
         if (count($els = $root->getSubElementsByPath($path)) > 1) {
-            throw new ilMDGUIException(
-                'The path to the to be deleted' .
-                ' element leads to multiple element.'
-            );
+            foreach ($els as $element) {
+                if ($element->isScaffold()) {
+                    return $element;
+                }
+            }
         }
         return $els[0];
     }

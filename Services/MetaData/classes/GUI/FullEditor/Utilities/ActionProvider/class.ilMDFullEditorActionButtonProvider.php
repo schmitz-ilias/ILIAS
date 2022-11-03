@@ -41,7 +41,7 @@ class ilMDFullEditorActionButtonProvider
     }
 
     public function delete(
-        Signal $modal_signal,
+        ilMDFullEditorFlexibleSignal $signal,
         bool $is_shy = false,
         bool $long_text = false
     ): Button {
@@ -49,20 +49,20 @@ class ilMDFullEditorActionButtonProvider
             $long_text ? 'delete_this_element' : 'delete'
         );
         if ($is_shy) {
-            return $this->getShyButton($label, $modal_signal);
+            return $this->getShyButton($label, $signal);
         }
-        return $this->getStandardButton($label, $modal_signal);
+        return $this->getStandardButton($label, $signal);
     }
 
     public function update(
-        Signal $modal_signal
+        ilMDFullEditorFlexibleSignal $signal
     ): ShyButton {
         $label = $this->presenter->txt('edit');
-        return $this->getShyButton($label, $modal_signal);
+        return $this->getShyButton($label, $signal);
     }
 
     public function create(
-        Signal $modal_signal,
+        ilMDFullEditorFlexibleSignal $signal,
         ilMDScaffoldElement $element,
         bool $is_shy = false
     ): Button {
@@ -71,22 +71,22 @@ class ilMDFullEditorActionButtonProvider
             [$this->presenter->getElementName($element)]
         );
         if ($is_shy) {
-            return $this->getShyButton($label, $modal_signal);
+            return $this->getShyButton($label, $signal);
         }
-        return $this->getStandardButton($label, $modal_signal);
+        return $this->getStandardButton($label, $signal);
     }
 
     protected function getShyButton(
         string $label,
-        Signal $modal_signal
+        ilMDFullEditorFlexibleSignal $signal
     ): ShyButton {
-        return $this->factory->button()->shy($label, $modal_signal);
+        return $this->factory->button()->shy($label, $signal->get());
     }
 
     protected function getStandardButton(
         string $label,
-        Signal $modal_signal
+        ilMDFullEditorFlexibleSignal $signal
     ): StandardButton {
-        return $this->factory->button()->standard($label, $modal_signal);
+        return $this->factory->button()->standard($label, $signal->get());
     }
 }

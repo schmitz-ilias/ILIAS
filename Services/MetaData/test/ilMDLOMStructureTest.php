@@ -213,8 +213,15 @@ class ilMDLOMStructureTest extends TestCase
             ->willReturn($tag);
 
         $db = $this->createMock(ilDBInterface::class);
+        $query_provider = $this->createMock(
+            ilMDLOMDatabaseQueryProvider::class
+        );
 
-        $dictionary = new ilMDLOMDatabaseDictionary($tag_factory, $db);
+        $dictionary = new ilMDLOMDatabaseDictionary(
+            $tag_factory,
+            $db,
+            $query_provider
+        );
         $structure = $dictionary->getStructure();
 
         $this->assertInstanceOf(

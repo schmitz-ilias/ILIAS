@@ -20,12 +20,6 @@ else in ILIAS.
 Currently any string can be converted to a path, so it would be
 good to include validation for input strings.
 
-### Clean up Names with Parents
-
-It would look better to skip the names of basic elements (string,
-value, dateTime, duration) when showing element names with parents,
-as long as this does not delete the whole label.
-
 ### Refactor conditional inputs
 
 Currently, conditional inputs do not work well with quirks.
