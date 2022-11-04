@@ -46,7 +46,7 @@ class ilMDFullEditorActionButtonProvider
         bool $long_text = false
     ): Button {
         $label = $this->presenter->txt(
-            $long_text ? 'delete_this_element' : 'delete'
+            $long_text ? 'meta_delete_this_element' : 'delete'
         );
         if ($is_shy) {
             return $this->getShyButton($label, $signal);
@@ -67,7 +67,7 @@ class ilMDFullEditorActionButtonProvider
         bool $is_shy = false
     ): Button {
         $label = $this->presenter->txtFill(
-            'add_element',
+            'meta_add_element',
             [$this->presenter->getElementName($element)]
         );
         if ($is_shy) {

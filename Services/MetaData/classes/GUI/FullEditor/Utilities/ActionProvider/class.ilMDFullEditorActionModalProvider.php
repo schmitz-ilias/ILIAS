@@ -90,7 +90,7 @@ class ilMDFullEditorActionModalProvider
                 ilMDFullEditorActionProvider::DELETE,
                 $elements[0]
             ),
-            $this->presenter->txt('delete_confirm'),
+            $this->presenter->txt('meta_delete_confirm'),
             (string) $action
         )->withAffectedItems($items);
 
@@ -122,9 +122,7 @@ class ilMDFullEditorActionModalProvider
     ): ilMDFullEditorFlexibleModal {
         // if the modal is empty, directly return the form action
         if (empty($form->getInputs())) {
-            global $DIC;
-            $DIC->logger()->root()->dump('test');
-            return new ilMDFullEditorFlexibleModal(null, $form->getPostURL());
+            return new ilMDFullEditorFlexibleModal($form->getPostURL());
         }
 
         $modal = $this->getRoundtripModal(
@@ -177,15 +175,15 @@ class ilMDFullEditorActionModalProvider
     ): string {
         switch ($action_cmd) {
             case ilMDFullEditorActionProvider::UPDATE:
-                $title_key = 'update_element';
+                $title_key = 'meta_edit_element';
                 break;
 
             case ilMDFullEditorActionProvider::CREATE:
-                $title_key = 'create_element';
+                $title_key = 'meta_add_element';
                 break;
 
             case ilMDFullEditorActionProvider::DELETE:
-                $title_key = 'delete_element';
+                $title_key = 'meta_delete_element';
                 break;
 
             default:

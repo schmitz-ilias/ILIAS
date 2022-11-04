@@ -47,8 +47,7 @@ class ilMDFullEditorUtilitiesCollection
         ilMDLOMPresenter $presenter,
         ilMDLOMLibrary $library,
         ilMDPathFactory $path_factory,
-        ilMDMarkerFactory $marker_factory,
-        ilMDLOMDataFactory $data_factory
+        ilMDMarkerFactory $marker_factory
     ) {
         $this->data_finder = new ilMDFullEditorDataFinder(
             $library->getLOMDictionary()
@@ -106,7 +105,6 @@ class ilMDFullEditorUtilitiesCollection
             $repo,
             $this->form_provider,
             $marker_factory,
-            $data_factory,
             $path_factory,
             $library->getLOMVocabulariesDictionary(
                 $path_factory

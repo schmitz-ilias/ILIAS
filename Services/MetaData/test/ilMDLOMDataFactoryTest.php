@@ -57,19 +57,9 @@ class ilMDLOMDataFactoryTest extends TestCase
                         return $constraint;
                     });
 
-        return $factory = new ilMDLOMDataFactory($ref_factory);
-    }
-
-    public function testWrongTypeException(): void
-    {
-        $ref_factory = \Mockery::mock(Factory::class);
-        $ref_factory->shouldReceive('custom->constraint')
-                    ->never();
-
-        $factory = new ilMDLOMDataFactory($ref_factory);
-        $this->expectException(ilMDBuildingBlocksException::class);
-
-        $factory->MDData('wrong type', 'value');
+        return $factory = new ilMDLOMDataFactory(
+            new ilMDLOMDataConstraintProvider($ref_factory)
+        );
     }
 
     public function testVocabSourceException(): void
@@ -78,10 +68,12 @@ class ilMDLOMDataFactoryTest extends TestCase
         $ref_factory->shouldReceive('custom->constraint')
                     ->never();
 
-        $factory = new ilMDLOMDataFactory($ref_factory);
+        $factory = new ilMDLOMDataFactory(
+            new ilMDLOMDataConstraintProvider($ref_factory)
+        );
         $this->expectException(ilMDBuildingBlocksException::class);
 
-        $factory->MDData(ilMDLOMDataFactory::TYPE_VOCAB_SOURCE, 'value');
+        $factory->vocabSource('value', []);
     }
 
     public function testVocabValueException(): void
@@ -90,10 +82,12 @@ class ilMDLOMDataFactoryTest extends TestCase
         $ref_factory->shouldReceive('custom->constraint')
                     ->never();
 
-        $factory = new ilMDLOMDataFactory($ref_factory);
+        $factory = new ilMDLOMDataFactory(
+            new ilMDLOMDataConstraintProvider($ref_factory)
+        );
         $this->expectException(ilMDBuildingBlocksException::class);
 
-        $factory->MDData(ilMDLOMDataFactory::TYPE_VOCAB_VALUE, 'value');
+        $factory->vocabValue('value', []);
     }
 
     public function testVocabValueConditionException(): void
@@ -102,48 +96,37 @@ class ilMDLOMDataFactoryTest extends TestCase
         $ref_factory->shouldReceive('custom->constraint')
                     ->never();
 
-        $factory = new ilMDLOMDataFactory($ref_factory);
+        $factory = new ilMDLOMDataFactory(
+            new ilMDLOMDataConstraintProvider($ref_factory)
+        );
         $path = $this->createMock(ilMDPathRelative::class);
 
         $this->expectException(ilMDBuildingBlocksException::class);
-        $factory->MDData(
-            ilMDLOMDataFactory::TYPE_VOCAB_VALUE,
-            'value',
-            [],
-            $path
-        );
+        $factory->conditionalVocabValue('value', [], $path);
     }
 
     public function testStringConstraint(): void
     {
         $factory = $this->getFactoryMock();
-        $data = $factory->MDData(ilMDLOMDataFactory::TYPE_STRING, 'value');
+        $data = $factory->string('value');
         $this->assertNull($data->getError());
-        $data = $factory->MDData(ilMDLOMDataFactory::TYPE_STRING, '');
+        $data = $factory->string('');
         $this->assertIsString($data->getError());
     }
 
     public function testNoneConstraint(): void
     {
         $factory = $this->getFactoryMock();
-        $data = $factory->MDNullData();
+        $data = $factory->none();
         $this->assertNull($data->getError());
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_NONE,
-            'something'
-        );
-        $this->assertIsString($data->getError());
     }
 
     public function testLangConstraint(): void
     {
         $factory = $this->getFactoryMock();
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_LANG,
-            'de'
-        );
+        $data = $factory->language('de');
         $this->assertNull($data->getError());
-        $data = $factory->MDData(ilMDLOMDataFactory::TYPE_LANG, 'not lang');
+        $data = $factory->language('not lang');
         $this->assertIsString($data->getError());
     }
 
@@ -163,41 +146,29 @@ class ilMDLOMDataFactoryTest extends TestCase
         $vocab2->method('getSource')->willReturn('different source');
         $vocab2->method('getConditionValue')->willReturn('condition');
 
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_VOCAB_SOURCE,
+        $data = $factory->vocabSource(
             'source',
             [$vocab1, $vocab2]
         );
         $this->assertNull($data->getError());
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_VOCAB_SOURCE,
+        $data = $factory->vocabSource(
             'not source',
             [$vocab1, $vocab2]
         );
         $this->assertIsString($data->getError());
 
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_VOCAB_VALUE,
-            'value1',
-            [$vocab1, $vocab2]
-        );
+        $data = $factory->vocabValue('value1', [$vocab1, $vocab2]);
         $this->assertNull($data->getError());
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_VOCAB_VALUE,
-            'not value',
-            [$vocab1, $vocab2]
-        );
+        $data = $factory->vocabValue('not value', [$vocab1, $vocab2]);
         $this->assertIsString($data->getError());
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_VOCAB_VALUE,
+        $data = $factory->conditionalVocabValue(
             'sheep',
             [$vocab1, $vocab2],
             $path
         );
         $this->assertNull($data->getError('condition'));
         $this->assertIsString($data->getError('something else'));
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_VOCAB_VALUE,
+        $data = $factory->conditionalVocabValue(
             'value1',
             [$vocab1, $vocab2],
             $path
@@ -216,8 +187,7 @@ class ilMDLOMDataFactoryTest extends TestCase
         $vocab->method('getValues')->willReturn(['sheep', 'cow']);
         $vocab->method('getSource')->willReturn('different source');
         $vocab->method('getConditionValue')->willReturn('condition');
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_VOCAB_VALUE,
+        $data = $factory->conditionalVocabValue(
             'sheep',
             [$vocab],
             $path
@@ -229,76 +199,40 @@ class ilMDLOMDataFactoryTest extends TestCase
     public function testDatetimeConstraint(): void
     {
         $factory = $this->getFactoryMock();
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_DATETIME,
-            '2001'
-        );
+        $data = $factory->datetime('2001');
         $this->assertNull($data->getError());
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_DATETIME,
-            '2001-12-01T23:56:01.1234Z'
-        );
+        $data = $factory->datetime('2001-12-01T23:56:01.1234Z');
         $this->assertNull($data->getError());
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_DATETIME,
-            'something else'
-        );
+        $data = $factory->datetime('something else');
         $this->assertIsString($data->getError());
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_DATETIME,
-            '2001-13-01T23:56:01.1234Z'
-        );
+        $data = $factory->datetime('2001-13-01T23:56:01.1234Z');
         $this->assertIsString($data->getError());
     }
 
     public function testNonNegativeIntegerConstraint(): void
     {
         $factory = $this->getFactoryMock();
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_NON_NEG_INT,
-            '12345'
-        );
+        $data = $factory->nonNegativeInt('12345');
         $this->assertNull($data->getError());
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_NON_NEG_INT,
-            '0000'
-        );
+        $data = $factory->nonNegativeInt('0000');
         $this->assertNull($data->getError());
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_NON_NEG_INT,
-            '-12345'
-        );
+        $data = $factory->nonNegativeInt('-12345');
         $this->assertIsString($data->getError());
     }
 
     public function testDurationConstraint(): void
     {
         $factory = $this->getFactoryMock();
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_DURATION,
-            'P120M'
-        );
+        $data = $factory->duration('P120M');
         $this->assertNull($data->getError());
         $factory = $this->getFactoryMock();
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_DURATION,
-            'PT120M'
-        );
+        $data = $factory->duration('PT120M');
         $this->assertNull($data->getError());
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_DURATION,
-            'P2Y13M78DT345H1M12.0S'
-        );
+        $data = $factory->duration('P2Y13M78DT345H1M12.0S');
         $this->assertNull($data->getError());
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_DURATION,
-            'something else'
-        );
+        $data = $factory->duration('something else');
         $this->assertIsString($data->getError());
-        $data = $factory->MDData(
-            ilMDLOMDataFactory::TYPE_DURATION,
-            'P12S'
-        );
+        $data = $factory->duration('P12S');
         $this->assertIsString($data->getError());
     }
 }

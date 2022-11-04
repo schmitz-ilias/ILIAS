@@ -447,10 +447,16 @@ class ilMDFullEditorGUI
                 if (!key_exists($path->getPathAsString(), $create_signals)) {
                     return null;
                 }
-                return $this->action_provider->getButton()->create(
-                    $create_signals[$path->getPathAsString()],
-                    $this->manipulator->getScaffoldByPath($root, $path)
-                );
+                $elements = $root->getSubElementsByPath($path);
+                foreach ($elements as $element) {
+                    if ($element instanceof ilMDScaffoldElement) {
+                        return $this->action_provider->getButton()->create(
+                            $create_signals[$path->getPathAsString()],
+                            $element
+                        );
+                    }
+                }
+                return null;
 
             case self::PANEL:
                 return null;
@@ -480,7 +486,7 @@ class ilMDFullEditorGUI
                 return $this->factory
                     ->dropdown()
                     ->standard($buttons)
-                    ->withLabel($this->presenter->txt('add_at_root'));
+                    ->withLabel($this->presenter->txt('add'));
 
             default:
                 throw new ilMDGUIException(

@@ -26,21 +26,19 @@ use ILIAS\UI\Component\Signal as Signal;
  */
 class ilMDFullEditorFlexibleModal
 {
-    protected ?Modal $modal;
+    protected ?Modal $modal = null;
     protected ilMDFullEditorFlexibleSignal $flexible_signal;
 
-    public function __construct(
-        ?Modal $modal = null,
-        string $alternative_link = ''
-    ) {
-        $this->modal = $modal;
-        if (isset($this->modal)) {
+    public function __construct(Modal|string $modal_or_link)
+    {
+        if (is_string($modal_or_link)) {
             $this->flexible_signal = new ilMDFullEditorFlexibleSignal(
-                $this->modal->getShowSignal()
+                $modal_or_link
             );
         } else {
+            $this->modal = $modal_or_link;
             $this->flexible_signal = new ilMDFullEditorFlexibleSignal(
-                $alternative_link
+                $this->modal->getShowSignal()
             );
         }
     }

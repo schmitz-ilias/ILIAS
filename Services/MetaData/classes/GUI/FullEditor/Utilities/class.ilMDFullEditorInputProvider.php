@@ -149,7 +149,7 @@ class ilMDFullEditorInputProvider
                         }
                         return false;
                     },
-                    $this->presenter->txt('error_empty_input')
+                    $this->presenter->txt('meta_error_empty_input')
                 )
             );
         }
@@ -411,7 +411,14 @@ class ilMDFullEditorInputProvider
                     ->withFormat($this->getUserDateFormat(
                         $this->presenter,
                         $this->data
-                    ));
+                    ))
+                    ->withAdditionalTransformation(
+                        $this->refinery->custom()->transformation(
+                            function ($v) {
+                                return (string) $v?->format('Y-m-d');
+                            }
+                        )
+                    );
                 break;
 
             case ilMDLOMDataFactory::TYPE_DURATION:
@@ -442,7 +449,7 @@ class ilMDFullEditorInputProvider
                                 $key === 2 &&
                                 !isset($vs[3]) &&
                                 !isset($vs[4]) &&
-                                !isset($vs[3])
+                                !isset($vs[5])
                             ) {
                                 return $r;
                             }
@@ -453,6 +460,7 @@ class ilMDFullEditorInputProvider
                         return $r;
                     })
                 );
+                $default = ['', '', '', '', '', ''];
                 break;
 
             default:
@@ -650,18 +658,16 @@ class ilMDFullEditorInputProvider
         ilMDRootElement $root,
         ilMDPathFromRoot $path
     ): ilMDBaseElement {
-        $els = $root->getSubElementsByPath($path);
-        if (count($els = $root->getSubElementsByPath($path)) < 1) {
+        $els = $root->getSubElementsByPath($path, null, true);
+        if (count($els) < 1) {
             throw new ilMDGUIException(
                 'The path does not lead to an element.'
             );
         }
-        if (count($els = $root->getSubElementsByPath($path)) > 1) {
-            foreach ($els as $element) {
-                if ($element->isScaffold()) {
-                    return $element;
-                }
-            }
+        if (count($els) > 1) {
+            throw new ilMDGUIException(
+                'The path does not lead to a unique element.'
+            );
         }
         return $els[0];
     }

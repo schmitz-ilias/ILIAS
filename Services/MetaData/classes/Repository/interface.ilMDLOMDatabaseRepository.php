@@ -59,7 +59,9 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
         global $DIC;
 
         $this->db = $DIC->database();
-        $this->data_factory = new ilMDLOMDataFactory($DIC->refinery());
+        $this->data_factory = new ilMDLOMDataFactory(
+            new ilMDLOMDataConstraintProvider($DIC->refinery())
+        );
         $this->path_factory = new ilMDPathFactory();
         $library = new ilMDLOMLibrary(new ilMDTagFactory());
         $this->db_dictionary = $library->getLOMDatabaseDictionary($this->db);
@@ -253,10 +255,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 0,
                 1
             ),
-            $this->data_factory->MDData(
-                $structure->getTypeAtPointer(),
-                ''
-            )
+            $this->data_factory->none()
         );
         $this->validateMD(
             'read',
@@ -285,10 +284,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 1,
                 $path
             ),
-            $this->data_factory->MDData(
-                $structure->getTypeAtPointer(),
-                ''
-            )
+            $this->data_factory->none()
         );
 
         $this->validateMD(
@@ -358,7 +354,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
             //check whether unique elements are actually unique
             $unique = $new_structure->isUniqueAtPointer();
             if ($unique && $res->rowCount() > 1) {
-                $this->logger->error(
+                $this->logger->warning(
                     'There are multiples of the unique element ' .
                     $sub_name . ' in the table ' . $tag->getTable() .
                     ' for the object with rbac_id=' . $this->rbac_id .
@@ -432,24 +428,11 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     continue;
                 }
 
-                $vocab_tag = $this
-                    ->getNewVocabStructure()
-                    ->movePointerToEndOfPath(
-                        $this->path_factory
-                            ->getStructurePointerAsPath($new_structure)
-                    )
-                    ->getTagAtPointer();
-
-                if (isset($vocab_tag)) {
-                    $vocabs = $vocab_tag->getVocabularies();
-                    $condition_path = $vocab_tag->getConditionPath();
-                }
-
-                $data = $this->data_factory->MDData(
-                    $type,
+                $data = $this->data_factory->byPath(
                     $value,
-                    $vocabs ?? [],
-                    $condition_path ?? null
+                    $this->path_factory
+                        ->getStructurePointerAsPath($new_structure),
+                    $this->vocab_dictionary
                 );
 
                 //create the element
@@ -524,7 +507,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     $structure->getTagAtPointer(),
                     $element->getMDID(),
                     $super_md_id,
-                    $this->data_factory->MDNullData(),
+                    $this->data_factory->none(),
                     $parent_ids
                 );
             };
@@ -710,7 +693,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 if ($throw_exception) {
                     throw new ilMDDatabaseException($error);
                 }
-                $this->logger->error($error);
+                $this->logger->warning($error);
                 $element->getSuperElement()->deleteFromSubElements($element);
                 return 0;
             }
@@ -757,7 +740,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 if ($throw_exception) {
                     throw new ilMDDatabaseException($error_intro . $error);
                 }
-                $this->logger->error($error_intro . $error);
+                $this->logger->warning($error_intro . $error);
                 $element->getSuperElement()->deleteFromSubElements($element);
             }
             return 0;

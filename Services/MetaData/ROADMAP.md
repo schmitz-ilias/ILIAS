@@ -84,8 +84,9 @@ Some initial ideas:
 * Additional filters: give a number of elements to return,
   filter by md_id (basically all the things that have to
   be done by hand in the LOMDigestGUI right now).
-* Scaffolds should also have data (type none) and the reserved
-  md_id 0. 
+* Scaffolds should also have data (type none) and a reserved
+  md_id. To this end a md_id object should be introduced that
+  facilitates the id being either int or a scaffold token.
 * Elements have grown in scope quite a bit, can one shift the
   extra functionality to fiducial classes?
 

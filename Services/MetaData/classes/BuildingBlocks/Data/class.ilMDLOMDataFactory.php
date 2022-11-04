@@ -18,9 +18,6 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-use ILIAS\Refinery\Constraint;
-use ILIAS\Refinery\Factory;
-
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
@@ -70,21 +67,21 @@ class ilMDLOMDataFactory
     public const DURATION_REGEX = '/^P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)' .
     '?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)(?:.\d+)?S)?)?$/';
 
-    protected Factory $factory;
+    protected ilMDLOMDataConstraintProvider $constraint;
 
-    public function __construct(Factory $factory)
+    public function __construct(ilMDLOMDataConstraintProvider $constraint)
     {
-        $this->factory = $factory;
+        $this->constraint = $constraint;
     }
 
     /**
      * @param string                $type
      * @param string                $value
-     * @param ilMDVocabulary        $vocabularies
+     * @param ilMDVocabulary[]      $vocabularies
      * @param ilMDPathRelative|null $path_to_condition
      * @return ilMDData
      */
-    public function MDData(
+    protected function MDData(
         string $type,
         string $value,
         array $vocabularies = [],
@@ -110,7 +107,7 @@ class ilMDLOMDataFactory
         return new ilMDData(
             $type,
             $value,
-            $this->getConstraintForType(
+            $this->constraint->byType(
                 $type,
                 $vocabularies,
                 isset($path_to_condition)
@@ -119,200 +116,96 @@ class ilMDLOMDataFactory
         );
     }
 
-    public function MDNullData(): ilMDData
+    public function byPath(
+        string $value,
+        ilMDPathFromRoot $path,
+        ilMDLOMVocabulariesDictionary $vocab_dict
+    ): ilMDData {
+        $structure = $vocab_dict->getStructure();
+        return $this->MDData(
+            $structure
+                ->movePointerToEndOfPath($path)
+                ->getTypeAtPointer(),
+            $value,
+            $structure
+                ->getTagAtPointer()
+                ?->getVocabularies() ?? [],
+            $structure
+                ->getTagAtPointer()
+                ?->getConditionPath()
+        );
+    }
+
+    public function none(): ilMDData
     {
         return $this->MDData(self::TYPE_NONE, '');
     }
 
+    public function string(string $value): ilMDData
+    {
+        return $this->MDData(self::TYPE_STRING, $value);
+    }
+
+    public function language(string $value): ilMDData
+    {
+        return $this->MDData(self::TYPE_LANG, $value);
+    }
+
     /**
-     * @param string         $type
-     * @param ilMDVocabulary $vocabularies
-     * @param bool           $conditional
-     * @return Constraint
+     * @param string            $value
+     * @param ilMDVocabulary[]  $vocabularies
+     * @return ilMDData
      */
-    protected function getConstraintForType(
-        string $type,
+    public function vocabSource(
+        string $value,
+        array $vocabularies
+    ): ilMDData {
+        return $this->MDData(self::TYPE_VOCAB_SOURCE, $value, $vocabularies);
+    }
+
+    /**
+     * @param string            $value
+     * @param ilMDVocabulary[]  $vocabularies
+     * @return ilMDData
+     */
+    public function vocabValue(
+        string $value,
+        array $vocabularies
+    ): ilMDData {
+        return $this->MDData(self::TYPE_VOCAB_VALUE, $value, $vocabularies);
+    }
+
+    /**
+     * @param string            $value
+     * @param ilMDVocabulary[]  $vocabularies
+     * @param ilMDPathRelative  $path_to_condition
+     * @return ilMDData
+     */
+    public function conditionalVocabValue(
+        string $value,
         array $vocabularies,
-        bool $conditional
-    ): Constraint {
-        if ($conditional) {
-            if ($type !== self::TYPE_VOCAB_VALUE) {
-                throw new ilMDBuildingBlocksException(
-                    "Only vocabulary values can have a conditional constraint."
-                );
-            }
-            $values = [];
-            $values[''] = [];
-            foreach ($vocabularies as $vocabulary) {
-                if (!$vocabulary->getConditionValue()) {
-                    $values[''] = array_merge(
-                        $values[''],
-                        $vocabulary->getValues()
-                    );
-                    continue;
-                }
-                $key = $vocabulary->getConditionValue();
-                if (array_key_exists($key, $values)) {
-                    $values[$key] = array_merge(
-                        $values[$key],
-                        $vocabulary->getValues()
-                    );
-                    continue;
-                }
-                $values[$key] = $vocabulary->getValues();
-            }
-            return $this->factory->custom()->constraint(
-                /*
-                 * args[0] should be the regular value,
-                 * and args[1] the condition value.
-                 */
-                function (array $args) use ($values) {
-                    return in_array(
-                        str_replace(' ', '', strtolower($args[0])),
-                        array_map(
-                            fn (string $s) => str_replace(
-                                ' ',
-                                '',
-                                strtolower($s)
-                            ),
-                            $values[$args[1]] ?? $values['']
-                        )
-                    );
-                },
-                'Invalid vocabulary value'
-            );
-        }
+        ilMDPathRelative $path_to_condition
+    ): ilMDData {
+        return $this->MDData(
+            self::TYPE_VOCAB_VALUE,
+            $value,
+            $vocabularies,
+            $path_to_condition
+        );
+    }
 
-        switch ($type) {
-            case(self::TYPE_NONE):
-                return $this->factory->custom()->constraint(
-                    function (string $arg) {
-                        return $arg === '';
-                    },
-                    'There should not be any data here.'
-                );
+    public function datetime(string $value): ilMDData
+    {
+        return $this->MDData(self::TYPE_DATETIME, $value);
+    }
 
-            case(self::TYPE_STRING):
-                return $this->factory->custom()->constraint(
-                    function (string $arg) {
-                        return $arg !== '';
-                    },
-                    'This should not be empty.'
-                );
+    public function nonNegativeInt(string $value): ilMDData
+    {
+        return $this->MDData(self::TYPE_NON_NEG_INT, $value);
+    }
 
-            case(self::TYPE_LANG):
-                return $this->factory->custom()->constraint(
-                    function (string $arg) {
-                        return in_array($arg, ilMDLOMDataFactory::LANGUAGES);
-                    },
-                    'Invalid language'
-                );
-
-            case(self::TYPE_VOCAB_SOURCE):
-                $sources = [];
-                foreach ($vocabularies as $vocabulary) {
-                    $sources[] = $vocabulary->getSource();
-                }
-                return $this->factory->custom()->constraint(
-                    function (string $arg) use ($sources) {
-                        return in_array($arg, $sources);
-                    },
-                    'Invalid vocabulary source'
-                );
-
-            case(self::TYPE_VOCAB_VALUE):
-                $values = [];
-                foreach ($vocabularies as $vocabulary) {
-                    if ($vocabulary->getConditionValue()) {
-                        continue;
-                    }
-                    $values = array_merge($values, $vocabulary->getValues());
-                }
-                return $this->factory->custom()->constraint(
-                    function (string $arg) use ($values) {
-                        return in_array(
-                            str_replace(' ', '', strtolower($arg)),
-                            array_map(
-                                fn (string $s) => str_replace(
-                                    ' ',
-                                    '',
-                                    strtolower($s)
-                                ),
-                                $values
-                            )
-                        );
-                    },
-                    'Invalid vocabulary value'
-                );
-
-            case(self::TYPE_DATETIME):
-                return $this->factory->custom()->constraint(
-                    function (string $arg) {
-                        if (!preg_match(
-                            ilMDLOMDataFactory::DATETIME_REGEX,
-                            $arg,
-                            $matches,
-                            PREG_UNMATCHED_AS_NULL
-                        )) {
-                            return false;
-                        }
-                        if (isset($matches[1]) && ((int) $matches[1]) < 1) {
-                            return false;
-                        }
-                        if (isset($matches[2]) &&
-                            (((int) $matches[2]) < 1 || ((int) $matches[2]) > 12)) {
-                            return false;
-                        }
-                        if (isset($matches[3]) &&
-                            (((int) $matches[3]) < 1 || ((int) $matches[3]) > 31)) {
-                            return false;
-                        }
-                        if (isset($matches[4]) && ((int) $matches[4]) > 23) {
-                            return false;
-                        }
-                        if (isset($matches[5]) && ((int) $matches[5]) > 59) {
-                            return false;
-                        }
-                        if (isset($matches[6]) && ((int) $matches[6]) > 59) {
-                            return false;
-                        }
-                        return true;
-                    },
-                    'Invalid LOM datetime'
-                );
-
-            case(self::TYPE_NON_NEG_INT):
-                return $this->factory->custom()->constraint(
-                    function (string $arg) {
-                        return (bool) preg_match('/^\d+$/', $arg);
-                    },
-                    'Invalid non-negative integer'
-                );
-
-            case(self::TYPE_DURATION):
-                return $this->factory->custom()->constraint(
-                    function (string $arg) {
-                        if (!preg_match(
-                            ilMDLOMDataFactory::DURATION_REGEX,
-                            $arg,
-                            $matches,
-                            PREG_UNMATCHED_AS_NULL
-                        )) {
-                            return false;
-                        }
-                        unset($matches[0]);
-                        foreach ($matches as $match) {
-                            if (isset($match) && (int) $match < 0) {
-                                return false;
-                            }
-                        }
-                        return true;
-                    },
-                    'Invalid LOM duration'
-                );
-
-            default:
-                throw new ilMDBuildingBlocksException("Invalid MD data type.");
-        }
+    public function duration(string $value): ilMDData
+    {
+        return $this->MDData(self::TYPE_DURATION, $value);
     }
 }

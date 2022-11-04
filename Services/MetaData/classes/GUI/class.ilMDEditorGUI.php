@@ -56,7 +56,6 @@ class ilMDEditorGUI
 
     protected ilMDLOMDatabaseRepository $repo;
     protected ilMDPathFactory $path_factory;
-    protected ilMDLOMDataFactory $data_factory;
     protected ilMDMarkerFactory $marker_factory;
     protected ilMDLOMLibrary $library;
     protected ilMDLOMPresenter $presenter;
@@ -101,8 +100,10 @@ class ilMDEditorGUI
             $a_obj_type
         );
         $this->path_factory = new ilMDPathFactory();
-        $this->data_factory = new ilMDLOMDataFactory($this->refinery);
-        $this->marker_factory = new ilMDMarkerFactory($this->data_factory);
+        $data_factory = new ilMDLOMDataFactory(
+            new ilMDLOMDataConstraintProvider($this->refinery)
+        );
+        $this->marker_factory = new ilMDMarkerFactory($data_factory);
         $this->library = new ilMDLOMLibrary(new ilMDTagFactory());
         $this->presenter = new ilMDLOMPresenter(
             $this->lng,
@@ -505,7 +506,6 @@ class ilMDEditorGUI
         return new ilMDLOMDigestGUI(
             $this->repo,
             $this->path_factory,
-            $this->data_factory,
             $this->marker_factory,
             $this->library,
             $this->ui_factory,
@@ -535,8 +535,7 @@ class ilMDEditorGUI
                 $this->presenter,
                 $this->library,
                 $this->path_factory,
-                $this->marker_factory,
-                $this->data_factory
+                $this->marker_factory
             )
         );
     }
@@ -961,26 +960,6 @@ class ilMDEditorGUI
         }
     }
 
-    protected function getUniqueElement(
-        ilMDRootElement $root,
-        ilMDPathFromRoot $path
-    ): ilMDBaseElement {
-        $els = $root->getSubElementsByPath($path);
-        if (count($els = $root->getSubElementsByPath($path)) < 1) {
-            throw new ilMDGUIException(
-                'The path to the to be deleted' .
-                ' element does not lead to an element.'
-            );
-        }
-        if (count($els = $root->getSubElementsByPath($path)) > 1) {
-            throw new ilMDGUIException(
-                'The path to the to be deleted' .
-                ' element leads to multiple element.'
-            );
-        }
-        return $els[0];
-    }
-
     protected function fullEditorCreate(): void
     {
         $this->fullEditorEdit(true);
@@ -1040,7 +1019,11 @@ class ilMDEditorGUI
         // redirect back to the full editor
         $this->tpl->setOnScreenMessage(
             'success',
-            $this->lng->txt('element_updated_successfully'),
+            $this->lng->txt(
+                $create ?
+                    'meta_add_element_success' :
+                    'meta_edit_element_success'
+            ),
             true
         );
         $this->ctrl->setParameter(
@@ -1079,7 +1062,7 @@ class ilMDEditorGUI
         // redirect back to the full editor
         $this->tpl->setOnScreenMessage(
             'success',
-            $this->lng->txt('element_deleted_successfully'),
+            $this->lng->txt('meta_delete_element_success'),
             true
         );
         $this->ctrl->setParameter(
@@ -1277,10 +1260,10 @@ class ilMDEditorGUI
         $bulky = $this->ui_factory->button()->bulky(
             $this->ui_factory->symbol()->icon()->standard(
                 'mds',
-                $this->lng->txt('button_to_full_editor_label'),
+                $this->lng->txt('meta_button_to_full_editor_label'),
                 'medium'
             ),
-            $this->lng->txt('button_to_full_editor_label'),
+            $this->lng->txt('meta_button_to_full_editor_label'),
             $this->ctrl->getLinkTarget($this, 'fullEditor')
         );
         if (DEVMODE) {

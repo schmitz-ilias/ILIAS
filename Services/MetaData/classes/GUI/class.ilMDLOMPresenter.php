@@ -85,7 +85,8 @@ class ilMDLOMPresenter
     ): string {
         $name = $element->getName();
         $exceptions = [
-            'metadataSchema' => 'metadatascheme', 'lifeCycle' => 'lifecycle'
+            'metadataSchema' => 'metadatascheme', 'lifeCycle' => 'lifecycle',
+            'otherPlatformRequirements' => 'otherPlattformRequirements'
         ];
         if (array_key_exists($name, $exceptions)) {
             $name = $exceptions[$name];
@@ -173,12 +174,12 @@ class ilMDLOMPresenter
                     PREG_UNMATCHED_AS_NULL
                 );
                 $labels = [
-                    ['md_years', 'md_year'],
-                    ['md_months', 'md_month'],
-                    ['md_days', 'md_day'],
-                    ['md_hours', 'md_hour'],
-                    ['md_minutes', 'md_minute'],
-                    ['md_seconds', 'md_second'],
+                    ['years', 'year'],
+                    ['months', 'month'],
+                    ['days', 'day'],
+                    ['hours', 'hour'],
+                    ['minutes', 'minute'],
+                    ['seconds', 'second'],
                 ];
                 $res_array = [];
                 foreach (array_slice($matches, 1) as $key => $match) {
@@ -227,7 +228,8 @@ class ilMDLOMPresenter
             'educational validator' => 'educationalvalidator',
             'script writer' => 'scriptwriter',
             'instructional designer' => 'instructionaldesigner',
-            'subject matter expert' => 'subjectmatterexpert'
+            'subject matter expert' => 'subjectmatterexpert',
+            'diagram' => 'diagramm'
         ];
         if (array_key_exists($value, $exceptions)) {
             $value = $exceptions[$value];
@@ -314,12 +316,12 @@ class ilMDLOMPresenter
     public function getDurationLabels(): array
     {
         return [
-            $this->txt('md_years'),
-            $this->txt('md_months'),
-            $this->txt('md_days'),
-            $this->txt('md_hours'),
-            $this->txt('md_minutes'),
-            $this->txt('md_seconds')
+            $this->txt('years'),
+            $this->txt('months'),
+            $this->txt('days'),
+            $this->txt('hours'),
+            $this->txt('minutes'),
+            $this->txt('seconds')
         ];
     }
 

@@ -33,7 +33,6 @@ class ilMDLOMDigestGUI
 {
     protected ilMDLOMDatabaseRepository $repo;
     protected ilMDPathFactory $path_factory;
-    protected ilMDLOMDataFactory $data_factory;
     protected ilMDMarkerFactory $marker_factory;
     protected UIFactory $factory;
     protected Refinery $refinery;
@@ -45,7 +44,6 @@ class ilMDLOMDigestGUI
     public function __construct(
         ilMDLOMDatabaseRepository $repo,
         ilMDPathFactory $path_factory,
-        ilMDLOMDataFactory $data_factory,
         ilMDMarkerFactory $marker_factory,
         ilMDLOMLibrary $library,
         UIFactory $factory,
@@ -54,7 +52,6 @@ class ilMDLOMDigestGUI
     ) {
         $this->repo = $repo;
         $this->path_factory = $path_factory;
-        $this->data_factory = $data_factory;
         $this->marker_factory = $marker_factory;
         $this->factory = $factory;
         $this->refinery = $refinery;
@@ -102,7 +99,7 @@ class ilMDLOMDigestGUI
         $el = $this->getTitleStringElement($root);
         $title = $ff
             ->text(
-                $this->lng->txt('title')
+                $this->lng->txt('meta_title')
             )
             ->withRequired(true)
             ->withValue(
@@ -234,12 +231,12 @@ class ilMDLOMDigestGUI
                     );
             $nums = [];
             $labels = [
-                $this->lng->txt('md_years'),
-                $this->lng->txt('md_months'),
-                $this->lng->txt('md_days'),
-                $this->lng->txt('md_hours'),
-                $this->lng->txt('md_minutes'),
-                $this->lng->txt('md_seconds')
+                $this->lng->txt('years'),
+                $this->lng->txt('months'),
+                $this->lng->txt('days'),
+                $this->lng->txt('hours'),
+                $this->lng->txt('minutes'),
+                $this->lng->txt('seconds')
             ];
             foreach ($labels as $key => $label) {
                 $nums[] = (clone $num)
@@ -250,7 +247,7 @@ class ilMDLOMDigestGUI
             $tlt_sections[] = $ff
                 ->section(
                     $nums,
-                    $this->lng->txt('meta_typical_learning_time') .
+                    $this->lng->txt('meta_typical_learning_time') . ' ' .
                     (count($tlt_sections) > 0 ? count($tlt_sections) + 1 : '')
                 )
                 ->withAdditionalTransformation(
@@ -271,7 +268,7 @@ class ilMDLOMDigestGUI
                                 $key === 2 &&
                                 !isset($vs[3]) &&
                                 !isset($vs[4]) &&
-                                !isset($vs[3])
+                                !isset($vs[5])
                             ) {
                                 return $r;
                             }
@@ -370,7 +367,7 @@ class ilMDLOMDigestGUI
         //custom input as the last option
         $custom_text = $ff
             ->textarea(
-                $this->lng->txt('meta_cp_own_description')
+                $this->lng->txt('meta_description')
             )
             ->withValue(
                 $current_id === 0 ? $description : ''
@@ -436,13 +433,8 @@ class ilMDLOMDigestGUI
         $this
             ->getTitleStringElement($root)
             ->leaveMarkerTrail(
-                $this->marker_factory->Marker(
-                    $this->data_factory->MDData(
-                        ilMDLOMDataFactory::TYPE_STRING,
-                        $data_general['title']
-                    )
-                ),
-                $this->marker_factory->NullMarker()
+                $this->marker_factory->stringMarker($data_general['title']),
+                $this->marker_factory->nullMarker()
             );
 
         // description(s)
@@ -450,13 +442,10 @@ class ilMDLOMDigestGUI
         foreach ($this->getDescriptionStringElements($root) as $el) {
             if ($data_general['descriptions'][$index]) {
                 $el->leaveMarkerTrail(
-                    $this->marker_factory->Marker(
-                        $this->data_factory->MDData(
-                            ilMDLOMDataFactory::TYPE_STRING,
-                            $data_general['descriptions'][$index]
-                        )
+                    $this->marker_factory->stringMarker(
+                        $data_general['descriptions'][$index]
                     ),
-                    $this->marker_factory->NullMarker()
+                    $this->marker_factory->nullMarker()
                 );
                 $index += 1;
                 continue;
@@ -464,8 +453,8 @@ class ilMDLOMDigestGUI
             $this
                 ->getDescriptionStringElements($root_for_delete)[$index]
                 ->leaveMarkerTrail(
-                    $this->marker_factory->NullMarker(),
-                    $this->marker_factory->NullMarker()
+                    $this->marker_factory->nullMarker(),
+                    $this->marker_factory->nullMarker()
                 );
             $index += 1;
         }
@@ -475,13 +464,10 @@ class ilMDLOMDigestGUI
         foreach ($this->getLanguageElements($root) as $el) {
             if ($data_general['languages'][$index]) {
                 $el->leaveMarkerTrail(
-                    $this->marker_factory->Marker(
-                        $this->data_factory->MDData(
-                            ilMDLOMDataFactory::TYPE_LANG,
-                            $data_general['languages'][$index]
-                        )
+                    $this->marker_factory->languageMarker(
+                        $data_general['languages'][$index]
                     ),
-                    $this->marker_factory->NullMarker()
+                    $this->marker_factory->nullMarker()
                 );
                 $index += 1;
                 continue;
@@ -489,8 +475,8 @@ class ilMDLOMDigestGUI
             $this
                 ->getLanguageElements($root_for_delete)[$index]
                 ->leaveMarkerTrail(
-                    $this->marker_factory->NullMarker(),
-                    $this->marker_factory->NullMarker()
+                    $this->marker_factory->nullMarker(),
+                    $this->marker_factory->nullMarker()
                 );
             $index += 1;
         }
@@ -510,8 +496,8 @@ class ilMDLOMDigestGUI
                 continue;
             }
             $el->getSuperElement()->leaveMarkerTrail(
-                $this->marker_factory->NullMarker(),
-                $this->marker_factory->NullMarker()
+                $this->marker_factory->nullMarker(),
+                $this->marker_factory->nullMarker()
             );
         }
         // create the remaining inputs as scaffolds
@@ -529,13 +515,10 @@ class ilMDLOMDigestGUI
             )[0];
             $new_keyword->addScaffoldToSubElements($string_scaffold);
             $new_keyword->getSubElements('string')[0]->leaveMarkerTrail(
-                $this->marker_factory->Marker(
-                    $this->data_factory->MDData(
-                        ilMDLOMDataFactory::TYPE_STRING,
-                        $keyword_string
-                    )
+                $this->marker_factory->stringMarker(
+                    $keyword_string
                 ),
-                $this->marker_factory->NullMarker()
+                $this->marker_factory->nullMarker()
             );
         }
 
@@ -546,19 +529,16 @@ class ilMDLOMDigestGUI
         foreach ([0 => 'first', 1 => 'second', 2 => 'third'] as $key => $value) {
             if ($data_authors[$value] ?? '') {
                 $els[$key]->leaveMarkerTrail(
-                    $this->marker_factory->Marker(
-                        $this->data_factory->MDData(
-                            ilMDLOMDataFactory::TYPE_STRING,
-                            $data_authors[$value]
-                        )
+                    $this->marker_factory->stringMarker(
+                        $data_authors[$value]
                     ),
-                    $this->marker_factory->NullMarker()
+                    $this->marker_factory->nullMarker()
                 );
                 continue;
             }
             $delete_els[$key]->leaveMarkerTrail(
-                $this->marker_factory->NullMarker(),
-                $this->marker_factory->NullMarker()
+                $this->marker_factory->nullMarker(),
+                $this->marker_factory->nullMarker()
             );
         }
 
@@ -570,36 +550,27 @@ class ilMDLOMDigestGUI
         ) {
             $data_cp = $data_rights['copyright'];
             $this->getCPAndORValueElement($root)->leaveMarkerTrail(
-                $this->marker_factory->Marker(
-                    $this->data_factory->MDData(
-                        ilMDLOMDataFactory::TYPE_VOCAB_VALUE,
-                        'yes',
-                        [$this->cp_vocab]
-                    )
+                $this->marker_factory->vocabValueMarker(
+                    'yes',
+                    [$this->cp_vocab]
                 ),
-                $this->marker_factory->NullMarker()
+                $this->marker_factory->nullMarker()
             );
 
             if ($data_cp[0] > 0) {
                 $this->getRightsDescriptionElement($root)->leaveMarkerTrail(
-                    $this->marker_factory->Marker(
-                        $this->data_factory->MDData(
-                            ilMDLOMDataFactory::TYPE_STRING,
-                            'il_copyright_entry__' . IL_INST_ID . '__' .
-                            (int) $data_cp[0]
-                        )
+                    $this->marker_factory->stringMarker(
+                        'il_copyright_entry__' . IL_INST_ID . '__' .
+                        (int) $data_cp[0]
                     ),
-                    $this->marker_factory->NullMarker()
+                    $this->marker_factory->nullMarker()
                 );
             } else {
                 $this->getRightsDescriptionElement($root)->leaveMarkerTrail(
-                    $this->marker_factory->Marker(
-                        $this->data_factory->MDData(
-                            ilMDLOMDataFactory::TYPE_STRING,
-                            $data_cp[1]['copyright_text']
-                        )
+                    $this->marker_factory->stringMarker(
+                        $data_cp[1]['copyright_text']
                     ),
-                    $this->marker_factory->NullMarker()
+                    $this->marker_factory->nullMarker()
                 );
             }
 
@@ -619,20 +590,17 @@ class ilMDLOMDigestGUI
         } else {
             if (!($el = $this->getCPAndORValueElement($root))->isScaffold()) {
                 $el->leaveMarkerTrail(
-                    $this->marker_factory->Marker(
-                        $this->data_factory->MDData(
-                            ilMDLOMDataFactory::TYPE_VOCAB_VALUE,
-                            'no',
-                            [$this->cp_vocab]
-                        )
+                    $this->marker_factory->vocabValueMarker(
+                        'no',
+                        [$this->cp_vocab]
                     ),
-                    $this->marker_factory->NullMarker()
+                    $this->marker_factory->nullMarker()
                 );
             }
             $this->getRightsDescriptionElement($root_for_delete)
                  ->leaveMarkerTrail(
-                     $this->marker_factory->NullMarker(),
-                     $this->marker_factory->NullMarker()
+                     $this->marker_factory->nullMarker(),
+                     $this->marker_factory->nullMarker()
                  );
         }
 
@@ -641,13 +609,10 @@ class ilMDLOMDigestGUI
         foreach ($this->getTltDurationElement($root) as $el) {
             if ($data['tlts'][$index]) {
                 $el->leaveMarkerTrail(
-                    $this->marker_factory->Marker(
-                        $this->data_factory->MDData(
-                            ilMDLOMDataFactory::TYPE_DURATION,
-                            $data['tlts'][$index]
-                        )
+                    $this->marker_factory->durationMarker(
+                        $data['tlts'][$index]
                     ),
-                    $this->marker_factory->NullMarker()
+                    $this->marker_factory->nullMarker()
                 );
                 $index += 1;
                 continue;
@@ -655,8 +620,8 @@ class ilMDLOMDigestGUI
             $this
                 ->getTltDurationElement($root_for_delete)[$index]
                 ->leaveMarkerTrail(
-                    $this->marker_factory->NullMarker(),
-                    $this->marker_factory->NullMarker()
+                    $this->marker_factory->nullMarker(),
+                    $this->marker_factory->nullMarker()
                 );
             $index += 1;
         }
@@ -832,14 +797,11 @@ class ilMDLOMDigestGUI
                     'value'
                 )[0];
                 $role->addScaffoldToSubElements($value);
-                $role->setMarker($this->marker_factory->NullMarker());
+                $role->setMarker($this->marker_factory->nullMarker());
                 $value->setMarker(
-                    $this->marker_factory->Marker(
-                        $this->data_factory->MDData(
-                            ilMDLOMDataFactory::TYPE_VOCAB_VALUE,
-                            'author',
-                            [$this->role_vocab]
-                        )
+                    $this->marker_factory->vocabValueMarker(
+                        'author',
+                        [$this->role_vocab]
                     )
                 );
             }

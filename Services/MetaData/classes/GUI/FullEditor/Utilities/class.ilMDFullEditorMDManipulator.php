@@ -28,7 +28,6 @@ class ilMDFullEditorMDManipulator
     protected ilMDRepository $repo;
     protected ilMDFullEditorFormProvider $form_provider;
     protected ilMDMarkerFactory $marker_factory;
-    protected ilMDLOMDataFactory $data_factory;
     protected ilMDPathFactory $path_factory;
     protected ilMDLOMVocabulariesDictionary $vocab_dict;
 
@@ -36,14 +35,12 @@ class ilMDFullEditorMDManipulator
         ilMDRepository $repo,
         ilMDFullEditorFormProvider $form_provider,
         ilMDMarkerFactory $marker_factory,
-        ilMDLOMDataFactory $data_factory,
         ilMDPathFactory $path_factory,
         ilMDLOMVocabulariesDictionary $vocab_dict
     ) {
         $this->repo = $repo;
         $this->form_provider = $form_provider;
         $this->marker_factory = $marker_factory;
-        $this->data_factory = $data_factory;
         $this->path_factory = $path_factory;
         $this->vocab_dict = $vocab_dict;
     }
@@ -105,7 +102,6 @@ class ilMDFullEditorMDManipulator
             return false;
         }
         $data = $data[0] ?? [];
-        $vocab_struct = $this->vocab_dict->getStructure();
         foreach ($data as $path_string => $value) {
             $path = $this->path_factory
                 ->getPathFromRoot()
@@ -113,21 +109,12 @@ class ilMDFullEditorMDManipulator
             if ($value !== '') {
                 $el = $this->getUniqueElement($root, $path);
                 $el->leaveMarkerTrail(
-                    $this->marker_factory->Marker(
-                        $this->data_factory->MDData(
-                            $vocab_struct
-                                ->movePointerToEndOfPath($path)
-                                ->getTypeAtPointer(),
-                            $value,
-                            $vocab_struct
-                                ->getTagAtPointer()
-                                ?->getVocabularies() ?? [],
-                            $vocab_struct
-                                ->getTagAtPointer()
-                                ?->getConditionPath()
-                        )
+                    $this->marker_factory->markerByPath(
+                        $value,
+                        $path,
+                        $this->vocab_dict
                     ),
-                    $this->marker_factory->NullMarker()
+                    $this->marker_factory->nullMarker()
                 );
             }
         }
@@ -138,8 +125,8 @@ class ilMDFullEditorMDManipulator
         $element = $this->getUniqueElement($root, $create_path);
         if (!$element->getMarker()) {
             $element->leaveMarkerTrail(
-                $this->marker_factory->NullMarker(),
-                $this->marker_factory->NullMarker()
+                $this->marker_factory->nullMarker(),
+                $this->marker_factory->nullMarker()
             );
         }
         $this->repo->createAndUpdateMDElements($root);
@@ -165,7 +152,6 @@ class ilMDFullEditorMDManipulator
         }
         $data = $data[0];
         $delete_root = clone $root;
-        $vocab_struct = $this->vocab_dict->getStructure();
         foreach ($data as $path_string => $value) {
             $path = $this->path_factory
                 ->getPathFromRoot()
@@ -173,28 +159,19 @@ class ilMDFullEditorMDManipulator
             if ($value !== '') {
                 $el = $this->getUniqueElement($root, $path);
                 $el->leaveMarkerTrail(
-                    $this->marker_factory->Marker(
-                        $this->data_factory->MDData(
-                            $vocab_struct
-                                ->movePointerToEndOfPath($path)
-                                ->getTypeAtPointer(),
-                            $value,
-                            $vocab_struct
-                                ->getTagAtPointer()
-                                ?->getVocabularies() ?? [],
-                            $vocab_struct
-                                ->getTagAtPointer()
-                                ?->getConditionPath()
-                        )
+                    $this->marker_factory->markerByPath(
+                        $value,
+                        $path,
+                        $this->vocab_dict
                     ),
-                    $this->marker_factory->NullMarker()
+                    $this->marker_factory->nullMarker()
                 );
                 continue;
             }
             $el = $this->getUniqueElement($delete_root, $path);
             $el->leaveMarkerTrail(
-                $this->marker_factory->NullMarker(),
-                $this->marker_factory->NullMarker()
+                $this->marker_factory->nullMarker(),
+                $this->marker_factory->nullMarker()
             );
         }
         $this->repo->createAndUpdateMDElements($root);
@@ -213,8 +190,8 @@ class ilMDFullEditorMDManipulator
     ): bool {
         $el = $this->getUniqueElement($root, $delete_path);
         $el->leaveMarkerTrail(
-            $this->marker_factory->NullMarker(),
-            $this->marker_factory->NullMarker()
+            $this->marker_factory->nullMarker(),
+            $this->marker_factory->nullMarker()
         );
         $this->repo->deleteMDElements($root);
 
@@ -233,33 +210,17 @@ class ilMDFullEditorMDManipulator
         ilMDRootElement $root,
         ilMDPathFromRoot $path
     ): ilMDBaseElement {
-        $els = $root->getSubElementsByPath($path);
-        if (count($els = $root->getSubElementsByPath($path)) < 1) {
+        $els = $root->getSubElementsByPath($path, null, true);
+        if (count($els) < 1) {
             throw new ilMDGUIException(
-                'The path to the to be deleted' .
-                ' element does not lead to an element.'
+                'The path does not lead to an element.'
             );
         }
-        if (count($els = $root->getSubElementsByPath($path)) > 1) {
-            foreach ($els as $element) {
-                if ($element->isScaffold()) {
-                    return $element;
-                }
-            }
+        if (count($els) > 1) {
+            throw new ilMDGUIException(
+                'The path does not lead to a unique element.'
+            );
         }
         return $els[0];
-    }
-
-    public function getScaffoldByPath(
-        ilMDRootElement $root,
-        ilMDPathFromRoot $path
-    ): ?ilMDScaffoldElement {
-        $elements = $root->getSubElementsByPath($path);
-        foreach ($elements as $element) {
-            if ($element instanceof ilMDScaffoldElement) {
-                return $element;
-            }
-        }
-        return null;
     }
 }

@@ -81,7 +81,8 @@ class ilMDRootElement extends ilMDElement
      */
     public function getSubElementsByPath(
         ilMDPathFromRoot $path,
-        ?ilMDRepository $repo = null
+        ?ilMDRepository $repo = null,
+        bool $prefer_first_scaffold = false
     ): array {
         $elements = [$this];
         for ($i = 1; $i < $path->getPathLength(); $i++) {
@@ -119,7 +120,18 @@ class ilMDRootElement extends ilMDElement
                     }
                 }
             }
-            $elements = $next_elements;
+
+            $filtered_next_els = $next_elements;
+            if ($prefer_first_scaffold) {
+                foreach ($next_elements as $el) {
+                    if ($el->isScaffold()) {
+                        $filtered_next_els = [$el];
+                        break;
+                    }
+                }
+            }
+
+            $elements = $filtered_next_els;
         }
         return $elements;
     }

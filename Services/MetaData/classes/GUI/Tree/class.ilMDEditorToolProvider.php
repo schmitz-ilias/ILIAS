@@ -72,12 +72,12 @@ class ilMDEditorToolProvider extends AbstractDynamicToolProvider
         return $this->factory
             ->tool($id_generator('system_styles_tree'))
             ->withTitle(
-                $lng->txt('lom')
+                $lng->txt('meta_lom_short')
             )
             ->withSymbol(
                 $this->dic->ui()->factory()->symbol()->icon()->standard(
                     'mds',
-                    $lng->txt('lom')
+                    $lng->txt('meta_lom_short')
                 )
             )
             ->withContent($this->dic->ui()->factory()->legacy(
