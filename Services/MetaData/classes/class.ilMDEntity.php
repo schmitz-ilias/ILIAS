@@ -98,10 +98,10 @@ class ilMDEntity extends ilMDBase
             while ($row = $res->fetchRow(ilDBConstants::FETCHMODE_OBJECT)) {
                 $this->setRBACId((int) $row->rbac_id);
                 $this->setObjId((int) $row->obj_id);
-                $this->setObjType($row->obj_type);
+                $this->setObjType((string) $row->obj_type);
                 $this->setParentId((int) $row->parent_id);
-                $this->setParentType($row->parent_type);
-                $this->setEntity($row->entity ?? '');
+                $this->setParentType((string) $row->parent_type);
+                $this->setEntity((string) $row->entity);
             }
         }
         return true;

@@ -100,8 +100,8 @@ class ilMDFormat extends ilMDBase
             while ($row = $res->fetchRow(ilDBConstants::FETCHMODE_OBJECT)) {
                 $this->setRBACId((int) $row->rbac_id);
                 $this->setObjId((int) $row->obj_id);
-                $this->setObjType($row->obj_type);
-                $this->setFormat($row->format);
+                $this->setObjType((string) $row->obj_type);
+                $this->setFormat((string) $row->format);
             }
         }
         return true;

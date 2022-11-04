@@ -131,12 +131,12 @@ class ilMDTaxon extends ilMDBase
             while ($row = $res->fetchRow(ilDBConstants::FETCHMODE_OBJECT)) {
                 $this->setRBACId((int) $row->rbac_id);
                 $this->setObjId((int) $row->obj_id);
-                $this->setObjType($row->obj_type);
+                $this->setObjType((string) $row->obj_type);
                 $this->setParentId((int) $row->parent_id);
-                $this->setParentType($row->parent_type);
-                $this->setTaxon($row->taxon);
-                $this->taxon_language = new ilMDLanguageItem($row->taxon_language);
-                $this->setTaxonId($row->taxon_id);
+                $this->setParentType((string) $row->parent_type);
+                $this->setTaxon($row->taxon ?? '');
+                $this->taxon_language = new ilMDLanguageItem($row->taxon_language ?? '');
+                $this->setTaxonId($row->taxon_id ?? '');
             }
         }
         return true;

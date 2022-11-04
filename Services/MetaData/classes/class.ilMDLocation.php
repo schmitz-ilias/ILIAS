@@ -113,11 +113,11 @@ class ilMDLocation extends ilMDBase
             while ($row = $res->fetchRow(ilDBConstants::FETCHMODE_OBJECT)) {
                 $this->setRBACId((int) $row->rbac_id);
                 $this->setObjId((int) $row->obj_id);
-                $this->setObjType($row->obj_type);
+                $this->setObjType((string) $row->obj_type);
                 $this->setParentId((int) $row->parent_id);
-                $this->setParentType($row->parent_type);
-                $this->setLocation($row->location);
-                $this->setLocationType($row->location_type);
+                $this->setParentType($row->parent_type ?? '');
+                $this->setLocation($row->location ?? '');
+                $this->setLocationType($row->location_type ?? '');
             }
         }
         return true;

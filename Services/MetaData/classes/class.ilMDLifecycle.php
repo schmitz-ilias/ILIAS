@@ -173,7 +173,7 @@ class ilMDLifecycle extends ilMDBase
             while ($row = $res->fetchRow(ilDBConstants::FETCHMODE_OBJECT)) {
                 $this->setRBACId((int) $row->rbac_id);
                 $this->setObjId((int) $row->obj_id);
-                $this->setObjType($row->obj_type);
+                $this->setObjType((string) $row->obj_type);
                 $this->setStatus((string) $row->lifecycle_status);
                 $this->setVersion((string) $row->meta_version);
                 $this->setVersionLanguage(new ilMDLanguageItem((string) $row->version_language));

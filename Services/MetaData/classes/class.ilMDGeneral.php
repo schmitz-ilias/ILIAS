@@ -163,12 +163,12 @@ class ilMDGeneral extends ilMDBase
     // SET/GET
     public function setStructure(string $a_structure): bool
     {
-        switch ($a_structure) {
-            case 'Atomic':
-            case 'Collection':
-            case 'Networked':
-            case 'Hierarchical':
-            case 'Linear':
+        switch (strtolower($a_structure)) {
+            case 'atomic':
+            case 'collection':
+            case 'networked':
+            case 'hierarchical':
+            case 'linear':
                 $this->structure = $a_structure;
                 return true;
 
@@ -326,7 +326,7 @@ class ilMDGeneral extends ilMDBase
                 $this->setObjType((string) $row->obj_type);
                 $this->setStructure((string) $row->general_structure);
                 $this->setTitle((string) $row->title);
-                $this->setTitleLanguage(new ilMDLanguageItem($row->title_language));
+                $this->setTitleLanguage(new ilMDLanguageItem((string) $row->title_language));
                 $this->setCoverage((string) $row->coverage);
                 $this->setCoverageLanguage(new ilMDLanguageItem($row->coverage_language ?? ''));
             }

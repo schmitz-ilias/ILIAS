@@ -314,10 +314,10 @@ class ilMDCopyrightSelectionEntry
 
         $res = $this->db->query($query);
         while ($row = $res->fetchRow(ilDBConstants::FETCHMODE_OBJECT)) {
-            $this->setTitle($row->title);
-            $this->setDescription($row->description);
-            $this->setCopyright($row->copyright);
-            $this->setLanguage($row->language);
+            $this->setTitle((string) $row->title);
+            $this->setDescription((string) $row->description);
+            $this->setCopyright((string) $row->copyright);
+            $this->setLanguage((string) $row->language);
             $this->setCosts((bool) $row->costs);
             $this->setOutdated((bool) $row->outdated);
             $this->setOrderPosition((int) $row->position);

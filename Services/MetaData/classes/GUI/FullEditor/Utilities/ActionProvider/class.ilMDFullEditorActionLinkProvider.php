@@ -92,7 +92,7 @@ class ilMDFullEditorActionLinkProvider
                 $action_path->getPathAsString()
             )
             ->withParameter(
-                'cmd',
+                ilCtrlInterface::PARAM_CMD,
                 $action_cmd
             );
     }
