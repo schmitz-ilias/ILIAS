@@ -20,7 +20,7 @@
  * Portfolio page gui class
  * @author Jörg Lützenkirchen <luetzenkirchen@leifos.com>
  * @ilCtrl_Calls ilPortfolioPageGUI: ilPageEditorGUI, ilEditClipboardGUI, ilMediaPoolTargetSelector
- * @ilCtrl_Calls ilPortfolioPageGUI: ilPageObjectGUI, ilObjBlogGUI, ilBlogPostingGUI
+ * @ilCtrl_Calls ilPortfolioPageGUI: ilPageObjectGUI, ilObjBlogGUI, ilBlogPostingGUI, ilPublicUserProfileGUI
  * @ilCtrl_Calls ilPortfolioPageGUI: ilCalendarMonthGUI, ilConsultationHoursGUI, ilLearningHistoryGUI
  */
 class ilPortfolioPageGUI extends ilPageObjectGUI
@@ -334,7 +334,7 @@ class ilPortfolioPageGUI extends ilPageObjectGUI
         // full circle: additional was set in the original public user profile call
         $pub_profile->setAdditional($this->getAdditional());
 
-        if ($a_type === "manual" && count($a_fields)) {
+        if ($a_type === "manual" && is_array($a_fields) && count($a_fields) > 0) {
             $prefs = array();
             foreach ($a_fields as $field) {
                 $field = trim($field);
@@ -1013,11 +1013,11 @@ class ilPortfolioPageGUI extends ilPageObjectGUI
                 if (array_key_exists($objective_id, $lo_results)) {
                     $lo_result = $lo_results[$objective_id];
                     $tmp[$objective_id]["user_id"] = $lo_result["user_id"];
-                    $tmp[$objective_id]["result_perc"] = $lo_result["result_perc"];
-                    $tmp[$objective_id]["limit_perc"] = $lo_result["limit_perc"];
-                    $tmp[$objective_id]["status"] = $lo_result["status"];
-                    $tmp[$objective_id]["type"] = $lo_result["type"];
-                    $tmp[$objective_id]["initial"] = $lo_result["initial"];
+                    $tmp[$objective_id]["result_perc"] = $lo_result["result_perc"] ?? null;
+                    $tmp[$objective_id]["limit_perc"] = $lo_result["limit_perc"] ?? null;
+                    $tmp[$objective_id]["status"] = $lo_result["status"] ?? null;
+                    $tmp[$objective_id]["type"] = $lo_result["type"] ?? null;
+                    $tmp[$objective_id]["initial"] = $lo_result["initial"] ?? null;
                 }
             }
 

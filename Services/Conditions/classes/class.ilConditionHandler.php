@@ -129,6 +129,12 @@ class ilConditionHandler
         $this->validation = true;
     }
 
+    public static function resetCache(): void
+    {
+        self::$cond_for_target_cache = [];
+        self::$cond_target_rows = [];
+    }
+
     /**
      * @param string target type ILIAS obj type
      */
@@ -161,7 +167,7 @@ class ilConditionHandler
             /** @var ilConditionControllerInterface $controller */
             $controller = new $class_name();
             if ($controller->isContainerConditionController($parent_ref_id)) {
-                return $controller->getConditionSetForRepositoryObject($a_target_ref_id)->getHiddenStatus();
+                return (bool) $controller->getConditionSetForRepositoryObject($a_target_ref_id)->getHiddenStatus();
             }
         }
         return self::lookupPersistedHiddenStatusByTarget($a_target_ref_id);
@@ -954,6 +960,8 @@ class ilConditionHandler
         $ilDB = $DIC['ilDB'];
 
         // Get all conditions
+
+        self::resetCache();
         $all = self::_getPersistedConditionsOfTarget($a_target_ref_id, $a_target_obj_id, $a_target_obj_type);
         $opt = self::getPersistedOptionalConditionsOfTarget($a_target_ref_id, $a_target_obj_id, $a_target_obj_type);
 

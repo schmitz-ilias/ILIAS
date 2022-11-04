@@ -16,10 +16,6 @@
  *
  *********************************************************************/
 
-use ILIAS\Refinery\Transformation;
-use ILIAS\Refinery\Random\Seed\GivenSeed;
-use ILIAS\Refinery\Random\Group as RandomGroup;
-
 require_once './Modules/Test/classes/inc.AssessmentConstants.php';
 
 /**
@@ -75,8 +71,6 @@ abstract class ilTestPlayerAbstractGUI extends ilTestServiceGUI
      */
     protected $testSequence = null;
 
-    private RandomGroup $randomGroup;
-
     /**
     * ilTestOutputGUI constructor
     *
@@ -97,7 +91,6 @@ abstract class ilTestPlayerAbstractGUI extends ilTestServiceGUI
         $this->processLocker = null;
         $this->testSession = null;
         $this->assSettings = null;
-        $this->randomGroup = $DIC->refinery()->random();
     }
 
     protected function checkReadAccess()
@@ -554,7 +547,7 @@ abstract class ilTestPlayerAbstractGUI extends ilTestServiceGUI
             && $this->object->getUsePreviousAnswers() == 1
         ) {
             $chb_use_previous_answers = array_key_exists("chb_use_previous_answers", $post_array) ? 1 : 0;
-            $ilUser->writePref("chb_use_previous_answers", $chb_use_previous_answers);
+            $ilUser->writePref("tst_use_previous_answers", $chb_use_previous_answers);
         }
     }
 
@@ -1311,7 +1304,7 @@ abstract class ilTestPlayerAbstractGUI extends ilTestServiceGUI
     {
         require_once './Modules/Test/classes/class.ilObjTest.php';
 
-        if (ilObjTest::_getUsePreviousAnswers($this->testSession->getActiveId(), true)) {
+        if ($this->object->isPreviousSolutionReuseEnabled($this->testSession->getActiveId())) {
             $currentSolutionAvailable = $questionGui->object->authorizedOrIntermediateSolutionExists(
                 $this->testSession->getActiveId(),
                 $this->testSession->getPass()
@@ -1969,7 +1962,6 @@ abstract class ilTestPlayerAbstractGUI extends ilTestServiceGUI
 
     protected function showAnswerOptionalQuestionsConfirmation()
     {
-        require_once 'Modules/Test/classes/confirmations/class.ilTestAnswerOptionalQuestionsConfirmationGUI.php';
         $confirmation = new ilTestAnswerOptionalQuestionsConfirmationGUI($this->lng);
 
         $confirmation->setFormAction($this->ctrl->getFormAction($this));
@@ -2470,28 +2462,32 @@ abstract class ilTestPlayerAbstractGUI extends ilTestServiceGUI
      * @param $sequenceElement
      * @return object
      */
-    protected function getQuestionGuiInstance($questionId, $fromCache = true): object
+    protected function getQuestionGuiInstance($question_id, $fromCache = true): object
     {
         global $DIC;
         $tpl = $DIC['tpl'];
 
-        if (!$fromCache || !isset($this->cachedQuestionGuis[$questionId])) {
-            $questionGui = $this->object->createQuestionGUI("", $questionId);
-            $questionGui->setTargetGui($this);
-            $questionGui->setPresentationContext(assQuestionGUI::PRESENTATION_CONTEXT_TEST);
-            $questionGui->object->setObligationsToBeConsidered($this->object->areObligationsEnabled());
-            $questionGui->populateJavascriptFilesRequiredForWorkForm($tpl);
-            $questionGui->object->setOutputType(OUTPUT_JAVASCRIPT);
-            $questionGui->object->setShuffler($this->buildQuestionAnswerShuffler($questionId));
+        if (!$fromCache || !isset($this->cachedQuestionGuis[$question_id])) {
+            $question_gui = $this->object->createQuestionGUI("", $question_id);
+            $question_gui->setTargetGui($this);
+            $question_gui->setPresentationContext(assQuestionGUI::PRESENTATION_CONTEXT_TEST);
+            $question_gui->object->setObligationsToBeConsidered($this->object->areObligationsEnabled());
+            $question_gui->populateJavascriptFilesRequiredForWorkForm($tpl);
+            $question_gui->object->setOutputType(OUTPUT_JAVASCRIPT);
+            $question_gui->object->setShuffler($this->buildQuestionAnswerShuffler(
+                (string) $question_id,
+                (string) $this->testSession->getActiveId(),
+                (string) $this->testSession->getPass()
+            ));
 
             // hey: prevPassSolutions - determine solution pass index and configure gui accordingly
-            $this->initTestQuestionConfig($questionGui->object);
+            $this->initTestQuestionConfig($question_gui->object);
             // hey.
 
-            $this->cachedQuestionGuis[$questionId] = $questionGui;
+            $this->cachedQuestionGuis[$question_id] = $question_gui;
         }
 
-        return $this->cachedQuestionGuis[$questionId];
+        return $this->cachedQuestionGuis[$question_id];
     }
 
     /**
@@ -2540,18 +2536,6 @@ abstract class ilTestPlayerAbstractGUI extends ilTestServiceGUI
         $questionOBJ->getTestPresentationConfig()->setPreviousPassSolutionReuseAllowed(
             $this->object->isPreviousSolutionReuseEnabled($this->testSession->getActiveId())
         );
-    }
-    // hey.
-
-    /**
-     * @param $questionId
-     * @return Transformation
-     */
-    protected function buildQuestionAnswerShuffler($questionId): Transformation
-    {
-        $fixedSeed = $this->buildFixedShufflerSeed($questionId);
-
-        return $this->randomGroup->shuffleArray(new GivenSeed($fixedSeed));
     }
 
     /**
@@ -2884,23 +2868,6 @@ abstract class ilTestPlayerAbstractGUI extends ilTestServiceGUI
         // fau: testNav - always set default presentation mode to "edit"
         return self::PRESENTATION_MODE_EDIT;
         // fau.
-    }
-
-    /**
-     * @param $questionId
-     * @return string
-     */
-    protected function buildFixedShufflerSeed($questionId)
-    {
-        $fixedSeed = $questionId . $this->testSession->getActiveId() . $this->testSession->getPass();
-
-        if (strlen($fixedSeed < ilTestPlayerAbstractGUI::FIXED_SHUFFLER_SEED_MIN_LENGTH)) {
-            $fixedSeed *= (
-                10 * (ilTestPlayerAbstractGUI::FIXED_SHUFFLER_SEED_MIN_LENGTH - strlen($fixedSeed))
-            );
-        }
-
-        return $fixedSeed;
     }
 
     protected function registerForcedFeedbackNavUrl($forcedFeedbackNavUrl)

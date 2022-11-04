@@ -389,18 +389,17 @@ class ilObjSurvey extends ilObject
     ): void {
         $ilDB = $this->db;
 
-        $user_ids[] = array();
+        $user_ids = [];
 
         foreach ($finished_ids as $finished_id) {
             $result = $ilDB->queryF(
-                "SELECT finished_id FROM svy_finished WHERE finished_id = %s",
+                "SELECT finished_id, user_fi FROM svy_finished WHERE finished_id = %s",
                 array('integer'),
                 array($finished_id)
             );
             $row = $ilDB->fetchAssoc($result);
-
             if ($row["user_fi"]) {
-                $user_ids[] = $row["user_fi"];
+                $user_ids[] = (int) $row["user_fi"];
             }
 
             $affectedRows = $ilDB->manipulateF(
@@ -962,40 +961,40 @@ class ilObjSurvey extends ilObject
         if ($result->numRows() === 1) {
             $data = $ilDB->fetchAssoc($result);
             $this->setSurveyId($data["survey_id"]);
-            $this->setAuthor($data["author"]);
+            $this->setAuthor($data["author"] ?? "");
             $this->setIntroduction(ilRTE::_replaceMediaObjectImageSrc((string) $data["introduction"], 1));
             if (strcmp($data["outro"], "survey_finished") === 0) {
                 $this->setOutro($this->lng->txt("survey_finished"));
             } else {
                 $this->setOutro(ilRTE::_replaceMediaObjectImageSrc($data["outro"], 1));
             }
-            $this->setShowQuestionTitles($data["show_question_titles"]);
-            $this->setStartDate((string) $data["startdate"]);
-            $this->setEndDate((string) $data["enddate"]);
-            $this->setAnonymize($data["anonymize"]);
-            $this->setEvaluationAccess($data["evaluation_access"]);
+            $this->setShowQuestionTitles((bool) $data["show_question_titles"]);
+            $this->setStartDate((string) ($data["startdate"] ?? ""));
+            $this->setEndDate((string) ($data["enddate"] ?? ""));
+            $this->setAnonymize((int) $data["anonymize"]);
+            $this->setEvaluationAccess($data["evaluation_access"] ?? "");
             $this->loadQuestionsFromDb();
             $this->setMailNotification((bool) $data['mailnotification']);
             $this->setMailAddresses((string) $data['mailaddresses']);
             $this->setMailParticipantData((string) $data['mailparticipantdata']);
-            $this->setPoolUsage($data['pool_usage']);
+            $this->setPoolUsage((bool) $data['pool_usage']);
             // Mode
             $this->setMode($data['mode']);
             // 360°
-            $this->set360SelfEvaluation($data['mode_360_self_eval']);
-            $this->set360SelfRaters($data['mode_360_self_rate']);
-            $this->set360SelfAppraisee($data['mode_360_self_appr']);
-            $this->set360Results($data['mode_360_results']);
+            $this->set360SelfEvaluation((bool) $data['mode_360_self_eval']);
+            $this->set360SelfRaters((bool) $data['mode_360_self_rate']);
+            $this->set360SelfAppraisee((bool) $data['mode_360_self_appr']);
+            $this->set360Results((int) $data['mode_360_results']);
             // Mode self evaluated
-            $this->setSelfEvaluationResults($data['mode_self_eval_results']);
+            $this->setSelfEvaluationResults((int) $data['mode_self_eval_results']);
             // Competences
-            $this->setSkillService($data['mode_skill_service']);
+            $this->setSkillService((bool) $data['mode_skill_service']);
             // reminder/notification
-            $this->setReminderStatus($data["reminder_status"]);
+            $this->setReminderStatus((bool) $data["reminder_status"]);
             $this->setReminderStart($data["reminder_start"] ? new ilDate($data["reminder_start"], IL_CAL_DATE) : null);
             $this->setReminderEnd($data["reminder_end"] ? new ilDate($data["reminder_end"], IL_CAL_DATE) : null);
-            $this->setReminderFrequency($data["reminder_frequency"]);
-            $this->setReminderTarget($data["reminder_target"]);
+            $this->setReminderFrequency((int) $data["reminder_frequency"]);
+            $this->setReminderTarget((int) $data["reminder_target"]);
             $this->setReminderLastSent((string) $data["reminder_last_sent"]);
             $this->setReminderTemplate((int) $data["reminder_tmpl"]);
             $this->setTutorNotificationStatus($data["tutor_ntf_status"]);
@@ -1004,12 +1003,12 @@ class ilObjSurvey extends ilObject
             $this->setTutorResultsStatus((bool) $data["tutor_res_status"]);
             $this->setTutorResultsRecipients(explode(";", $data["tutor_res_reci"]));
 
-            $this->setViewOwnResults($data["own_results_view"]);
-            $this->setMailOwnResults($data["own_results_mail"]);
+            $this->setViewOwnResults((bool) $data["own_results_view"]);
+            $this->setMailOwnResults((bool) $data["own_results_mail"]);
             $this->setMailConfirmation((bool) $data["confirmation_mail"]);
-            $this->setCalculateSumScore($data["calculate_sum_score"]);
+            $this->setCalculateSumScore((bool) $data["calculate_sum_score"]);
 
-            $this->setAnonymousUserList($data["anon_user_list"]);
+            $this->setAnonymousUserList((bool) $data["anon_user_list"]);
         }
 
         // moved activation to ilObjectActivation
@@ -2445,16 +2444,16 @@ class ilObjSurvey extends ilObject
 
             if (is_numeric($recipient)) {
                 $lng = $ntf->getUserLanguage($recipient);
-                $ntf->sendMail(array($recipient), null);
+                $ntf->sendMail(array($recipient), false);
             } else {
                 $recipient = trim($recipient);
                 $user_ids = ilObjUser::getUserIdsByEmail($recipient);
                 if (empty($user_ids)) {
-                    $ntf->sendMail(array($recipient), null);
+                    $ntf->sendMail(array($recipient), false);
                 } else {
                     foreach ($user_ids as $user_id) {
                         $lng = $ntf->getUserLanguage($user_id);
-                        $ntf->sendMail(array($user_id), null);
+                        $ntf->sendMail(array($user_id), false);
                     }
                 }
             }
@@ -2735,7 +2734,7 @@ class ilObjSurvey extends ilObject
                 }
             }
             if ($row["user_fi"] == 0 || $row["user_fi"] == ANONYMOUS_USER_ID) {
-                $code = $this->code_manager->getByUserKey($row["anonymous_id"]);
+                $code = $this->code_manager->getByUserKey((string) $row["anonymous_id"]);
                 if (!is_null($code) && $this->feature_config->usesAppraisees()) {
                     $userdata["firstname"] = $code->getFirstName();
                     $userdata["lastname"] = $code->getLastName();
@@ -4414,7 +4413,7 @@ class ilObjSurvey extends ilObject
             " WHERE obj_id = " . $ilDB->quote($this->getSurveyId(), "integer") .
             " AND user_id = " . $ilDB->quote($a_user_id, "integer"));
         $row = $ilDB->fetchAssoc($set);
-        return (bool) $row["has_closed"];
+        return (bool) ($row["has_closed"] ?? false);
     }
 
     /**
@@ -5149,7 +5148,6 @@ class ilObjSurvey extends ilObject
         global $DIC;
 
         $access = $DIC->access();
-
         // collect all open ratings
         $rater_ids = array();
         foreach ($this->getAppraiseesData() as $app) {
@@ -5165,10 +5163,10 @@ class ilObjSurvey extends ilObject
                     // did user already finished self evaluation?
                     if (!$this->is360SurveyStarted((int) $app['user_id'], (int) $app['user_id'])) {
                         $this->svy_log->debug("...2");
-                        if (!is_array($rater_ids[$app['user_id']])) {
+                        if (!isset($rater_ids[$app['user_id']])) {
                             $rater_ids[$app['user_id']] = array();
                         }
-                        if (!in_array($app["user_id"], $rater_ids[$app['user_id']])) {
+                        if (!isset($app["user_id"], $rater_ids[$app['user_id']])) {
                             $rater_ids[$app['user_id']][] = $app["user_id"];
                         }
                     }
@@ -5185,13 +5183,19 @@ class ilObjSurvey extends ilObject
                     )
                 ) {
                     foreach ($this->getRatersData($app['user_id']) as $rater) {
-                        // is rater not anonymous and did not rate yet?
-                        if (!$rater["anonymous_id"] && !$rater["finished"]) {
-                            if (!is_array($rater_ids[$rater["user_id"]])) {
-                                $rater_ids[$rater["user_id"]] = array();
-                            }
-                            if (!in_array($app["user_id"], $rater_ids[$rater["user_id"]])) {
-                                $rater_ids[$rater["user_id"]][] = $app["user_id"];
+                        $rater_id = 0;
+                        if ($rater["login"] !== "") {
+                            $rater_id = ilObjUser::_lookupId($rater["login"]);
+                        }
+                        if ($rater_id > 0) {
+                            // is rater not anonymous and did not rate yet?
+                            if (!($rater["anonymous_id"] ?? false) && !($rater["finished"] ?? false)) {
+                                if (!isset($rater_ids[$rater_id])) {
+                                    $rater_ids[$rater_id] = array();
+                                }
+                                if (!in_array($app["user_id"], $rater_ids[$rater_id])) {
+                                    $rater_ids[$rater_id][] = $app["user_id"];
+                                }
                             }
                         }
                     }
@@ -5202,8 +5206,8 @@ class ilObjSurvey extends ilObject
         $this->svy_log->debug("Found raters:" . count($rater_ids));
 
         foreach ($rater_ids as $id => $app) {
-            if ($access->checkAccessOfUser($id, "read", "", $this->getRefId())) {
-                $this->send360ReminderToUser($id, $app);
+            if ($access->checkAccessOfUser((int) $id, "read", "", $this->getRefId())) {
+                $this->send360ReminderToUser((int) $id, $app);
             }
         }
     }
@@ -5357,7 +5361,6 @@ class ilObjSurvey extends ilObject
         if (!$this->getReminderLastSent() ||
             $cut->get(IL_CAL_DATE) >= substr($this->getReminderLastSent(), 0, 10)) {
             $missing_ids = array();
-
             if (!$this->feature_config->usesAppraisees()) {
                 $this->svy_log->debug("Entering survey mode.");
 

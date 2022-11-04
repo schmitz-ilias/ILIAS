@@ -393,7 +393,7 @@ class ilObjWiki extends ilObject implements ilAdvancedMetaDataSubItems
             $ilDB->quote($a_wiki_id, "integer");
         $set = $ilDB->query($query);
         $rec = $ilDB->fetchAssoc($set);
-        return $rec[$a_field];
+        return $rec[$a_field] ?? null;
     }
 
     public static function _lookupStartPage(int $a_wiki_id): string
@@ -697,8 +697,8 @@ class ilObjWiki extends ilObject implements ilAdvancedMetaDataSubItems
         foreach (ilRatingCategory::getAllForObject($this->getId()) as $rc) {
             $new_rc = new ilRatingCategory();
             $new_rc->setParentId($new_obj->getId());
-            $new_rc->setTitle($rc["title"]);
-            $new_rc->setDescription($rc["description"]);
+            $new_rc->setTitle((string) $rc["title"]);
+            $new_rc->setDescription((string) $rc["description"]);
             $new_rc->save();
         }
 

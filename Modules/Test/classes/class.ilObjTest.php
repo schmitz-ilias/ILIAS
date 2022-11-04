@@ -847,7 +847,6 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
         $testQuestionSetConfigFactory = new ilTestQuestionSetConfigFactory($tree, $ilDB, $component_repository, $this);
         $testQuestionSetConfig = $testQuestionSetConfigFactory->getQuestionSetConfig();
 
-        include_once("./Modules/Test/classes/class.ilObjAssessmentFolder.php");
         if ($this->test_id == -1) {
             // Create new dataset
             $next_id = $ilDB->nextId('tst_tests');
@@ -1072,7 +1071,6 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
                     )
             );
 
-            include_once("./Modules/Test/classes/class.ilObjAssessmentFolder.php");
             if (ilObjAssessmentFolder::_enabledAssessmentLogging()) {
                 $logresult = $ilDB->queryF(
                     "SELECT * FROM tst_tests WHERE test_id = %s",
@@ -2302,50 +2300,25 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
         return 0;
     }
 
-    // hey: prevPassSolutions - serious (nonstatic) identifier, for use in high level controller gui
-    public function isPreviousSolutionReuseEnabled($activeId): int
+    public function isPreviousSolutionReuseEnabled($active_id): bool
     {
-        // checks if allowed in general and if enabled by participant
-        return self::_getUsePreviousAnswers($activeId, true);
-    }
-    // hey.
-
-    /**
-    * Returns if the previous results should be hidden for a learner
-    *
-    * @param integer $test_id The test id
-    * @param boolean $use_active_user_setting If true, the tst_use_previous_answers- of the active user should be used as well
-    * @return integer 1 if the previous results should be hidden, 0 otherwise
-    * @access public
-    * @see $use_previous_answers
-    */
-    public static function _getUsePreviousAnswers($active_id, $user_active_user_setting = false): int
-    {
-        global $DIC;
-        $ilDB = $DIC['ilDB'];
-        $ilUser = $DIC['ilUser'];
-
-        $use_previous_answers = 1;
-
-        $result = $ilDB->queryF(
+        $result = $this->db->queryF(
             "SELECT tst_tests.use_previous_answers FROM tst_tests, tst_active WHERE tst_tests.test_id = tst_active.test_fi AND tst_active.active_id = %s",
             array("integer"),
             array($active_id)
         );
         if ($result->numRows()) {
-            $row = $ilDB->fetchAssoc($result);
-            $use_previous_answers = $row["use_previous_answers"];
+            $row = $this->db->fetchAssoc($result);
+            $test_allows_reuse = $row["use_previous_answers"];
         }
 
-        if ($use_previous_answers == 1) {
-            if ($user_active_user_setting) {
-                $res = $ilUser->getPref("tst_use_previous_answers");
-                if ($res !== false) {
-                    $use_previous_answers = $res;
-                }
+        if ($test_allows_reuse === '1') {
+            $res = $this->user->getPref("tst_use_previous_answers");
+            if ($res === '1') {
+                return true;
             }
         }
-        return $use_previous_answers;
+        return false;
     }
 
     /**
@@ -2722,7 +2695,7 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
      */
     public function getPassWaiting(): string
     {
-        return $this->pass_waiting;
+        return $this->pass_waiting ?? '';
     }
 
     /**
@@ -3523,13 +3496,13 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
 						tst_test_result.hint_count requested_hints,
 						tst_test_result.hint_points hint_points,
 						tst_test_result.answered answered
-			
+
 			FROM		tst_test_result
-			
+
 			LEFT JOIN	tst_solutions
 			ON			tst_solutions.active_fi = tst_test_result.active_fi
 			AND			tst_solutions.question_fi = tst_test_result.question_fi
-			
+
 			WHERE		tst_test_result.active_fi = %s
 			AND			tst_test_result.pass = %s
 		";
@@ -3554,13 +3527,13 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
 			SELECT		qpl_questions.*,
 						qpl_qst_type.type_tag,
 						qpl_sol_sug.question_fi has_sug_sol
-			
+
 			FROM		qpl_qst_type,
 						qpl_questions
-			
+
 			LEFT JOIN	qpl_sol_sug
 			ON			qpl_sol_sug.question_fi = qpl_questions.question_id
-			
+
 			WHERE		qpl_qst_type.question_type_id = qpl_questions.question_type_fi
 			AND			$IN_question_ids
 		";
@@ -4258,13 +4231,13 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
 						qpl_questions.original_id,
 						qpl_questions.title questiontitle,
 						qpl_questions.points maxpoints
-			
+
 			FROM		tst_test_result, qpl_questions, tst_active
-			
+
 			WHERE		tst_active.active_id = tst_test_result.active_fi
 			AND			qpl_questions.question_id = tst_test_result.question_fi
 			AND			tst_active.test_fi = %s
-			
+
 			ORDER BY	tst_active.active_id ASC, tst_test_result.pass ASC, tst_test_result.tstamp DESC
 		";
 
@@ -4365,7 +4338,7 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
 
                         $res = $DIC->database()->queryF(
                             "
-							SELECT * 
+							SELECT *
 							FROM qpl_questions
 							WHERE {$questionIdsCondition}",
                             array('integer'),
@@ -4549,15 +4522,15 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
                     "
 						SELECT		COUNT(tst_test_question.question_fi) qcount,
 									SUM(qpl_questions.points) qsum
-						
+
 						FROM		tst_test_question,
 									qpl_questions,
 									tst_active
-						
+
 						WHERE		tst_test_question.question_fi = qpl_questions.question_id
 						AND			tst_test_question.test_fi = tst_active.test_fi
 						AND			tst_active.active_id = %s
-						
+
 						GROUP BY	tst_test_question.test_fi
 					",
                     array('integer'),
@@ -6502,8 +6475,13 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
         $newObj->setTmpCopyWizardCopyId($copy_id);
         $this->cloneMetaData($newObj);
 
-        // #27082
-        $newObj->setOfflineStatus(true);
+        //copy online status if object is not the root copy object
+        $cp_options = ilCopyWizardOptions::_getInstance($copy_id);
+        if ($cp_options->isRootNode($this->getRefId())) {
+            $newObj->setOfflineStatus(true);
+        } else {
+            $newObj->setOfflineStatus($this->getOfflineStatus());
+        }
         $newObj->update();
 
         $newObj->setAnonymity($this->getAnonymity());
@@ -6602,8 +6580,8 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
 
         $testQuestionSetConfigFactory = new ilTestQuestionSetConfigFactory($tree, $ilDB, $component_repository, $this);
         $testQuestionSetConfigFactory->getQuestionSetConfig()->cloneQuestionSetRelatedData($newObj);
+        $newObj->saveQuestionsToDb();
 
-        require_once 'Modules/Test/classes/class.ilTestSkillLevelThresholdList.php';
         $skillLevelThresholdList = new ilTestSkillLevelThresholdList($ilDB);
         $skillLevelThresholdList->setTestId($this->getTestId());
         $skillLevelThresholdList->loadFromDb();
@@ -6612,7 +6590,6 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
         $newObj->saveToDb();
         $newObj->updateMetaData();// #14467
 
-        include_once('./Services/Tracking/classes/class.ilLPObjSettings.php');
         $obj_settings = new ilLPObjSettings($this->getId());
         $obj_settings->cloneSettings($newObj->getId());
 
@@ -6659,6 +6636,14 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
         }
 
         return $num;
+    }
+
+    public function getQuestionCountWithoutReloading(): int
+    {
+        if ($this->isRandomTest()) {
+            return $this->getQuestionCount();
+        }
+        return count($this->questions);
     }
 
     /**
@@ -6925,7 +6910,7 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
 						usr_data.matriculation,
 						usr_data.active,
 						tst_active.lastindex,
-						COALESCE(tst_active.last_finished_pass, -1) <> tst_active.last_started_pass unfinished_passes 
+						COALESCE(tst_active.last_finished_pass, -1) <> tst_active.last_started_pass unfinished_passes
 				FROM tst_active
 				LEFT JOIN usr_data
 				ON tst_active.user_fi = usr_data.usr_id
@@ -6949,7 +6934,7 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
 						usr_data.matriculation,
 						usr_data.active,
 						tst_active.lastindex,
-						COALESCE(tst_active.last_finished_pass, -1) <> tst_active.last_started_pass unfinished_passes 
+						COALESCE(tst_active.last_finished_pass, -1) <> tst_active.last_started_pass unfinished_passes
 				FROM tst_active
 				LEFT JOIN usr_data
 				ON tst_active.user_fi = usr_data.usr_id
@@ -6992,12 +6977,12 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
 
             $queryString = "
 				SELECT		tst_test_result.manual
-				
+
 				FROM		tst_test_result
-				
+
 				INNER JOIN	qpl_questions
 				ON			tst_test_result.question_fi = qpl_questions.question_id
-			
+
 				WHERE		tst_test_result.active_fi = %s
 				AND			$qstType_IN_manScoreableQstTypes
 			";
@@ -7628,16 +7613,16 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
         $query = "
 			SELECT	tst_pass_result.tstamp pass_res_tstamp,
 					tst_test_result.tstamp quest_res_tstamp
-			
+
 			FROM tst_pass_result
-			
+
 			LEFT JOIN tst_test_result
 			ON tst_test_result.active_fi = tst_pass_result.active_fi
 			AND tst_test_result.pass = tst_pass_result.pass
-			
+
 			WHERE tst_pass_result.active_fi = %s
 			AND tst_pass_result.pass = %s
-			
+
 			ORDER BY tst_test_result.tstamp DESC
 		";
 
@@ -7849,12 +7834,12 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
 						tstquest.sequence,
 						tstquest.obligatory,
 						origquest.obj_fi orig_obj_fi
-			
+
 			FROM		qpl_questions questions
-			
+
 			INNER JOIN	qpl_qst_type questtypes
 			ON			questtypes.question_type_id = questions.question_type_fi
-			
+
 			INNER JOIN	tst_test_question tstquest
 			ON			tstquest.question_fi = questions.question_id
 
@@ -7862,7 +7847,7 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
 			ON			origquest.question_id = questions.original_id
 
 			WHERE		tstquest.test_fi = %s
-			
+
 			ORDER BY	tstquest.sequence
 		";
 
@@ -7961,12 +7946,12 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
 			SELECT		questions.*,
 						questtypes.type_tag,
 						origquest.obj_fi orig_obj_fi
-			
+
 			FROM		qpl_questions questions
-			
+
 			INNER JOIN	qpl_qst_type questtypes
 			ON			questtypes.question_type_id = questions.question_type_fi
-			
+
 			INNER JOIN	tst_rnd_cpy tstquest
 			ON			tstquest.qst_fi = questions.question_id
 
@@ -9723,9 +9708,9 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
         $ilDB = $DIC['ilDB'];
 
         $query = "
-			SELECT tst_test_result.active_fi, tst_test_result.question_fi, tst_test_result.pass 
+			SELECT tst_test_result.active_fi, tst_test_result.question_fi, tst_test_result.pass
 			FROM tst_test_result
-			INNER JOIN tst_active ON tst_active.active_id = tst_test_result.active_fi AND tst_active.test_fi = %s 
+			INNER JOIN tst_active ON tst_active.active_id = tst_test_result.active_fi AND tst_active.test_fi = %s
 			INNER JOIN qpl_questions ON qpl_questions.question_id = tst_test_result.question_fi
 			LEFT JOIN usr_data ON usr_data.usr_id = tst_active.user_fi
 			WHERE tst_test_result.question_fi = %s
@@ -10224,12 +10209,12 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
 
         $query = "
 			SELECT		count(q1.question_id) cnt
-			
+
 			FROM		qpl_questions q1
 
 			INNER JOIN	qpl_questions q2
 			ON			q2.question_id = q1.original_id
-			
+
 			WHERE		$IN_questions
 			AND		 	q1.obj_fi = q2.obj_fi
 		";
@@ -10968,7 +10953,7 @@ class ilObjTest extends ilObject implements ilMarkSchemaAware, ilEctsGradesEnabl
 
         $query = '
 			SELECT MAX(tst_pass_result.pass) + 1 max_res
-			FROM tst_pass_result 
+			FROM tst_pass_result
 			INNER JOIN tst_active ON tst_active.active_id = tst_pass_result.active_fi
 			WHERE test_fi = ' . $ilDB->quote($this->getTestId(), 'integer') . '
 		';

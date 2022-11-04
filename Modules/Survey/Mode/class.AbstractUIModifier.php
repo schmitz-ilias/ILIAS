@@ -173,6 +173,16 @@ abstract class AbstractUIModifier implements UIModifier
 
         if ($details) {
             $pv = $this->service->gui()->print()->resultsDetails($survey->getRefId());
+            $this->service->gui()->ctrl()->setParameterByClass(
+                "ilSurveyEvaluationGUI",
+                "vw",
+                $this->service->gui()->evaluation($survey)->request()->getVW()
+            );
+            $this->service->gui()->ctrl()->setParameterByClass(
+                "ilSurveyEvaluationGUI",
+                "cp",
+                $this->service->gui()->evaluation($survey)->request()->getCP()
+            );
             $modal_elements = $pv->getModalElements(
                 $this->service->gui()->ctrl()->getLinkTargetByClass(
                     "ilSurveyEvaluationGUI",

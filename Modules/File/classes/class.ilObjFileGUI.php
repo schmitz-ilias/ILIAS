@@ -468,7 +468,8 @@ class ilObjFileGUI extends ilObject2GUI
         } else {
             $title = $this->object->checkFileExtension($filename, $title);
         }
-        $this->object->setTitle($title);
+
+        $this->object->handleChangedObjectTitle($title);
         $this->object->setDescription($form->getInput('description'));
         $this->object->setRating($form->getInput('rating'));
         $this->object->setOnclickMode((int) $form->getInput('on_click_action'));
@@ -706,7 +707,7 @@ class ilObjFileGUI extends ilObject2GUI
         // using getVersions function instead of ilHistory direct
         $uploader = $this->object->getVersions();
         $uploader = array_shift($uploader);
-        $uploader = $uploader["user_id"];
+        $uploader = $uploader["user_id"] ?? -1; // unknown uploader
         $info->addProperty($this->lng->txt("file_uploaded_by"), ilUserUtil::getNamePresentation($uploader));
 
         // download link added in repository
@@ -824,9 +825,7 @@ class ilObjFileGUI extends ilObject2GUI
         $ilAccess = $DIC['ilAccess'];
 
         if ($a_additional && substr($a_additional, -3) == "wsp") {
-            /** @noRector  */
-            include("ilias.php");
-            exit;
+            ilObjectGUI::_gotoSharedWorkspaceNode((int) $a_target);
         }
 
         // added support for direct download goto links

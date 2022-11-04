@@ -1,25 +1,27 @@
 <?php
 
-/******************************************************************************
+/**
+ * This file is part of ILIAS, a powerful learning management system
+ * published by ILIAS open source e-Learning e.V.
  *
- * This file is part of ILIAS, a powerful learning management system.
- *
- * ILIAS is licensed with the GPL-3.0, you should have received a copy
- * of said license along with the source code.
+ * ILIAS is licensed with the GPL-3.0,
+ * see https://www.gnu.org/licenses/gpl-3.0.en.html
+ * You should have received a copy of said license along with the
+ * source code, too.
  *
  * If this is not the case or you just want to try ILIAS, you'll find
  * us at:
  * https://www.ilias.de
  * https://github.com/ILIAS-eLearning
  *
- *****************************************************************************/
+ *********************************************************************/
 /**
  * Legacy Content Object Parser
  *
  * @author Alexander Killing <killing@leifos.de>
  * @deprecated use COPage dependency to export/import COPages instead
  */
-class ilContObjParser extends ilMDSaxParser
+class ilQuestionPageParser extends ilMDSaxParser
 {
     /**
      * @var false
@@ -475,9 +477,9 @@ class ilContObjParser extends ilMDSaxParser
 
             case "Layout":
                 if (is_object($this->media_object) && $this->in_media_object) {
-                    $this->media_item->setWidth($a_attribs["Width"]);
-                    $this->media_item->setHeight($a_attribs["Height"]);
-                    $this->media_item->setHAlign($a_attribs["HorizontalAlign"]);
+                    $this->media_item->setWidth($a_attribs["Width"] ?? '');
+                    $this->media_item->setHeight($a_attribs["Height"] ?? '');
+                    $this->media_item->setHAlign($a_attribs["HorizontalAlign"] ?? '');
                 }
                 break;
 

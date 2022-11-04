@@ -91,12 +91,12 @@ class ilTestImporter extends ilXmlImporter
         $qtiParser = new ilQTIParser($qti_file, ilQTIParser::IL_MO_PARSE_QTI, $questionParentObjId, $idents);
         $qtiParser->setTestObject($newObj);
         $qtiParser->startParsing();
+        $newObj = $qtiParser->getTestObject();
 
         // import page data
-        include_once("./Modules/LearningModule/classes/class.ilContObjParser.php");
-        $contParser = new ilContObjParser($newObj, $xml_file, basename($this->getImportDirectory()));
-        $contParser->setQuestionMapping($qtiParser->getImportMapping());
-        $contParser->startParsing();
+        $questionPageParser = new ilQuestionPageParser($newObj, $xml_file, basename($this->getImportDirectory()));
+        $questionPageParser->setQuestionMapping($qtiParser->getImportMapping());
+        $questionPageParser->startParsing();
 
         foreach ($qtiParser->getQuestionIdMapping() as $oldQuestionId => $newQuestionId) {
             $a_mapping->addMapping(
@@ -143,8 +143,6 @@ class ilTestImporter extends ilXmlImporter
         $this->importSkillLevelThresholds($a_mapping, $importedAssignmentList, $newObj, $xml_file);
 
         $a_mapping->addMapping("Modules/Test", "tst", $a_id, $newObj->getId());
-
-        ilObjTest::_setImportDirectory();
     }
 
     /**
@@ -191,7 +189,7 @@ class ilTestImporter extends ilXmlImporter
             $tax_ids = explode(":", $new_tax_ids);
 
             foreach ($tax_ids as $tid) {
-                ilObjTaxonomy::saveUsage($tid, $newTstObjId);
+                ilObjTaxonomy::saveUsage((int) $tid, (int) $newTstObjId);
             }
         }
 

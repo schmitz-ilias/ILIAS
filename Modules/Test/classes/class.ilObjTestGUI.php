@@ -1296,9 +1296,9 @@ class ilObjTestGUI extends ilObjectGUI implements ilCtrlBaseClassInterface
             $qtiParser->setTestObject($newObj);
             $qtiParser->startParsing();
             $newObj->saveToDb();
-            $contParser = new ilContObjParser($newObj, ilSession::get("tst_import_xml_file"), ilSession::get("tst_import_subdir"));
-            $contParser->setQuestionMapping($qtiParser->getImportMapping());
-            $contParser->startParsing();
+            $questionPageParser = new ilQuestionPageParser($newObj, ilSession::get("tst_import_xml_file"), ilSession::get("tst_import_subdir"));
+            $questionPageParser->setQuestionMapping($qtiParser->getImportMapping());
+            $questionPageParser->startParsing();
 
             if (isset($_POST["ident"]) && is_array($_POST["ident"]) && count($_POST["ident"]) == $qtiParser->getNumImportedItems()) {
                 // import test results
@@ -1314,6 +1314,9 @@ class ilObjTestGUI extends ilObjectGUI implements ilCtrlBaseClassInterface
 
         // delete import directory
         ilFileUtils::delDir(ilObjTest::_getImportDirectory());
+        //Note, has been in ilTestImporter, however resetting this there, lead to problem in delDir.
+        // See: https://github.com/ILIAS-eLearning/ILIAS/pull/5097
+        ilObjTest::_setImportDirectory();
 
         $this->tpl->setOnScreenMessage('success', $this->lng->txt("object_imported"), true);
         ilUtil::redirect("ilias.php?ref_id=" . $newObj->getRefId() . "&baseClass=ilObjTestGUI");
@@ -2626,12 +2629,7 @@ class ilObjTestGUI extends ilObjectGUI implements ilCtrlBaseClassInterface
     */
     public function infoScreen($session_lock = "")
     {
-        global $DIC; /* @var ILIAS\DI\Container $DIC */
-        /**
-         * @var $ilAccess  ilAccessHandler
-         * @var $ilUser    ilObjUser
-         * @var $ilToolbar ilToolbarGUI
-         */
+        /* @var ILIAS\DI\Container $DIC */
         global $DIC;
         $ilAccess = $DIC['ilAccess'];
         $ilUser = $DIC['ilUser'];
@@ -2693,7 +2691,7 @@ class ilObjTestGUI extends ilObjectGUI implements ilCtrlBaseClassInterface
                 }
             } else {
                 $checked_previous_answers = false;
-                if ($ilUser->prefs["tst_use_previous_answers"]) {
+                if ($ilUser->getPref("tst_use_previous_answers")) {
                     $checked_previous_answers = true;
                 }
                 $info->addPropertyCheckbox($this->lng->txt("tst_use_previous_answers"), "chb_use_previous_answers", 1, $this->lng->txt("tst_use_previous_answers_user"), $checked_previous_answers);

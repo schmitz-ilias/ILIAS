@@ -1325,6 +1325,16 @@ class ilSurveyEvaluationGUI
      */
     public function printResultsDetailsSelection(): void
     {
+        $this->ctrl->setParameterByClass(
+            "ilSurveyEvaluationGUI",
+            "vw",
+            $this->request->getVW()
+        );
+        $this->ctrl->setParameterByClass(
+            "ilSurveyEvaluationGUI",
+            "cp",
+            $this->request->getCP()
+        );
         $view = $this->print->resultsDetails($this->object->getRefId());
         $view->sendForm();
     }

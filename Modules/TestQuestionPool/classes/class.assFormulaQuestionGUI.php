@@ -577,7 +577,7 @@ class assFormulaQuestionGUI extends assQuestionGUI
                 }
             }
 
-            //$form->setValuesByPost();
+
             foreach ($this->request->getParsedBody() as $key => $value) {
                 $item = $form->getItemByPostVar($key);
                 if ($item !== null) {
@@ -592,6 +592,20 @@ class assFormulaQuestionGUI extends assQuestionGUI
                     }
                 }
             }
+
+            $check = array_merge($found_vars, $found_results);
+            foreach ((array) $form->getItems() as $item) {
+                $postvar = $item->getPostVar();
+                if (preg_match("/_\\\$[r|v]\d+/", $postvar, $matches)) {
+                    $k = substr(array_shift($matches), 1);
+                    if (!in_array($k, $check)) {
+                        $form->removeItemByPostVar($postvar);
+                    }
+                }
+            }
+            $variables = array_filter($variables, fn ($k, $v) => in_array($k, $check), ARRAY_FILTER_USE_BOTH);
+            $results = array_filter($results, fn ($k, $v) => in_array($k, $check), ARRAY_FILTER_USE_BOTH);
+
             $errors = !$form->checkInput();
 
             $custom_errors = false;
@@ -867,13 +881,6 @@ class assFormulaQuestionGUI extends assQuestionGUI
         // get the solution of the user for the active pass or from the last pass if allowed
         $user_solution = array();
         if (($active_id > 0) && (!$show_correct_solution)) {
-            $solutions = array();
-            include_once "./Modules/Test/classes/class.ilObjTest.php";
-            if (!ilObjTest::_getUsePreviousAnswers($active_id, true)) {
-                if (is_null($pass)) {
-                    $pass = ilObjTest::_getPass($active_id);
-                }
-            }
             $user_solution["active_id"] = $active_id;
             $user_solution["pass"] = $pass;
             $solutions = $this->object->getSolutionValues($active_id, $pass);
@@ -893,13 +900,6 @@ class assFormulaQuestionGUI extends assQuestionGUI
                 }
             }
         } elseif ($active_id) {
-            $solutions = null;
-            include_once "./Modules/Test/classes/class.ilObjTest.php";
-            if (!ilObjTest::_getUsePreviousAnswers($active_id, true)) {
-                if (is_null($pass)) {
-                    $pass = ilObjTest::_getPass($active_id);
-                }
-            }
             $user_solution = $this->object->getBestSolution($this->object->getSolutionValues($active_id, $pass));
         } elseif (is_object($this->getPreviewSession())) {
             $solutionValues = array();
@@ -978,7 +978,7 @@ class assFormulaQuestionGUI extends assQuestionGUI
 
         $template = new ilTemplate("tpl.il_as_qpl_formulaquestion_output.html", true, true, 'Modules/TestQuestionPool');
         if (is_object($this->getPreviewSession())) {
-            $questiontext = $this->object->substituteVariables($user_solution, false, false, false);
+            $questiontext = $this->object->substituteVariables($user_solution);
         } else {
             $questiontext = $this->object->substituteVariables(array());
         }

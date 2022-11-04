@@ -569,7 +569,7 @@ class ilObjectGUI
         }
 
         $ru = new ilRepositoryTrashGUI($this);
-        $ru->deleteObjects($this->requested_ref_id, ilSession::get("saved_post"));
+        $ru->deleteObjects($this->requested_ref_id, ilSession::get("saved_post") ?? []);
         ilSession::clear("saved_post");
         $this->ctrl->returnToParent($this);
     }
@@ -1145,6 +1145,9 @@ class ilObjectGUI
                     );
                 }
             } catch (ilException $e) {
+                if (DEVMODE) {
+                    throw $e;
+                }
                 $this->tmp_import_dir = $imp->getTemporaryImportDir();
                 if (!$catch_errors) {
                     throw $e;
@@ -1575,6 +1578,15 @@ class ilObjectGUI
         $ctrl = $DIC->ctrl();
         $ctrl->setParameterByClass("ilRepositoryGUI", "ref_id", $ref_id);
         $ctrl->redirectByClass("ilRepositoryGUI", $cmd);
+    }
+
+    public static function _gotoSharedWorkspaceNode(int $wsp_id): void
+    {
+        global $DIC;
+
+        $ctrl = $DIC->ctrl();
+        $ctrl->setParameterByClass(ilSharedResourceGUI::class, "wsp_id", $wsp_id);
+        $ctrl->redirectByClass(ilSharedResourceGUI::class, "");
     }
 
     /**

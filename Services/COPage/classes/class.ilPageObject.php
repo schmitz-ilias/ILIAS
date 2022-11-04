@@ -2402,8 +2402,8 @@ s     */
 
     /**
      * Updates page object with current xml content
-     * This function is currently (4.4.0 alpha) called by:
-     * - ilContObjParser (LM and Glossary import parser)
+     * This function is currently (8 beta) called by:
+     * - ilQuestionPageParser (Test and TestQuestionPool)
      * - ilSCORM13Package->dbImportSco (SCORM importer)
      * - assQuestion->copyPageOfQuestion
      */
@@ -3059,8 +3059,8 @@ s     */
 
             // @todo 1: hook
             // do not delete question nodes in assessment pages
-            if (!$this->checkForTag("Question", $a_hid[0], (string) $a_hid[1]) || $a_self_ass) {
-                $curr_node = $this->getContentNode((string) $a_hid[0], (string) $a_hid[1]);
+            if (!$this->checkForTag("Question", $a_hid[0], (string) ($a_hid[1] ?? "")) || $a_self_ass) {
+                $curr_node = $this->getContentNode((string) $a_hid[0], (string) ($a_hid[1] ?? ""));
                 if (is_object($curr_node)) {
                     $parent_node = $curr_node->parent_node();
                     if ($parent_node->node_name() != "TableRow") {

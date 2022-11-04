@@ -18,6 +18,11 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+use ILIAS\UI\Renderer;
+use ILIAS\UI\Factory;
+use ILIAS\HTTP\GlobalHttpState;
+use ILIAS\Refinery\Factory as RefineryFactory;
+
 /**
 * Class ilRepositorySearchGUI
 *
@@ -29,12 +34,6 @@ declare(strict_types=1);
 * @ilCtrl_Calls ilRepositorySearchGUI: ilFormPropertyDispatchGUI
 *
 */
-
-use ILIAS\UI\Renderer;
-use ILIAS\UI\Factory;
-use ILIAS\HTTP\GlobalHttpState;
-use ILIAS\Refinery\Factory as RefineryFactory;
-
 class ilRepositorySearchGUI
 {
     private array $search_results = [];
@@ -827,10 +826,12 @@ class ilRepositorySearchGUI
 
         $post_rep_query = (array) ($this->http->request()->getParsedBody()['rep_query'] ?? []);
         $post_search_for = (string) ($this->http->request()->getParsedBody()['search_for'] ?? '');
-        foreach ((array) $post_rep_query[$post_search_for] as $field => $value) {
-            if (trim(ilUtil::stripSlashes($value))) {
-                $found_query = true;
-                break;
+        if (isset($post_rep_query[$post_search_for])) {
+            foreach ((array) $post_rep_query[$post_search_for] as $field => $value) {
+                if (trim(ilUtil::stripSlashes($value))) {
+                    $found_query = true;
+                    break;
+                }
             }
         }
         if ($this->http->wrapper()->post()->has('rep_query_orgu')) {
@@ -868,7 +869,7 @@ class ilRepositorySearchGUI
                 $post_rep_query_orgu = (array) ($this->http->request()->getParsedBody()['rep_query_orgu'] ?? []);
                 $selected_objects = array_map(
                     function ($ref_id) {
-                        return ilObject::_lookupObjId($ref_id);
+                        return ilObject::_lookupObjId((int) $ref_id);
                     },
                     $post_rep_query_orgu
                 );

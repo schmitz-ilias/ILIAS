@@ -195,7 +195,7 @@ class ilForum
         int $parent_pos,
         bool $notify,
         string $subject = '',
-        string $alias = '',
+        ?string $alias = null,
         string $date = '',
         bool $status = true,
         bool $send_activation_mail = false
@@ -724,13 +724,13 @@ class ilForum
             $excluded_ids_condition = ' AND ' . $this->db->in('thr_pk', $params['excluded_ids'], true, 'integer') . ' ';
         }
 
-        if (!in_array(
+        if (!isset($params['order_column']) || !in_array(
             strtolower($params['order_column']),
             ['lp_date', 'rating', 'thr_subject', 'num_posts', 'num_visit']
         )) {
             $params['order_column'] = 'post_date';
         }
-        if (!in_array(strtolower($params['order_direction']), ['asc', 'desc'])) {
+        if (!isset($params['order_direction']) || !in_array(strtolower($params['order_direction']), ['asc', 'desc'])) {
             $params['order_direction'] = 'desc';
         }
 

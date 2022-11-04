@@ -887,6 +887,7 @@ assessment#:#log_wrong_test_password_entered#:#Participant entered wrong test pa
 assessment#:#longmenu#:#Longmenu
 assessment#:#longmenu_text#:#Long Menu Text
 assessment#:#mailnottype#:#Send notification even if a user finishes a test pass
+assessment#:#mailnottype_desc#:#Notify the owner of the test <strong>even if</strong> the number of test attempts has not been limited.
 assessment#:#maintenance#:#Maintenance
 assessment#:#manscoring#:#Manual Scoring
 assessment#:#manscoring_done#:#Scored Participants
@@ -967,6 +968,7 @@ assessment#:#oq_btn_use_order_pictures#:#Use answer pictures
 assessment#:#oq_btn_use_order_terms#:#Use answer terms
 assessment#:#oq_header_ordering_elements#:#Ordering Elements
 assessment#:#or#:#or
+assessment#:#order#:#Order
 assessment#:#ordering_answer_sequence_info#:#The answer sequence you define here will be taken as the correct solution sequence.
 assessment#:#ordertext#:#Ordering Text
 assessment#:#ordertext_info#:#Please enter the text that should be ordered horizontally. The ordering text will be separated by the whitespace signs in the text. If you need a different separation, you may use the separator %s to separate your text units.
@@ -1704,6 +1706,7 @@ assessment#:#tst_question_hints_ordering_clipboard_resetted#:#The ordering clipb
 assessment#:#tst_question_hints_paste_after_success_msg#:#The hint %s has been pasted after hint %s successfully.
 assessment#:#tst_question_hints_paste_before_success_msg#:#The hint %s has been pasted before hint %s successfully.
 assessment#:#tst_question_hints_request_confirmation#:#Do you really want to request hint %s? For this hint %s point(s) will be deducted.
+assessment#:#tst_question_hints_request_confirmation_no_deduction#:#No points will be deducted for this hint.
 assessment#:#tst_question_hints_requested_hint_count_header#:#Requested Hints
 assessment#:#tst_question_hints_save_order_success_msg#:#The order of hint was saved successfully.
 assessment#:#tst_question_hints_tab#:#Hints
@@ -2049,7 +2052,7 @@ auth#:#auth_oidc_settings_section_user_sync#:#User Synchronisation Settings
 auth#:#auth_oidc_settings_session_duration#:#Duration
 auth#:#auth_oidc_settings_title#:#Configure OpenID Connect Authentification
 auth#:#auth_oidc_settings_txt#:#Text
-auth#:#auth_oidc_settings_txt_val_info#:#Enter a text that you would like to have shown on the login page. The text will link automatically to the OpenID Connect login script.
+auth#:#auth_oidc_settings_txt_val_info#:#Enter a text to be displayed on the login page. The text will link automatically to the OpenID Connect login script.
 auth#:#auth_oidc_settings_user_attr#:#Attribute name of user accounts
 auth#:#auth_oidc_settings_user_sync#:#Synchronise Automatically
 auth#:#auth_oidc_settings_user_sync_info#:#Users who do not have an ILIAS account, but have successfully authenticated themselves using OpenID Connect, will have an ILIAS account created for them automatically.
@@ -2823,6 +2826,9 @@ chatroom#:#chat_no_use_typing_broadcast#:#Typing will not be broadcasted
 chatroom#:#chat_not_use_osc#:#Not Using On-Screen-Chat
 chatroom#:#chat_osc_accept_msg#:#Allow On-Screen Chat Conversations
 chatroom#:#chat_osc_accept_msg_info#:#Allow other users to send you messages using the on-screen chat system.
+chatroom#:#chat_osc_accept_msg_info_slate#:#To have private conversations, you must enable your setting "Allow On-Screen Chat Conversations".
+chatroom#:#chat_osc_accept_msg_info_slate_link_txt#:#Visibility (in Profile and Privacy)
+chatroom#:#chat_osc_accept_no_conv_info_slate#:#There are currently no minimzed conversations.
 chatroom#:#chat_osc_accepts_messages_no#:#Doesn't Receive Chat Messages
 chatroom#:#chat_osc_accepts_messages_yes#:#Receives Chat Messages
 chatroom#:#chat_osc_add_user#:#Add Further Users
@@ -3803,7 +3809,6 @@ common#:#day#:#Day
 common#:#days#:#Days
 common#:#db_host#:#Database Host
 common#:#db_name#:#Database Name
-common#:#db_need_hotfix#:#Hotfix available. Please open <a href="./setup/setup.php">»Setup</a>!
 common#:#db_need_update#:#Database needs an update!
 common#:#db_pass#:#Database Password
 common#:#db_type#:#Database Type
@@ -7577,7 +7582,7 @@ crs#:#crs_objective_pretest#:#After initial test
 crs#:#crs_objective_qst_summary#:#Overview Question Assignment
 crs#:#crs_objective_random_warn#:#You can not use random tests in combination with learning objectives.
 crs#:#crs_objective_result#:#After final test
-crs#:#crs_objective_result_details#:#« Show Details
+crs#:#crs_objective_result_details#:#« Show Results
 crs#:#crs_objective_result_summary_initial#:#Placement Test: %1$s (%2$s required)
 crs#:#crs_objective_result_summary_qualifying#:#Achievement Test: %1$s (%2$s required)
 crs#:#crs_objective_saved_sorting#:#Saved sorting.
@@ -10326,8 +10331,8 @@ lso#:#curriculum#:#Curriculum
 lso#:#delete_confirmation#:#Are you sure you want to delete this objects?
 lso#:#entries_deleted#:#Successfully deleted entries.
 lso#:#entries_updated#:#Entries saved
-lso#:#extro#:#Exitpage
-lso#:#extro_img#:#Image for Exitpage
+lso#:#extro#:#Exit Page
+lso#:#extro_img#:#Image for Exit Page
 lso#:#failed#:#Failed
 lso#:#finished#:#Finished
 lso#:#first_access#:#First Access
@@ -10339,7 +10344,7 @@ lso#:#lso_at_least_one_admin#:#There has to be at least one learning sequence ad
 lso#:#lso_edit_permission#:#User can change permission settings
 lso#:#lso_header_delete_members#:#Would you like to remove the following members from this learning sequence?
 lso#:#lso_header_edit_members#:#Edit Members
-lso#:#lso_intropages_deprecationhint#:#You can edit the abstract and extro page in the tab "Content".
+lso#:#lso_intropages_deprecationhint#:#You can edit the abstract and exit page in the tab "Content".
 lso#:#lso_mail_admission_new_bod#:#we are pleased to announce your registration for the learning sequence "%s".
 lso#:#lso_mail_admission_new_sub#:#Your registration for learning sequence "%s"
 lso#:#lso_mail_dismiss_bod#:#your membership in learning sequence "%s" has been terminated.
@@ -10392,11 +10397,11 @@ lso#:#lso_player_viewmodelabel#:#Learning Sequence
 lso#:#lso_print_list#:#Generate list
 lso#:#lso_read#:#User has read access to Learning Sequence
 lso#:#lso_search_users#:#Search Users
-lso#:#lso_settings_availability#:#availability
-lso#:#lso_settings_extro#:#Exitpage Settings
-lso#:#lso_settings_intro#:#Intropage Settings
-lso#:#lso_settings_old_extro#:#View Old Exitpage
-lso#:#lso_settings_old_intro#:#View Old Intropage
+lso#:#lso_settings_availability#:#Availability
+lso#:#lso_settings_extro#:#Edit Exit Page
+lso#:#lso_settings_intro#:#Edit Intro Page
+lso#:#lso_settings_old_extro#:#View Old Exit Page
+lso#:#lso_settings_old_intro#:#View Old Intro Page
 lso#:#lso_show_members_info#:#Member Gallery available for users
 lso#:#lso_start_item#:#Open %s
 lso#:#lso_users_already_assigned#:#The user is already assigned to this learning sequence
@@ -10702,7 +10707,6 @@ mail#:#first_email_missing_info#:#Selection not possible because no e-mail addre
 mail#:#forward#:#Forward
 mail#:#goto_invitation_chat#:#Open Chat Room
 mail#:#invite_to_chat#:#Invite to Chat
-mail#:#linebreak#:#Line Break
 mail#:#link_check_affected_links#:#Affected Links
 mail#:#link_check_introduction#:#the following weblinks are invalid:
 mail#:#link_check_perma_link#:#Permanent Link
@@ -11927,6 +11931,7 @@ mob#:#mob_srt_not_allowed#:#Files with a .srt suffix are currently not allowed t
 mob#:#mob_subtitle_file#:#Subtitle File
 mob#:#mob_subtitle_files#:#Subtitle Files
 mob#:#mob_subtitles#:#Subtitles
+mob#:#mob_type_not_supported#:#Mime type not supported:
 mob#:#mob_upload_file#:#Upload File
 mob#:#mob_upload_multi_srt#:#Upload as ZIP
 mob#:#mob_upload_multi_srt_howto#:#The .zip file should contain no subdirectory, all .srt files should be located on the top level. The file names should end with "_&lt;lang code&gt;.srt" where lang code is e.g. "en", "it", "de".
@@ -13122,20 +13127,6 @@ rbac#:#chtr_moderate#:#User can moderate discussion in chat room
 rbac#:#chtr_read#:#User can join and participate at chat room
 rbac#:#chtr_visible#:#Chat Room is visible
 rbac#:#chtr_write#:#User can edit settings of chat room and ban users
-rbac#:#cld_delete#:#User can delete cloud object
-rbac#:#cld_delete_files#:#Users can delete Files in the cloud object
-rbac#:#cld_delete_folders#:#Users can delete Folders in the cloud object
-rbac#:#cld_download#:#User can download files from the cloud object
-rbac#:#cld_edit_in_online_editor#:#User can open and edit files in online editor
-rbac#:#cld_edit_permission#:#User can change permission settings
-rbac#:#cld_files_visible#:#Files are visible in the cloud object
-rbac#:#cld_folders_create#:#Folders may be created in the cloud object
-rbac#:#cld_folders_visible#:#Folders are visible in the cloud object
-rbac#:#cld_permission#:#User can change permission settings
-rbac#:#cld_read#:#User can open a Cloud Object
-rbac#:#cld_upload#:#User can upload files to the cloud object
-rbac#:#cld_visible#:#Cloud Object is visible
-rbac#:#cld_write#:#User can edit cloud object settings
 rbac#:#cmis_edit_permissions#:#User can change permission settings of xAPI/cmi5 administration.
 rbac#:#cmis_read#:#User has read access to xAPI/cmi5 administration.
 rbac#:#cmis_visible#:#Administration of xAPI/cmi5 is visible.
@@ -15742,6 +15733,7 @@ survey#:#survey_edit_heading#:#Edit Heading
 survey#:#survey_edit_settings#:#Edit Settings
 survey#:#survey_error_insert_incomplete_question#:#You tried to add an incomplete question to the survey! The question was not added.
 survey#:#survey_execution_exit#:#Back to repository
+survey#:#survey_execution_exit_360#:#Back
 survey#:#survey_execution_sure_finish#:#Are you sure you want to finish the survey? You will not be able to edit your answers afterwards.
 survey#:#survey_existing_pool#:#Use existing question pool
 survey#:#survey_finish#:#Finish Survey
@@ -15990,6 +15982,7 @@ svy#:#svy_codes#:#Access Codes
 svy#:#svy_current_page#:#Current Page
 svy#:#svy_finish_survey#:#Finish survey '%1'
 svy#:#svy_invite_participants#:#Invite Participants
+svy#:#svy_link_to_svy#:#Link to Survey
 svy#:#svy_part_overview#:#Overview
 svy#:#svy_print_selection#:#Print View Selection
 svy#:#svy_remove_all_participants#:#Remove all Participants
@@ -16007,6 +16000,7 @@ svy#:#svy_user_added_360_appraisee_mail#:#You have been added to the survey as a
 svy#:#svy_user_added_360_rater#:#360° Survey '%1'
 svy#:#svy_user_added_360_rater_mail#:#You have been added as a rater to the survey.
 svy#:#svy_user_added_360_rater_reminder_mail#:#Please finish to rate the following appraisees:
+svy#:#svy_user_not_found#:#User not found.
 svy#:#svy_users_invited#:#Users have been invited.
 sysc#:#sysc_action_list_tree#:#Create Repository Tree Dump
 sysc#:#sysc_action_repair#:#Repair

@@ -16,6 +16,10 @@
  *
  *********************************************************************/
 
+use ILIAS\Refinery\Transformation;
+use ILIAS\Refinery\Random\Seed\GivenSeed;
+use ILIAS\Refinery\Random\Group as RandomGroup;
+
 include_once "./Modules/Test/classes/inc.AssessmentConstants.php";
 
 /**
@@ -92,6 +96,8 @@ class ilTestServiceGUI
      */
     protected $participantData;
 
+    private RandomGroup $randomGroup;
+
     /**
      * @var ilTestObjectiveOrientedContainer
      */
@@ -152,7 +158,7 @@ class ilTestServiceGUI
         $this->testSessionFactory = new ilTestSessionFactory($this->object);
 
         $this->testSequenceFactory = new ilTestSequenceFactory($ilDB, $lng, $component_repository, $this->object);
-
+        $this->randomGroup = $DIC->refinery()->random();
         $this->objectiveOrientedContainer = null;
     }
 
@@ -173,9 +179,12 @@ class ilTestServiceGUI
     }
 
     /**
-     * @param ilTestSession $testSession
-     * @param $short
-     * @return array
+     * This method uses the data of a given test pass to create an evaluation for displaying into a table used in the ilTestEvaluationGUI
+     *
+     * @param ilTestSession $testSession the current test session
+     * @param array $passes An integer array of test runs
+     * @param boolean $withResults $withResults tells the method to include all scoring data into the  returned row
+     * @return array The array contains the date of the requested row
      */
     public function getPassOverviewTableData(ilTestSession $testSession, $passes, $withResults): array
     {
@@ -198,13 +207,15 @@ class ilTestServiceGUI
         );
 
         foreach ($passes as $pass) {
-            $row = array();
-
+            $row = [
+                'scored' => null,
+                'pass' => $pass,
+                'date' => ilObjTest::lookupLastTestPassAccess($testSession->getActiveId(), $pass)
+            ];
             $considerOptionalQuestions = true;
 
             if ($this->getObjectiveOrientedContainer()->isObjectiveOrientedPresentationRequired()) {
                 $testSequence = $this->testSequenceFactory->getSequenceByActiveIdAndPass($testSession->getActiveId(), $pass);
-
                 $testSequence->loadFromDb();
                 $testSequence->loadQuestions();
 
@@ -240,32 +251,20 @@ class ilTestServiceGUI
                 }
 
                 if (!$result_array['pass']['total_max_points']) {
-                    $percentage = 0;
+                    $row['percentage'] = 0;
                 } else {
-                    $percentage = ($result_array['pass']['total_reached_points'] / $result_array['pass']['total_max_points']) * 100;
+                    $row['percentage'] = ($result_array['pass']['total_reached_points'] / $result_array['pass']['total_max_points']) * 100;
                 }
-                $total_max = $result_array['pass']['total_max_points'];
-                $total_reached = $result_array['pass']['total_reached_points'];
-                $total_requested_hints = $result_array['pass']['total_requested_hints'];
-            }
 
-            if ($withResults) {
+                $row['max_points'] = $result_array['pass']['total_max_points'];
+                $row['reached_points'] = $result_array['pass']['total_reached_points'];
                 $row['scored'] = ($pass == $scoredPass);
-            }
-
-            $row['pass'] = $pass;
-            $row['date'] = ilObjTest::lookupLastTestPassAccess($testSession->getActiveId(), $pass);
-            if ($withResults) {
                 $row['num_workedthrough_questions'] = $result_array['pass']['num_workedthrough'];
                 $row['num_questions_total'] = $result_array['pass']['num_questions_total'];
 
                 if ($this->object->isOfferingQuestionHintsEnabled()) {
-                    $row['hints'] = $total_requested_hints;
+                    $row['hints'] = $result_array['pass']['total_requested_hints'];
                 }
-
-                $row['reached_points'] = $total_reached;
-                $row['max_points'] = $total_max;
-                $row['percentage'] = $percentage;
             }
 
             $data[] = $row;
@@ -373,10 +372,15 @@ class ilTestServiceGUI
             if ((array_key_exists('workedthrough', $question_data) && $question_data["workedthrough"] == 1) ||
                 ($only_answered_questions == false)) {
                 $template = new ilTemplate("tpl.il_as_qpl_question_printview.html", true, true, "Modules/TestQuestionPool");
-                $question = $question_data["qid"] ?? null;
-                if (is_numeric($question)) {
+                $question_id = $question_data["qid"] ?? null;
+                if (is_numeric($question_id)) {
                     $maintemplate->setCurrentBlock("printview_question");
-                    $question_gui = $this->object->createQuestionGUI("", $question);
+                    $question_gui = $this->object->createQuestionGUI("", $question_id);
+                    $question_gui->object->setShuffler($this->buildQuestionAnswerShuffler(
+                        (int) $question_id,
+                        (int) $active_id,
+                        (int) $pass
+                    ));
                     if (is_object($question_gui)) {
                         if ($this->isPdfDeliveryRequest()) {
                             $question_gui->setRenderPurpose(assQuestionGUI::RENDER_PURPOSE_PRINT_PDF);
@@ -384,11 +388,11 @@ class ilTestServiceGUI
 
                         if ($anchorNav) {
                             $template->setCurrentBlock('block_id');
-                            $template->setVariable('BLOCK_ID', "detailed_answer_block_act_{$active_id}_qst_{$question}");
+                            $template->setVariable('BLOCK_ID', "detailed_answer_block_act_{$active_id}_qst_{$question_id}");
                             $template->parseCurrentBlock();
 
                             $template->setCurrentBlock('back_anchor');
-                            $template->setVariable('HREF_BACK_ANCHOR', "#pass_details_tbl_row_act_{$active_id}_qst_{$question}");
+                            $template->setVariable('HREF_BACK_ANCHOR', "#pass_details_tbl_row_act_{$active_id}_qst_{$question_id}");
                             $template->setVariable('TXT_BACK_ANCHOR', $this->lng->txt('tst_back_to_question_list'));
                             $template->parseCurrentBlock();
                         }
@@ -450,6 +454,33 @@ class ilTestServiceGUI
 
         $maintemplate->setVariable("RESULTS_OVERVIEW", $headerText);
         return $maintemplate->get();
+    }
+
+    protected function buildQuestionAnswerShuffler(
+        int $question_id,
+        int $active_id,
+        int $pass_id
+    ): Transformation {
+        $fixedSeed = $this->buildFixedShufflerSeed($question_id, $pass_id, $active_id);
+
+        return $this->randomGroup->shuffleArray(new GivenSeed($fixedSeed));
+    }
+
+    protected function buildFixedShufflerSeed(int $question_id, int $pass_id, int $active_id): int
+    {
+        $seed = ($question_id + $pass_id) * $active_id;
+
+        if (is_float($seed) && is_float($seed = $active_id + $pass_id)) {
+            $seed = $active_id;
+        }
+
+        $div = ceil((10 ** (ilTestPlayerAbstractGUI::FIXED_SHUFFLER_SEED_MIN_LENGTH - 1)) / $seed);
+
+        if ($div > 1) {
+            $seed = $seed * ($div + $seed % 10);
+        }
+
+        return (int) $seed;
     }
 
     /**

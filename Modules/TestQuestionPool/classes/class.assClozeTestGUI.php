@@ -203,7 +203,7 @@ JS;
 
                     $k_gapsize = 'gap_' . $idx . '_gapsize';
                     if ($this->request->isset($k_gapsize)) {
-                        $this->object->setGapSize($idx, $order, $_POST[$k_gapsize]);
+                        $this->object->setGapSize($idx, $_POST[$k_gapsize]);
                     }
                     break;
 
@@ -272,7 +272,7 @@ JS;
                     }
 
                     if ($this->post->has('gap_' . $idx . '_gapsize')) {
-                        $this->object->setGapSize($idx, $order, $_POST['gap_' . $idx . '_gapsize']);
+                        $this->object->setGapSize($idx, $_POST['gap_' . $idx . '_gapsize']);
                     }
                     break;
             }
@@ -1246,12 +1246,6 @@ JS;
             $indexedSolution = $this->object->fetchSolutionSubmit($use_post_solutions);
             $user_solution = $this->object->fetchValuePairsFromIndexedValues($indexedSolution);
         } elseif ($active_id) {
-            // hey: prevPassSolutions - obsolete due to central check
-            #include_once "./Modules/Test/classes/class.ilObjTest.php";
-            #if (!ilObjTest::_getUsePreviousAnswers($active_id, true))
-            #{
-            #	if (is_null($pass)) $pass = ilObjTest::_getPass($active_id);
-            #}
             $user_solution = $this->object->getTestOutputSolutions($active_id, $pass);
             // hey.
             if (!is_array($user_solution)) {
@@ -1351,6 +1345,9 @@ JS;
 
         foreach ($this->object->gaps as $gapIndex => $gap) {
             $answerValue = $this->object->fetchAnswerValueForGap($userSolution, $gapIndex);
+            if ($answerValue === '') {
+                continue;
+            }
             $answerIndex = $this->object->feedbackOBJ->determineAnswerIndexForAnswerValue($gap, $answerValue);
             $fb = $this->object->feedbackOBJ->determineTestOutputGapFeedback($gapIndex, $answerIndex);
 

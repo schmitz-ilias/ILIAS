@@ -642,7 +642,12 @@ class ilExSubmission
     public function deleteAllFiles(): void
     {
         $files = array();
+        // normal files
         foreach ($this->getFiles() as $item) {
+            $files[] = $item["returned_id"];
+        }
+        // print versions
+        foreach ($this->getFiles(null, false, null, true) as $item) {
             $files[] = $item["returned_id"];
         }
         if ($files !== []) {
@@ -766,7 +771,6 @@ class ilExSubmission
 
         $user_ids = $this->getUserIds();
         $is_team = $this->assignment->hasTeam();
-
         // get last download time
         $download_time = null;
         if ($a_only_new) {
@@ -786,7 +790,6 @@ class ilExSubmission
                     break;
                 }
             }
-
             // this will remove personal info from zip-filename
             $is_team = true;
         }
@@ -855,7 +858,6 @@ class ilExSubmission
                         );
                     }
                 }
-
                 $this->downloadMultipleFiles(
                     $array_files,
                     ($is_team ? null : $this->getUserId()),
@@ -915,10 +917,11 @@ class ilExSubmission
 
     protected function downloadMultipleFiles(
         array $a_filenames,
-        int $a_user_id,
+        ?int $a_user_id,
         bool $a_multi_user = false
     ): void {
         $lng = $this->lng;
+        $a_user_id = (int) $a_user_id;
 
         $path = $this->initStorage()->getAbsoluteSubmissionPath();
 
@@ -1304,16 +1307,13 @@ class ilExSubmission
         return $next_id;
     }
 
-    // Remove personal resource from assigment
-    public function deleteResourceObject(int $a_returned_id): void
+    /*
+     * Remove ressource from assignement (and delete
+     * its submission): Note: The object itself will not be deleted.
+     */
+    public function deleteResourceObject(): void
     {
-        $ilDB = $this->db;
-
-        $ilDB->manipulate("DELETE FROM exc_returned" .
-            " WHERE obj_id = " . $ilDB->quote($this->assignment->getExerciseId(), "integer") .
-            " AND " . $this->getTableUserWhere(false) .
-            " AND ass_id = " . $ilDB->quote($this->assignment->getId(), "integer") .
-            " AND returned_id = " . $ilDB->quote($a_returned_id, "integer"));
+        $this->deleteAllFiles();
     }
 
     /**

@@ -291,7 +291,7 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
                 $resObj = $this->getResult($result);
                 $value = "";
                 $frac_helper = '';
-                $user_data[$result]['result_type'] = $resObj->getResultType();
+                $userdata[$result]['result_type'] = $resObj->getResultType();
                 $is_frac = false;
                 if (
                     $resObj->getResultType() == assFormulaQuestionResult::RESULT_FRAC ||
@@ -299,67 +299,26 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
                 ) {
                     $is_frac = true;
                 }
-                if (is_array($userdata) && isset($userdata[$result])) {
-                    if (is_array($userdata[$result])) {
-                        if (false && $forsolution && $result_output) { // fix for mantis #25956
-                            $value_org = $resObj->calculateFormula($this->getVariables(), $this->getResults(), parent::getId());
-                            $value = sprintf("%." . $resObj->getPrecision() . "f", $value_org);
-                            if ($is_frac) {
-                                $value = assFormulaQuestionResult::convertDecimalToCoprimeFraction($value_org);
-                                if (is_array($value)) {
-                                    $frac_helper = $value[1];
-                                    $value = $value[0];
-                                }
-                            }
-                        } else {
-                            if ($forsolution) {
-                                $value = $userdata[$result]["value"];
-                            } else {
-                                $value = ' value="' . $userdata[$result]["value"] . '"';
-                            }
-                        }
-                    }
-                } else {
-                    if ($forsolution) {
-                        $value = $resObj->calculateFormula($this->getVariables(), $this->getResults(), parent::getId());
-                        $value = sprintf("%." . $resObj->getPrecision() . "f", $value);
-
-                        if ($is_frac) {
-                            $value = assFormulaQuestionResult::convertDecimalToCoprimeFraction($value);
-                            if (is_array($value)) {
-                                $frac_helper = $value[1];
-                                $value = $value[0];
-                            }
-                            $value = ' value="' . $value . '"';
-                        }
-                    } else {
-                        // Precision fix for Preview by tjoussen
-                        // If all default values are set, this function is called in getPreview
-                        $use_precision = !($userdata == null && $graphicalOutput == false && $forsolution == false && $result_output == false);
-
-                        $val = $resObj->calculateFormula($this->getVariables(), $this->getResults(), parent::getId(), $use_precision);
-
-                        if ($resObj->getResultType() == assFormulaQuestionResult::RESULT_FRAC
-                            || $resObj->getResultType() == assFormulaQuestionResult::RESULT_CO_FRAC) {
-                            $val = $resObj->convertDecimalToCoprimeFraction($val);
-                            if (is_array($val)) {
-                                $frac_helper = $val[1];
-                                $val = $val[0];
-                            }
-                        } else {
-                            $val = sprintf("%." . $resObj->getPrecision() . "f", $val);
-                            $val = (strlen($val) > 8) ? strtoupper(sprintf("%e", $val)) : $val;
-                        }
-                        $value = ' value="' . $val . '"';
-                    }
-                }
-
                 if ($forsolution) {
+                    $value = $resObj->calculateFormula($this->getVariables(), $this->getResults(), parent::getId());
+                    $value = sprintf("%." . $resObj->getPrecision() . "f", $value);
+
+                    if ($is_frac) {
+                        $value = assFormulaQuestionResult::convertDecimalToCoprimeFraction($value);
+                        if (is_array($value)) {
+                            $frac_helper = $value[1];
+                            $value = $value[0];
+                        }
+                        $value = ' value="' . $value . '"';
+                    }
+
                     $input = '<span class="ilc_qinput_TextInput solutionbox">' . ilLegacyFormElementsUtil::prepareFormOutput(
                         $value
                     ) . '</span>';
+                } elseif (is_array($userdata) && isset($userdata[$result])) {
+                    $input = $this->generateResultInputHtml($result, $userdata[$result]["value"]);
                 } else {
-                    $input = '<input class="ilc_qinput_TextInput" type="text" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" name="result_' . $result . '"' . $value . ' />';
+                    $input = $this->generateResultInputHTML($result, '');
                 }
 
                 $units = "";
@@ -381,7 +340,9 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
                         $units .= '<option value="-1">' . $this->lng->txt("select_unit") . '</option>';
                         foreach ($this->getResultUnits($resObj) as $unit) {
                             $units .= '<option value="' . $unit->getId() . '"';
-                            if ((is_array($userdata[$result])) && (strlen($userdata[$result]["unit"]))) {
+                            if (array_key_exists($result, $userdata) &&
+                                is_array($userdata[$result]) &&
+                                array_key_exists('unit', $userdata[$result])) {
                                 if ($userdata[$result]["unit"] == $unit->getId()) {
                                     $units .= ' selected="selected"';
                                 }
@@ -400,7 +361,10 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
                     case assFormulaQuestionResult::RESULT_FRAC:
                         if (strlen($frac_helper)) {
                             $units .= ' &asymp; ' . $frac_helper . ', ';
-                        } elseif (is_array($userdata) && isset($userdata[$result]) && strlen($userdata[$result]["frac_helper"])) {
+                        } elseif (is_array($userdata) &&
+                            array_key_exists($result, $userdata) &&
+                            array_key_exists('frac_helper', $userdata[$result]) &&
+                            is_string($userdata[$result]["frac_helper"])) {
                             if (!preg_match('-/-', $value)) {
                                 $units .= ' &asymp; ' . $userdata[$result]["frac_helper"] . ', ';
                             }
@@ -494,6 +458,15 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
         return $text;
     }
 
+    protected function generateResultInputHTML(string $result_key, string $result_value): string
+    {
+        $input = '<input class="ilc_qinput_TextInput" type="text"';
+        $input .= 'spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"';
+        $input .= 'name="result_' . $result_key . '"';
+        $input .= ' value="' . $result_value . '"/>';
+        return $input;
+    }
+
     /**
      * Check if advanced rating can be used for a result. This is only possible if there is exactly
      * one possible correct unit for the result, otherwise it is impossible to determine wheather the
@@ -560,7 +533,7 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
         // save variables
         $affectedRows = $ilDB->manipulateF(
             "
-		DELETE FROM il_qpl_qst_fq_var 
+		DELETE FROM il_qpl_qst_fq_var
 		WHERE question_fi = %s",
             array("integer"),
             array($this->getId())

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * This file is part of ILIAS, a powerful learning management system
  * published by ILIAS open source e-Learning e.V.
@@ -91,6 +93,18 @@ class ilSkillUsage implements ilSkillUsageInfo
                 " AND tref_id = " . $ilDB->quote($a_tref_id, "integer")
             );
         }
+    }
+
+    public static function removeUsagesFromObject(int $a_obj_id): void
+    {
+        global $DIC;
+
+        $ilDB = $DIC->database();
+
+        $ilDB->manipulate(
+            $q = "DELETE FROM skl_usage WHERE " .
+                " obj_id = " . $ilDB->quote($a_obj_id, "integer")
+        );
     }
 
     /**
