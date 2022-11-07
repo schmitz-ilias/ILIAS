@@ -22,7 +22,6 @@ use ILIAS\Data\URI;
 use ILIAS\UI\Renderer;
 use ILIAS\UI\Factory;
 use ILIAS\Refinery\Factory as Refinery;
-use ILIAS\Data\Factory as Data;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -42,7 +41,6 @@ class ilMDFullEditorUtilitiesCollection
         Factory $factory,
         Renderer $renderer,
         Refinery $refinery,
-        Data $data,
         ilMDRepository $repo,
         ilMDLOMPresenter $presenter,
         ilMDLOMLibrary $library,
@@ -75,7 +73,6 @@ class ilMDFullEditorUtilitiesCollection
         $this->input_provider = new ilMDFullEditorInputProvider(
             $factory->input()->field(),
             $refinery,
-            $data,
             $presenter,
             $library->getLOMVocabulariesDictionary(
                 $path_factory

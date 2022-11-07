@@ -24,6 +24,7 @@ use ILIAS\UI\Component\Tree\Tree;
 use ILIAS\GlobalScreen\ScreenContext\Stack\ContextCollection;
 use ILIAS\GlobalScreen\ScreenContext\Stack\CalledContexts;
 use ILIAS\Data\URI;
+use ILIAS\Data\Factory as Data;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -116,6 +117,7 @@ class ilMDEditorToolProvider extends AbstractDynamicToolProvider
             new ilMDLOMPresenter(
                 $this->dic->language(),
                 $this->dic->user(),
+                (new Data())->dateFormat(),
                 $library->getLOMDictionary()
             )
         );

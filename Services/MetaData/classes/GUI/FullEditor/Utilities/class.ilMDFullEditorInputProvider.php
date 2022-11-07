@@ -22,7 +22,6 @@ use ILIAS\UI\Component\Input\Field\FormInput;
 use ILIAS\UI\Component\Input\Field\Section;
 use ILIAS\UI\Component\Input\Field\Factory;
 use ILIAS\Refinery\Factory as Refinery;
-use ILIAS\Data\Factory as DataFactory;
 use ILIAS\Data\DateFormat\DateFormat;
 
 /**
@@ -35,7 +34,6 @@ class ilMDFullEditorInputProvider
 
     protected Factory $factory;
     protected Refinery $refinery;
-    protected DataFactory $data;
     protected ilMDLOMPresenter $presenter;
     protected ilMDLOMVocabulariesDictionary $vocab_dict;
     protected ilMDLOMEditorGUIQuirkDictionary $quirk_dict;
@@ -55,7 +53,6 @@ class ilMDFullEditorInputProvider
     public function __construct(
         Factory $factory,
         Refinery $refinery,
-        DataFactory $data,
         ilMDLOMPresenter $presenter,
         ilMDLOMVocabulariesDictionary $vocab_dict,
         ilMDLOMEditorGUIQuirkDictionary $quirk_dict,
@@ -65,7 +62,6 @@ class ilMDFullEditorInputProvider
     ) {
         $this->factory = $factory;
         $this->refinery = $refinery;
-        $this->data = $data;
         $this->presenter = $presenter;
         $this->vocab_dict = $vocab_dict;
         $this->quirk_dict = $quirk_dict;
@@ -408,10 +404,7 @@ class ilMDFullEditorInputProvider
             case ilMDLOMDataFactory::TYPE_DATETIME:
                 $res = $this->factory
                     ->dateTime('placeholder')
-                    ->withFormat($this->getUserDateFormat(
-                        $this->presenter,
-                        $this->data
-                    ))
+                    ->withFormat($this->presenter->getUserDateFormat())
                     ->withAdditionalTransformation(
                         $this->refinery->custom()->transformation(
                             function ($v) {
@@ -532,16 +525,12 @@ class ilMDFullEditorInputProvider
                     $matches,
                     PREG_UNMATCHED_AS_NULL
                 );
-                $date = new ilDate(
+                $date = new DateTimeImmutable(
                     ($matches[1] ?? '0000') . '-' .
                     ($matches[2] ?? '01') . '-' .
-                    ($matches[3] ?? '01'),
-                    IL_CAL_DATE
+                    ($matches[3] ?? '01')
                 );
-                return $date->get(
-                    IL_CAL_FKT_DATE,
-                    $presenter->getUserDateFormat()
-                );
+                return $presenter->getUserDateFormat()->applyTo($date);
 
             case ilMDLOMDataFactory::TYPE_DURATION:
                 preg_match(
@@ -558,48 +547,6 @@ class ilMDFullEditorInputProvider
             default:
                 return $data->getValue();
         }
-    }
-
-    protected function getUserDateFormat(
-        ilMDLOMPresenter $presenter,
-        DataFactory $data
-    ): DateFormat {
-        $format = $presenter->getUserDateFormat();
-        $array = str_split($format);
-        $builder = $data->dateFormat()->custom();
-        foreach ($array as $char) {
-            switch ($char) {
-                case '.':
-                    $builder->dot();
-                    break;
-
-                case '-':
-                    $builder->dash();
-                    break;
-
-                case '/':
-                    $builder->slash();
-                    break;
-
-                case 'Y':
-                    $builder->year();
-                    break;
-
-                case 'm':
-                    $builder->month();
-                    break;
-
-                case 'd':
-                    $builder->day();
-                    break;
-
-                default:
-                    throw new ilMDGUIException(
-                        'Date format conversion failed'
-                    );
-            }
-        }
-        return $builder->get();
     }
 
     protected function getConditionElement(

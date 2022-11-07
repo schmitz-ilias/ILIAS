@@ -105,13 +105,14 @@ class ilMDEditorGUI
         );
         $this->marker_factory = new ilMDMarkerFactory($data_factory);
         $this->library = new ilMDLOMLibrary(new ilMDTagFactory());
+        $this->data = new Data();
         $this->presenter = new ilMDLOMPresenter(
             $this->lng,
             $DIC->user(),
+            $this->data->dateFormat(),
             $this->library->getLOMDictionary()
         );
         $this->user = $DIC->user();
-        $this->data = new Data();
 
         $this->lng->loadLanguageModule('meta');
     }
@@ -530,7 +531,6 @@ class ilMDEditorGUI
                 $this->ui_factory,
                 $this->ui_renderer,
                 $this->refinery,
-                $this->data,
                 $this->repo,
                 $this->presenter,
                 $this->library,

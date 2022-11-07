@@ -18,6 +18,9 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+use ILIAS\Data\DateFormat\Factory as DateFactory;
+use ILIAS\Data\DateFormat\DateFormat;
+
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
@@ -28,15 +31,18 @@ class ilMDLOMPresenter
 
     protected ilLanguage $lng;
     protected ilObjUser $user;
+    protected DateFactory $date_factory;
     protected ilMDLOMDictionary $dict;
 
     public function __construct(
         ilLanguage $lng,
         ilObjUser $user,
+        DateFactory $date_factory,
         ilMDLOMDictionary $dict
     ) {
         $this->lng = $lng;
         $this->lng->loadLanguageModule('meta');
+        $this->date_factory = $date_factory;
         $this->user = $user;
         $this->dict = $dict;
     }
@@ -155,16 +161,12 @@ class ilMDLOMPresenter
                     $matches,
                     PREG_UNMATCHED_AS_NULL
                 );
-                $date = new ilDate(
+                $date = new DateTimeImmutable(
                     ($matches[1] ?? '0000') . '-' .
                     ($matches[2] ?? '01') . '-' .
-                    ($matches[3] ?? '01'),
-                    IL_CAL_DATE
+                    ($matches[3] ?? '01')
                 );
-                return $date->get(
-                    IL_CAL_FKT_DATE,
-                    $this->getUserDateFormat()
-                );
+                return $this->getUserDateFormat()->applyTo($date);
 
             case ilMDLOMDataFactory::TYPE_DURATION:
                 preg_match(
@@ -325,18 +327,19 @@ class ilMDLOMPresenter
         ];
     }
 
-    public function getUserDateFormat(): string
+    public function getUserDateFormat(): DateFormat
     {
         switch ($this->user->getDateFormat()) {
             case ilCalendarSettings::DATE_FORMAT_DMY:
-                return 'd.m.Y';
+                return $this->date_factory->germanShort();
 
             case ilCalendarSettings::DATE_FORMAT_MDY:
-                return 'm/d/Y';
+                return $this->date_factory->custom()->month()->slash()
+                    ->day()->slash()->year()->get();
 
             case ilCalendarSettings::DATE_FORMAT_YMD:
             default:
-                return 'Y-m-d';
+                return $this->date_factory->standard();
         }
     }
 
