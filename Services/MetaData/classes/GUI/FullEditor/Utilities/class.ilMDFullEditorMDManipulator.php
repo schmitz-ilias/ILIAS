@@ -106,7 +106,7 @@ class ilMDFullEditorMDManipulator
             $path = $this->path_factory
                 ->getPathFromRoot()
                 ->setPathFromString($path_string);
-            if ($value !== '') {
+            if ($value !== '' && $value !== null) {
                 $el = $this->getUniqueElement($root, $path);
                 $el->leaveMarkerTrail(
                     $this->marker_factory->markerByPath(

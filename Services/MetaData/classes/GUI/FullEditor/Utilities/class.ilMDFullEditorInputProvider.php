@@ -398,6 +398,12 @@ class ilMDFullEditorInputProvider
                     ->numeric('placeholder')
                     ->withAdditionalTransformation(
                         $this->refinery->int()->isGreaterThanOrEqual(0)
+                    )
+                    ->withAdditionalTransformation(
+                        $this->refinery->byTrying([
+                            $this->refinery->kindlyTo()->string(),
+                            $this->refinery->kindlyTo()->null()
+                        ])
                     );
                 break;
 
