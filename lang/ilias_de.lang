@@ -11584,7 +11584,6 @@ meta#:#meta_identifier#:#Kennung
 meta#:#meta_identifier_plural#:#Kennungen
 meta#:#meta_index#:#Index
 meta#:#meta_info_only_repository_objects#:#Nachfolgend werden nur Magazinobjekte angezeigt, nicht aber Medienobjekte oder Lernmodulseiten.
-meta#:#meta_info_tlt_not_valid#:#Der aktuelle Wert ist nicht gültig und kann deswegen in anderen Bereichen (z.B Lernfortschritt) nicht verwertet werden. Bitte geben Sie eine Zeit in Stunden und/oder Minuten an.
 meta#:#meta_initiator#:#Initiator
 meta#:#meta_installation_remarks#:#Installationsanmerkungen
 meta#:#meta_instructionaldesigner#:#Lern-Designer
@@ -11774,14 +11773,6 @@ meta#:#meta_netscape_communicator#:#Netscape Communicator
 meta#:#meta_networked#:#Vernetzt
 meta#:#meta_new_element#:#Neues Element
 meta#:#meta_no#:#Nein
-meta#:#meta_no_annotation#:#Keine Metadaten für den Bereich 'Anmerkung' vorhanden.
-meta#:#meta_no_classification#:#Keine Metadaten für den Bereich 'Klassifizierung' vorhanden.
-meta#:#meta_no_educational#:#Keine Metadaten für den Bereich 'Pädagogik' vorhanden.
-meta#:#meta_no_lifecycle#:#Keine Metadaten für den Bereich 'Lebenszyklus' vorhanden.
-meta#:#meta_no_meta_metadata#:#Keine Metadaten für den Bereich 'Meta-Metadaten' vorhanden.
-meta#:#meta_no_relation#:#Keine Metadaten für den Bereich 'Beziehungen' vorhanden.
-meta#:#meta_no_rights#:#Keine Metadaten für den Bereich 'Rechte und Lizenzen' vorhanden.
-meta#:#meta_no_technical#:#Keine Metadaten für den Bereich 'Technische Angaben' vorhanden.
 meta#:#meta_none#:#Keines
 meta#:#meta_obj_type_active#:#Datensatz anbieten
 meta#:#meta_obj_type_inactive#:#Datensatz nicht anbieten
@@ -11802,15 +11793,12 @@ meta#:#meta_order#:#Order
 meta#:#meta_other#:#Andere
 meta#:#meta_other_plattform_requirements#:#Andere Plattform-Anforderungen
 meta#:#meta_pc-dos#:#PC-DOS
-meta#:#meta_pc_dos#:#PC-DOS
-meta#:#meta_please_select#:#Bitte wählen Sie
 meta#:#meta_pointofcontact#:#Kontakt
 meta#:#meta_prerequisite#:#Voraussetzung
 meta#:#meta_problem_statement#:#Problemstellung
 meta#:#meta_publisher#:#Herausgeber
 meta#:#meta_purpose#:#Zweck
 meta#:#meta_questionnaire#:#Fragebogen
-meta#:#meta_quickedit#:#Schnellbearbeitung
 meta#:#meta_references#:#Referenzen
 meta#:#meta_relation#:#Beziehung
 meta#:#meta_relation_plural#:#Beziehungen
@@ -11869,7 +11857,6 @@ meta#:#meta_very_easy#:#Sehr leicht
 meta#:#meta_very_high#:#Sehr hoch
 meta#:#meta_very_low#:#Sehr niedrig
 meta#:#meta_yes#:#Ja
-meta#:#sco_propagate#:#Auf alle SCOs übertragen
 meta#:#udf_type_address#:#Adresse
 meta#:#udf_type_externallink#:#Externer Link
 meta#:#udf_type_float#:#Gleitkommazahl

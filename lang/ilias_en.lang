@@ -11585,7 +11585,6 @@ meta#:#meta_identifier#:#Identifier
 meta#:#meta_identifier_plural#:#Identifiers
 meta#:#meta_index#:#Index
 meta#:#meta_info_only_repository_objects#:#Only repository objects are listed below (but not media objects or learning module pages).
-meta#:#meta_info_tlt_not_valid#:#The current value is not valid. Therefore it can not be used in other sections, such as learning progress statistics. Please insert a typical learning time in hours and/or minutes.
 meta#:#meta_initiator#:#Initiator
 meta#:#meta_installation_remarks#:#Installation Notes
 meta#:#meta_instructionaldesigner#:#Instructional Design
@@ -11775,14 +11774,6 @@ meta#:#meta_netscape_communicator#:#Netscape Communicator
 meta#:#meta_networked#:#Networked
 meta#:#meta_new_element#:#New Element
 meta#:#meta_no#:#No
-meta#:#meta_no_annotation#:#No metadata available for the Annotation section.
-meta#:#meta_no_classification#:#No metadata available for the Classification section.
-meta#:#meta_no_educational#:#No metadata available for the Educational section.
-meta#:#meta_no_lifecycle#:#No metadata available for the Lifecycle section.
-meta#:#meta_no_meta_metadata#:#No metadata available for the Meta-Metadata section.
-meta#:#meta_no_relation#:#No metadata available for the Relation section.
-meta#:#meta_no_rights#:#No metadata available for the Rights section.
-meta#:#meta_no_technical#:#No metadata available for the Technical section.
 meta#:#meta_none#:#None
 meta#:#meta_obj_type_active#:#Dataset offered
 meta#:#meta_obj_type_inactive#:#Data set not used
@@ -11803,15 +11794,12 @@ meta#:#meta_order#:#Order
 meta#:#meta_other#:#Other
 meta#:#meta_other_plattform_requirements#:#Other Platform Requirements
 meta#:#meta_pc-dos#:#PC-DOS
-meta#:#meta_pc_dos#:#PC-DOS
-meta#:#meta_please_select#:#Please select
 meta#:#meta_pointofcontact#:#Point(s) of Contact
 meta#:#meta_prerequisite#:#Prerequisite
 meta#:#meta_problem_statement#:#Problem Statement
 meta#:#meta_publisher#:#Publisher
 meta#:#meta_purpose#:#Purpose
 meta#:#meta_questionnaire#:#Questionnaire
-meta#:#meta_quickedit#:#Quick Edit
 meta#:#meta_references#:#References
 meta#:#meta_relation#:#Relation
 meta#:#meta_relation_plural#:#Relations
@@ -11870,7 +11858,6 @@ meta#:#meta_very_easy#:#Very Easy
 meta#:#meta_very_high#:#Very High
 meta#:#meta_very_low#:#Very Low
 meta#:#meta_yes#:#Yes
-meta#:#sco_propagate#:#Propagate to all SCOs
 meta#:#udf_type_address#:#Address
 meta#:#udf_type_externallink#:#External Link
 meta#:#udf_type_float#:#Float
