@@ -60,6 +60,7 @@ class ilMDEditorGUI
     protected ilMDLOMLibrary $library;
     protected ilMDLOMPresenter $presenter;
     protected ilObjUser $user;
+    protected ilRbacSystem $rbac_system;
     protected Data $data;
 
     /**
@@ -73,8 +74,6 @@ class ilMDEditorGUI
     protected array $observers = [];
 
     protected int $rbac_id;
-    protected int $obj_id;
-    protected string $obj_type;
 
     public function __construct(int $a_rbac_id, int $a_obj_id, string $a_obj_type)
     {
@@ -91,6 +90,8 @@ class ilMDEditorGUI
         $this->ui_renderer = $DIC->ui()->renderer();
         $this->http = $DIC->http();
         $this->refinery = $DIC->refinery();
+
+        $this->rbac_id = $a_rbac_id;
 
         $this->md_obj = new ilMD($a_rbac_id, $a_obj_id, $a_obj_type);
 
@@ -113,6 +114,7 @@ class ilMDEditorGUI
             $this->library->getLOMDictionary()
         );
         $this->user = $DIC->user();
+        $this->rbac_system = $DIC->rbac()->system();
 
         $this->lng->loadLanguageModule('meta');
     }
@@ -477,6 +479,8 @@ class ilMDEditorGUI
 
     public function updateQuickEdit(): void
     {
+        $this->checkAccess();
+
         $digest = $this->getLOMDigest();
         $root = $this->repo->getMD();
         $link = $this->ctrl->getLinkTarget($this, 'updateQuickEdit');
@@ -972,6 +976,8 @@ class ilMDEditorGUI
 
     protected function fullEditorEdit(bool $create): void
     {
+        $this->checkAccess();
+
         // get the paths from the http request
         $node_path = $this->getNodePathFromRequest();
         $update_path = $this->getActionPathFromRequest();
@@ -1036,6 +1042,8 @@ class ilMDEditorGUI
 
     protected function fullEditorDelete(): void
     {
+        $this->checkAccess();
+
         // get the paths from the http request
         $node_path = $this->getNodePathFromRequest();
         $delete_path = $this->getActionPathFromRequest();
@@ -1045,7 +1053,7 @@ class ilMDEditorGUI
         $root = $this->repo->getMD();
 
         // delete
-        $trim_path = $editor->manipulateMD()->delete(
+        $node_path = $editor->manipulateMD()->deleteAndTrimNodePath(
             $root,
             $node_path,
             $delete_path
@@ -1053,11 +1061,6 @@ class ilMDEditorGUI
 
         // call listeners
         $this->callListenersFullEditor($delete_path);
-
-        // trim the node path if it leads only to the deleted element
-        if ($trim_path) {
-            $node_path->removeLastStep();
-        }
 
         // redirect back to the full editor
         $this->tpl->setOnScreenMessage(
@@ -1325,6 +1328,17 @@ class ilMDEditorGUI
             $options[$i] = sprintf('%02d', $i);
         }
         return ilLegacyFormElementsUtil::formSelect($sel_day, 'tlt[d]', $options, false, true);
+    }
+
+    protected function checkAccess(): void
+    {
+        $ref_ids = ilObject::_getAllReferences($this->rbac_id);
+        foreach ($ref_ids as $ref_id) {
+            if ($this->rbac_system->checkAccess('write', $ref_id)) {
+                return;
+            }
+        }
+        throw new ilPermissionException($this->lng->txt('permission_denied'));
     }
 
     // Observer methods

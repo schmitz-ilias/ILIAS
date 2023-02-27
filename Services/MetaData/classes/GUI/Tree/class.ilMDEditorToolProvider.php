@@ -21,16 +21,20 @@ declare(strict_types=1);
 use ILIAS\GlobalScreen\Scope\Tool\Provider\AbstractDynamicToolProvider;
 use ILIAS\GlobalScreen\Scope\Tool\Factory\Tool;
 use ILIAS\UI\Component\Tree\Tree;
+use ILIAS\UI\Component\MainControls\Slate\Legacy as LegacySlate;
+use ILIAS\UI\Component\Component;
 use ILIAS\GlobalScreen\ScreenContext\Stack\ContextCollection;
 use ILIAS\GlobalScreen\ScreenContext\Stack\CalledContexts;
 use ILIAS\Data\URI;
 use ILIAS\Data\Factory as Data;
+use ILIAS\GlobalScreen\Scope\MainMenu\Collector\Renderer\Hasher;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 class ilMDEditorToolProvider extends AbstractDynamicToolProvider
 {
+    use Hasher;
     public function isInterestedInContexts(): ContextCollection
     {
         return $this->context_collection->repository();
@@ -66,12 +70,14 @@ class ilMDEditorToolProvider extends AbstractDynamicToolProvider
         $id_generator = function ($id) {
             return $this->identification_provider->contextAwareIdentifier($id);
         };
+        $identification = $id_generator('system_styles_tree');
+        $hashed = $this->hash($identification->serialize());
 
         $lng = $this->dic->language();
         $lng->loadLanguageModule('meta');
 
         return $this->factory
-            ->tool($id_generator('system_styles_tree'))
+            ->tool($identification)
             ->withTitle(
                 $lng->txt('meta_lom_short')
             )
@@ -86,7 +92,16 @@ class ilMDEditorToolProvider extends AbstractDynamicToolProvider
                     $link,
                     $root
                 ))
-            ));
+            ))
+            ->addComponentDecorator(static function (Component $c) use ($hashed): Component {
+                if ($c instanceof LegacySlate) {
+                    $signal_id = $c->getToggleSignal()->getId();
+                    return $c->withAdditionalOnLoadCode(static function ($id) use ($hashed) {
+                        return "il.UI.maincontrols.mainbar.engageTool('$hashed');";
+                    });
+                }
+                return $c;
+            });
     }
 
     protected function getUITree(URI $link, ilMDRootElement $root): Tree

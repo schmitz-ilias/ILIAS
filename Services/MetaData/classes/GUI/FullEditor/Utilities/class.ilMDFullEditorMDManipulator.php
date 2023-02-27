@@ -180,14 +180,14 @@ class ilMDFullEditorMDManipulator
     }
 
     /**
-     * Returns true if the deleted element was the only one at the end
-     * of the node path.
+     * Returns a trimmed node path if deleted element was the only one at the end
+     * of the path.
      */
-    public function delete(
+    public function deleteAndTrimNodePath(
         ilMDRootElement $root,
         ilMDPathFromRoot $node_path,
         ilMDPathFromRoot $delete_path
-    ): bool {
+    ): ilMDPathFromRoot {
         $el = $this->getUniqueElement($root, $delete_path);
         $el->leaveMarkerTrail(
             $this->marker_factory->nullMarker(),
@@ -197,9 +197,9 @@ class ilMDFullEditorMDManipulator
 
         $node_els = $root->getSubElementsByPath($node_path);
         if (count($node_els) == 1 && $node_els[0] == $el) {
-            return true;
+            $node_path = $node_path->removeLastStep();
         }
-        return false;
+        return $node_path;
     }
 
     /**

@@ -242,7 +242,8 @@ class ilMDLOMStructure implements ilMDStructure
             'type' => ilMDLOMDataFactory::TYPE_NONE,
             'sub' => [
                 'orComposite' => [
-                    'unique' => false,
+                    //'unique' => false,
+                    'unique' => true,
                     'type' => ilMDLOMDataFactory::TYPE_NONE,
                     'sub' => [
                         'type' => [

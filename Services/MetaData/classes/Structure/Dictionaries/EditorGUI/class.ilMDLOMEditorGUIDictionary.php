@@ -350,9 +350,9 @@ class ilMDLOMEditorGUIDictionary implements ilMDDictionary
                             ['type', 'value']
                         )
                     )
-                    ->setCollectionMode(
+                    /*->setCollectionMode(
                         ilMDLOMEditorGUIDictionary::COLLECTION_TABLE
-                    )
+                    )*/
                     ->getTag()
             )
             ->movePointerToSubElement('minimumVersion')
