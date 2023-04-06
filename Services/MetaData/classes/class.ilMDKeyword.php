@@ -115,8 +115,8 @@ class ilMDKeyword extends ilMDBase
                 $this->setObjId((int) $row->obj_id);
                 $this->setObjType($row->obj_type ?? '');
                 $this->setParentId((int) $row->parent_id);
-                $this->setParentType($row->parent_type ?? '');
-                $this->setKeyword($row->keyword ?? '');
+                $this->setParentType((string) $row->parent_type);
+                $this->setKeyword((string) $row->keyword);
                 $this->setKeywordLanguage(new ilMDLanguageItem($row->keyword_language ?? ''));
             }
         }

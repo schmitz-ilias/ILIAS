@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * This file is part of ILIAS, a powerful learning management system
  * published by ILIAS open source e-Learning e.V.
@@ -18,20 +16,22 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+declare(strict_types=1);
+
 /**
  * @author  Niels Theen <ntheen@databay.de>
  */
 class ilXlsFoParser
 {
-    private ilXMLChecker $xmlChecker;
-    private ilCertificateUtilHelper $utilHelper;
-    private ilCertificateXlstProcess $xlstProcess;
-    private ilLanguage $language;
-    private ilCertificateXlsFileLoader $certificateXlsFileLoader;
+    private readonly ilXMLChecker $xmlChecker;
+    private readonly ilCertificateUtilHelper $utilHelper;
+    private readonly ilCertificateXlstProcess $xlstProcess;
+    private readonly ilLanguage $language;
+    private readonly ilCertificateXlsFileLoader $certificateXlsFileLoader;
 
     public function __construct(
-        private ilSetting $settings,
-        private ilPageFormats $pageFormats,
+        private readonly ilSetting $settings,
+        private readonly ilPageFormats $pageFormats,
         ?ilXMLChecker $xmlChecker = null,
         ?ilCertificateUtilHelper $utilHelper = null,
         ?ilCertificateXlstProcess $xlstProcess = null,

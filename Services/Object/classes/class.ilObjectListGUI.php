@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * This file is part of ILIAS, a powerful learning management system
  * published by ILIAS open source e-Learning e.V.
@@ -17,6 +15,8 @@ declare(strict_types=1);
  * https://github.com/ILIAS-eLearning
  *
  *********************************************************************/
+
+declare(strict_types=1);
 
 use ILIAS\Repository\Clipboard\ClipboardManager;
 use ILIAS\DI\UIServices;
@@ -1003,7 +1003,7 @@ class ilObjectListGUI
         foreach ($this->commands as $command) {
             $permission = $command["permission"];
             $cmd = $command["cmd"];
-            $lang_var = $command["lang_var"];
+            $lang_var = $command["lang_var"] ?? "";
             $txt = "";
             $info_object = null;
             $cmd_link = '';
@@ -1106,38 +1106,13 @@ class ilObjectListGUI
             $this->tpl->setVariable("TXT_TITLE_LINKED", $this->getTitle());
             $this->tpl->setVariable("HREF_TITLE_LINKED", $this->default_command["link"]);
 
-            // has preview?
-            if (ilPreview::hasPreview($this->obj_id, $this->type)) {
-                // get context for access checks later on
-                switch ($this->context) {
-                    case self::CONTEXT_WORKSPACE:
-                    case self::CONTEXT_WORKSPACE_SHARING:
-                        $context = ilPreviewGUI::CONTEXT_WORKSPACE;
-                        $access_handler = new ilWorkspaceAccessHandler();
-                        break;
-
-                    default:
-                        $ilAccess = $this->access;
-                        $context = ilPreviewGUI::CONTEXT_REPOSITORY;
-                        $access_handler = $ilAccess;
-                        break;
+            // New Preview Implementation, File-Objects only
+            if ($this->type === 'file') {
+                $preview = new ilObjFilePreviewRendererGUI($this->obj_id);
+                if ($preview->has()) {
+                    $this->tpl->setVariable("PREVIEW_GLYPH", $preview->getRenderedTriggerComponents());
+                    $this->tpl->parseCurrentBlock();
                 }
-
-                $preview = new ilPreviewGUI($this->ref_id, $context, $this->obj_id, $access_handler);
-                $preview_status = ilPreview::lookupRenderStatus($this->obj_id);
-                $preview_status_class = "";
-                $preview_text_topic = "preview_show";
-                if ($preview_status == ilPreview::RENDER_STATUS_NONE) {
-                    $preview_status_class = "ilPreviewStatusNone";
-                    $preview_text_topic = "preview_none";
-                }
-                $this->tpl->setCurrentBlock("item_title_linked");
-                $this->tpl->setVariable("PREVIEW_STATUS_CLASS", $preview_status_class);
-                $this->tpl->setVariable("SRC_PREVIEW_ICON", ilUtil::getImagePath("preview.png"));
-                $this->tpl->setVariable("ALT_PREVIEW_ICON", $this->lng->txt($preview_text_topic));
-                $this->tpl->setVariable("TXT_PREVIEW", $this->lng->txt($preview_text_topic));
-                $this->tpl->setVariable("SCRIPT_PREVIEW_CLICK", $preview->getJSCall($this->getUniqueItemId(true)));
-                $this->tpl->parseCurrentBlock();
             }
         }
         $this->tpl->parseCurrentBlock();
@@ -1358,7 +1333,7 @@ class ilObjectListGUI
                     $tags_url = ilTaggingGUI::getListTagsJSCall($this->ajax_hash, $redraw_js);
 
                     // list object tags
-                    if (is_array(self::$tags[$note_obj_id])) {
+                    if (isset(self::$tags[$note_obj_id])) {
                         $tags_tmp = array();
                         foreach (self::$tags[$note_obj_id] as $tag => $is_tag_owner) {
                             if ($is_tag_owner) {
@@ -1548,7 +1523,10 @@ class ilObjectListGUI
             $this->tpl->setVariable("CONDITION_TOGGLE_ID", "_opt_" . $toggle_id);
             $this->tpl->setVariable(
                 "TXT_PRECONDITIONS",
-                sprintf($this->lng->txt("preconditions_optional_hint"), $num_optional_required)
+                sprintf(
+                    $this->lng->txt("preconditions_optional_hint"),
+                    $num_optional_required - $passed_optional
+                )
             );
             $this->tpl->parseCurrentBlock();
         }
@@ -1984,7 +1962,12 @@ class ilObjectListGUI
         }
 
         $this->current_selection_list = new ilAdvancedSelectionListGUI();
-        $this->current_selection_list->setAriaListTitle(sprintf($this->lng->txt('actions_for'), $this->getTitle()));
+        $this->current_selection_list->setAriaListTitle(
+            sprintf(
+                $this->lng->txt('actions_for'),
+                htmlspecialchars(addslashes($this->getTitle()))
+            )
+        );
         $this->current_selection_list->setAsynch($use_async && !$get_async_commands);
         $this->current_selection_list->setAsynchUrl($async_url);
         if ($header_actions) {
@@ -2632,12 +2615,12 @@ class ilObjectListGUI
         if ($this->getCheckboxStatus()) {
             $this->tpl->setCurrentBlock("check");
             $this->tpl->setVariable("VAL_ID", $this->getCommandId());
-            $this->tpl->setVariable("CHECK_TITLE", $this->lng->txt("select")." ".$this->getTitle());
+            $this->tpl->setVariable("CHECK_TITLE", $this->lng->txt("select") . " " . $this->getTitle());
             $this->tpl->parseCurrentBlock();
             $cnt += 1;
         } elseif ($this->getDownloadCheckboxState() != self::DOWNLOAD_CHECKBOX_NONE) {
             $this->tpl->setCurrentBlock("check_download");
-            $this->tpl->setVariable("CHECK_DOWNLOAD_TITLE", $this->lng->txt("download")." ".$this->getTitle());
+            $this->tpl->setVariable("CHECK_DOWNLOAD_TITLE", $this->lng->txt("download") . " " . $this->getTitle());
             if ($this->getDownloadCheckboxState() == self::DOWNLOAD_CHECKBOX_ENABLED) {
                 $this->tpl->setVariable("VAL_ID", $this->getCommandId());
             } else {
@@ -3121,7 +3104,7 @@ class ilObjectListGUI
             ->standard($actions)
             ->withAriaLabel(sprintf(
                 $this->lng->txt('actions_for'),
-                $title
+                htmlspecialchars(addslashes($title))
             ));
 
         $def_command = $this->getDefaultCommand();
@@ -3242,18 +3225,10 @@ class ilObjectListGUI
         $dropdown = $ui->factory()->dropdown()->standard($actions)
                        ->withAriaLabel(sprintf(
                            $this->lng->txt('actions_for'),
-                           $title
+                           htmlspecialchars(addslashes($title))
                        ));
 
-        $img = $this->object_service->commonSettings()->tileImage()->getByObjId($obj_id);
-        if ($img->exists()) {
-            $path = $img->getFullPath();
-        } else {
-            $path = ilUtil::getImagePath('cont_tile/cont_tile_default_' . $type . '.svg');
-            if (!is_file($path)) {
-                $path = ilUtil::getImagePath('cont_tile/cont_tile_default.svg');
-            }
-        }
+        $path = $this->getTileImagePath();
 
         // workaround for #26205
         // we should get rid of _top links completely and gifure our how
@@ -3266,7 +3241,7 @@ class ilObjectListGUI
 
         // workaround for scorm
         $modified_link =
-            $this->modifySAHSlaunch($def_cmd_link, $def_cmd_frame)[0];
+            $this->modifySAHSlaunch($def_cmd_link, $def_cmd_frame);
 
         $image = $this->ui->factory()
                           ->image()
@@ -3390,6 +3365,20 @@ class ilObjectListGUI
     public function checkInfoPageOnAsynchronousRendering(): bool
     {
         return false;
+    }
+
+    protected function getTileImagePath(): string
+    {
+        $img = $this->object_service->commonSettings()->tileImage()->getByObjId($this->obj_id);
+        if ($img->exists()) {
+            $path = $img->getFullPath();
+        } else {
+            $path = ilUtil::getImagePath('cont_tile/cont_tile_default_' . $this->type . '.svg');
+            if (!is_file($path)) {
+                $path = ilUtil::getImagePath('cont_tile/cont_tile_default.svg');
+            }
+        }
+        return $path;
     }
 
     /**

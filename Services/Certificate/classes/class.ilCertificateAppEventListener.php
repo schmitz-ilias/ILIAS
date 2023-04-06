@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * This file is part of ILIAS, a powerful learning management system
  * published by ILIAS open source e-Learning e.V.
@@ -18,6 +16,8 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+declare(strict_types=1);
+
 use ILIAS\Filesystem\Exception\IOException;
 
 /**
@@ -31,15 +31,15 @@ class ilCertificateAppEventListener implements ilAppEventListener
     protected string $component = '';
     protected string $event = '';
     protected array $parameters = [];
-    private ilCertificateQueueRepository $certificateQueueRepository;
-    private ilCertificateTypeClassMap $certificateClassMap;
-    private ilCertificateTemplateRepository $templateRepository;
-    private ilUserCertificateRepository $userCertificateRepository;
+    private readonly ilCertificateQueueRepository $certificateQueueRepository;
+    private readonly ilCertificateTypeClassMap $certificateClassMap;
+    private readonly ilCertificateTemplateRepository $templateRepository;
+    private readonly ilUserCertificateRepository $userCertificateRepository;
 
     public function __construct(
         protected ilDBInterface $db,
-        private ilObjectDataCache $objectDataCache,
-        private ilLogger $logger
+        private readonly ilObjectDataCache $objectDataCache,
+        private readonly ilLogger $logger
     ) {
         $this->certificateQueueRepository = new ilCertificateQueueRepository($this->db, $this->logger);
         $this->certificateClassMap = new ilCertificateTypeClassMap();

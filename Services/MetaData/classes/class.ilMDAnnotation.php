@@ -138,7 +138,7 @@ class ilMDAnnotation extends ilMDBase
             while ($row = $res->fetchRow(ilDBConstants::FETCHMODE_OBJECT)) {
                 $this->setRBACId((int) $row->rbac_id);
                 $this->setObjId((int) $row->obj_id);
-                $this->setObjType($row->obj_type ?? '');
+                $this->setObjType($row->obj_type);
                 $this->setEntity($row->entity ?? '');
                 $this->setDate($row->a_date ?? '');
                 $this->setDescription($row->description ?? '');

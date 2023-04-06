@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * This file is part of ILIAS, a powerful learning management system
  * published by ILIAS open source e-Learning e.V.
@@ -17,6 +15,8 @@ declare(strict_types=1);
  * https://github.com/ILIAS-eLearning
  *
  *********************************************************************/
+
+declare(strict_types=1);
 
 /**
  * Class ilChatroomAdminSmileyGUI
@@ -151,15 +151,18 @@ class ilChatroomAdminSmileyGUI extends ilChatroomGUIHandler
             $this->form_gui = $this->initSmiliesForm();
         }
 
-        $table = ilChatroomSmiliesGUI::_getExistingSmiliesTable($this->gui);
-
         $tpl_smilies = new ilTemplate(
             'tpl.chatroom_edit_smilies.html',
             true,
             true,
             'Modules/Chatroom'
         );
-        $tpl_smilies->setVariable('SMILEY_TABLE', $table);
+        $tpl_smilies->setVariable('SMILEY_TABLE', ilChatroomSmiliesGUI::_getExistingSmiliesTable(
+            $this->gui,
+            $this->uiFactory,
+            $this->uiRenderer,
+            $this->rbacsystem
+        ));
         $tpl_smilies->setVariable('SMILEY_FORM', $this->form_gui->getHTML());
 
         $this->mainTpl->setContent($tpl_smilies->get());
@@ -249,7 +252,6 @@ class ilChatroomAdminSmileyGUI extends ilChatroomGUIHandler
     }
 
     /**
-     * @param int $smileyId
      * @return array{chatroom_smiley_id: int, chatroom_smiley_keywords: string, chatroom_current_smiley_image_path: string}
      */
     protected function getSmileyFormDataById(int $smileyId): array
@@ -265,7 +267,6 @@ class ilChatroomAdminSmileyGUI extends ilChatroomGUIHandler
 
     /**
      * @param array<string, mixed> $form_data
-     * @return ilPropertyFormGUI
      */
     public function initSmiliesEditForm(array $form_data): ilPropertyFormGUI
     {

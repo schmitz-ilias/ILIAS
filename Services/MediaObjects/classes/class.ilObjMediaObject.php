@@ -1055,10 +1055,10 @@ class ilObjMediaObject extends ilObject
                     case "qpl":
                         // Question Pool *Question* Text (Test)
                         $qinfo = assQuestion::_getQuestionInfo($id);
-                        if ($qinfo["original_id"] > 0) {
+                        if (isset($qinfo["original_id"]) && $qinfo["original_id"] > 0) {
                             $obj_id = ilObjTest::_lookupTestObjIdForQuestionId($id);	// usage in test
                         } else {
-                            $obj_id = (int) $qinfo["obj_fi"];		// usage in pool
+                            $obj_id = (int) ($qinfo["obj_fi"] ?? 0);		// usage in pool
                         }
                         break;
 
@@ -1155,10 +1155,6 @@ class ilObjMediaObject extends ilObject
                             if ($pinfo && $pinfo["parent_type"] == "lm") {
                                 $obj_id = ilLMObject::_lookupContObjID($pinfo["page_id"]);
                             }
-                            $pinfo = ilPCQuestion::_getPageForQuestionId($id, "sahs");
-                            if ($pinfo && $pinfo["parent_type"] == "sahs") {
-                                $obj_id = (int) ilSCORM2004Node::_lookupSLMID($pinfo["page_id"]);
-                            }
                         }
                         break;
 
@@ -1167,10 +1163,9 @@ class ilObjMediaObject extends ilObject
                         $obj_id = ilLMObject::_lookupContObjID($id);
                         break;
 
-                    case "gdf":
-                        // glossary definition
-                        $term_id = ilGlossaryDefinition::_lookupTermId($id);
-                        $obj_id = (int) ilGlossaryTerm::_lookGlossaryID($term_id);
+                    case "term":
+                        $term_id = $id;
+                        $obj_id = ilGlossaryTerm::_lookGlossaryID($term_id);
                         break;
 
                     case "wpg":
@@ -1355,7 +1350,6 @@ class ilObjMediaObject extends ilObject
         if ($height == 0 && is_null($a_user_height)) {
             $height = "";
         }
-
         return array("width" => $width, "height" => $height, "info" => $info);
     }
 
@@ -1433,7 +1427,7 @@ class ilObjMediaObject extends ilObject
         }
         ilFileUtils::makeDirParents($dir);
         if ($a_mode == "rename") {
-            rename($tmp_name, $dir . "/" . $a_name);
+            ilFileUtils::rename($tmp_name, $dir . "/" . $a_name);
         } else {
             ilFileUtils::moveUploadedFile($tmp_name, $a_name, $dir . "/" . $a_name, true, $a_mode);
         }
@@ -1486,6 +1480,19 @@ class ilObjMediaObject extends ilObject
         string $a_format = "png",
         int $a_size = 80
     ): void {
+        $size = (int) $a_size;
+        $m_dir = ilObjMediaObject::_getDirectory($this->getId());
+        $t_dir = ilObjMediaObject::_getThumbnailDirectory($this->getId());
+        $file = $m_dir . "/" . $a_file;
+
+        $mime = ilObjMediaObject::getMimeType($file);
+        $wh = ilMediaImageUtil::getImageSize($file);
+
+        // see #8602
+        if ($size > (int) $wh[0] && $size > $wh[1]) {
+            $a_size = "";
+        }
+
         $m_dir = ilObjMediaObject::_getDirectory($this->getId());
         $t_dir = ilObjMediaObject::_getThumbnailDirectory($this->getId());
         self::_createThumbnailDirectory($this->getId());
@@ -1493,7 +1500,7 @@ class ilObjMediaObject extends ilObject
             $m_dir . "/" . $a_file,
             $t_dir . "/" . $a_thumbname,
             $a_format,
-            $a_size
+            (string) $a_size
         );
     }
 

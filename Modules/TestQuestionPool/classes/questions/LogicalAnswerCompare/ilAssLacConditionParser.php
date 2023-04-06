@@ -64,26 +64,17 @@ class ilAssLacConditionParser
     protected $spaces;
 
     /**
-     * Construct requirements
-     */
-    public function __construct()
-    {
-        include_once 'Modules/TestQuestionPool/classes/questions/LogicalAnswerCompare/Factory/ilAssLacExpressionManufacturer.php';
-        include_once 'Modules/TestQuestionPool/classes/questions/LogicalAnswerCompare/Factory/ilAssLacOperationManufacturer.php';
-        include_once "Modules/TestQuestionPool/classes/questions/LogicalAnswerCompare/ilAssLacCompositeBuilder.php";
-    }
-
-    /**
      * Parses the delivered condition and creates a composite tree Structure
      *
      * @param $condition
      *
      * @see CompositeBuilder::create()
-     * @return array
+     * @return ilAssLacAbstractComposite
      */
-    public function parse($condition): array
+    public function parse($condition): ilAssLacAbstractComposite
     {
         $this->condition = $condition;
+        $this->index = 0;
         $this->checkBrackets();
         $this->fetchExpressions();
         $this->fetchOperators();
@@ -249,6 +240,6 @@ class ilAssLacConditionParser
         $next_bracket = strpos($this->condition, "(", $index + 1);
         $next_expression = strpos($this->condition, "n", $index + 1);
 
-        return $next_bracket !== false & $next_bracket < $next_expression;
+        return $next_bracket !== false && $next_bracket < $next_expression;
     }
 }

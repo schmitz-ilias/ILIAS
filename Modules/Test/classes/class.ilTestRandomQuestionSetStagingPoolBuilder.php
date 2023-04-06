@@ -56,10 +56,7 @@ class ilTestRandomQuestionSetStagingPoolBuilder
     public function reset()
     {
         $this->removeMirroredTaxonomies();
-
         $this->removeStagedQuestions();
-
-        $this->cleanupTestSettings();
     }
 
     private function removeMirroredTaxonomies()
@@ -153,8 +150,6 @@ class ilTestRandomQuestionSetStagingPoolBuilder
             $lifecycleFilter = $definition->getLifecycleFilter();
 
             if (!empty($taxFilter)) {
-                require_once 'Services/Taxonomy/classes/class.ilObjTaxonomy.php';
-
                 $filterItems = null;
                 foreach ($taxFilter as $taxId => $nodeIds) {
                     $taxItems = array();
@@ -284,12 +279,4 @@ class ilTestRandomQuestionSetStagingPoolBuilder
             }
         }
     }
-
-    private function cleanupTestSettings()
-    {
-        $this->testOBJ->setResultFilterTaxIds(array());
-        $this->testOBJ->saveToDb(true);
-    }
-
-    // =================================================================================================================
 }

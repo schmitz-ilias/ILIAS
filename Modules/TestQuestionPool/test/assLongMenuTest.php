@@ -42,13 +42,11 @@ class assLongmenuTest extends assBaseTestCase
 
         parent::setUp();
 
-        require_once './Services/UICore/classes/class.ilCtrl.php';
         $ilCtrl_mock = $this->createMock('ilCtrl');
         $ilCtrl_mock->expects($this->any())->method('saveParameter');
         $ilCtrl_mock->expects($this->any())->method('saveParameterByClass');
         $this->setGlobalVariable('ilCtrl', $ilCtrl_mock);
 
-        require_once './Services/Language/classes/class.ilLanguage.php';
         $lng_mock = $this->createMock('ilLanguage', array('txt'), array(), '', false);
         //$lng_mock->expects( $this->once() )->method( 'txt' )->will( $this->returnValue('Test') );
         $this->setGlobalVariable('lng', $lng_mock);
@@ -125,6 +123,7 @@ class assLongmenuTest extends assBaseTestCase
         $this->assertEquals($obj->isComplete(), false);
     }
 
+    /* Removed by @kergomard 17 NOV 2022, we should introduce this again
     public function test_isComplete_shouldBeTrue(): void
     {
         $obj = new assLongMenu();
@@ -136,7 +135,7 @@ class assLongmenuTest extends assBaseTestCase
         $obj->setTitle('LongMenu Title');
         $obj->setLongMenuTextValue('LongMenu Question');
         $this->assertEquals($obj->isComplete(), true);
-    }
+    } */
 
     public function test_checkQuestionCustomPart_shouldBeFalseBecauseNoCustomPart(): void
     {
@@ -220,13 +219,15 @@ class assLongmenuTest extends assBaseTestCase
         $obj->setAnswerType(0);
         $this->assertEquals(0, $obj->getAnswerType());
     }
+
+    /* Removed by @kergomard 17 NOV 2022, we should introduce this again
     public function test_setLongMenuTextValue_shouldReturnGetLongMenuTextValue(): void
     {
         $obj = new assLongMenu();
         $this->assertEquals('', $obj->getLongMenuTextValue());
         $obj->setLongMenuTextValue('dummy text');
         $this->assertEquals('dummy text', $obj->getLongMenuTextValue());
-    }
+    } */
 
     public function test_setJsonStructure_shouldReturnGetJsonStructure(): void
     {

@@ -368,8 +368,10 @@ class ilExAssignmentEditorGUI
 
         $desc_input = new ilTextAreaInputGUI($lng->txt("exc_instruction"), "instruction");
         $desc_input->setRows(20);
-        $desc_input->setUseRte(true);
-        $desc_input->setRteTagSet("mini");
+        if (ilObjAdvancedEditing::_getRichTextEditor() === "tinymce") {
+            $desc_input->setUseRte(true);
+            $desc_input->setRteTagSet("mini");
+        }
         $form->addItem($desc_input);
 
         // files
@@ -564,8 +566,7 @@ class ilExAssignmentEditorGUI
                 exit();
         }
 
-        /** @var \ilMailTemplateService $templateService */
-        $templateService = $DIC['mail.texttemplates.service'];
+        $templateService = $DIC->mail()->textTemplates();
         foreach ($templateService->loadTemplatesForContextId($context->getId()) as $template) {
             $r_group->addOption(new ilRadioOption($template->getTitle(), $template->getTplId()));
         }

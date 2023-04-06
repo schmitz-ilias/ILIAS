@@ -128,7 +128,7 @@ class ilMDTaxon extends ilMDBase
                 $this->setObjId((int) $row->obj_id);
                 $this->setObjType($row->obj_type ?? '');
                 $this->setParentId((int) $row->parent_id);
-                $this->setParentType($row->parent_type ?? '');
+                $this->setParentType($row->parent_type);
                 $this->setTaxon($row->taxon ?? '');
                 $this->taxon_language = new ilMDLanguageItem($row->taxon_language ?? '');
                 $this->setTaxonId($row->taxon_id ?? '');

@@ -28,25 +28,11 @@ class ilTestSkillLevelThresholdsGUI
 {
     public const CMD_SHOW_SKILL_THRESHOLDS = 'showSkillThresholds';
     public const CMD_SAVE_SKILL_THRESHOLDS = 'saveSkillThresholds';
-    /**
-     * @var ilCtrl
-     */
-    private $ctrl;
 
-    /**
-     * @var ilGlobalTemplateInterface
-     */
-    private $tpl;
-
-    /**
-     * @var ilLanguage
-     */
-    private $lng;
-
-    /**
-     * @var ilDBInterface
-     */
-    private $db;
+    private ilCtrl $ctrl;
+    private ilGlobalTemplateInterface $tpl;
+    private ilLanguage $lng;
+    private ilDBInterface $db;
 
     /**
      * @var int
@@ -119,8 +105,6 @@ class ilTestSkillLevelThresholdsGUI
 
     private function saveSkillThresholdsCmd()
     {
-        require_once 'Modules/Test/classes/class.ilTestSkillLevelThreshold.php';
-
         if (strtolower($_SERVER['REQUEST_METHOD']) == 'post') {
             $assignmentList = $this->buildSkillQuestionAssignmentList();
             $assignmentList->loadFromDb();
@@ -134,7 +118,7 @@ class ilTestSkillLevelThresholdsGUI
                     $valid = false;
                 }
 
-                $elm->setValueByArray($_POST);
+                $elm->setValue($_POST[$elm->getPostVar()]);
             }
 
             if (!$valid) {
@@ -144,7 +128,9 @@ class ilTestSkillLevelThresholdsGUI
             }
 
             $threshold = array();
-            foreach ($_POST as $key => $value) {
+            foreach ($elements as $elm) {
+                $key = $elm->getPostVar();
+                $value = $_POST[$key];
                 $matches = null;
                 if (preg_match('/^threshold_(\d+?):(\d+?)_(\d+?)$/', $key, $matches) && is_array($matches)) {
                     $threshold[$matches[1] . ':' . $matches[2]][$matches[3]] = $value;
@@ -232,7 +218,6 @@ class ilTestSkillLevelThresholdsGUI
 
     private function buildTableGUI(): ilTestSkillLevelThresholdsTableGUI
     {
-        require_once 'Modules/Test/classes/tables/class.ilTestSkillLevelThresholdsTableGUI.php';
         $table = new ilTestSkillLevelThresholdsTableGUI(
             $this,
             $this->getTestId(),
@@ -248,7 +233,6 @@ class ilTestSkillLevelThresholdsGUI
 
     private function buildSkillQuestionAssignmentList(): ilAssQuestionSkillAssignmentList
     {
-        require_once 'Modules/TestQuestionPool/classes/class.ilAssQuestionSkillAssignmentList.php';
         $assignmentList = new ilAssQuestionSkillAssignmentList($this->db);
         $assignmentList->setParentObjId($this->getQuestionContainerId());
 
@@ -257,7 +241,6 @@ class ilTestSkillLevelThresholdsGUI
 
     private function buildSkillLevelThresholdList(): ilTestSkillLevelThresholdList
     {
-        require_once 'Modules/Test/classes/class.ilTestSkillLevelThresholdList.php';
         $thresholdList = new ilTestSkillLevelThresholdList($this->db);
         $thresholdList->setTestId($this->getTestId());
 

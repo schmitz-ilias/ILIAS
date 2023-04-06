@@ -16,7 +16,7 @@
  *
  *********************************************************************/
 
-include_once "./Modules/Test/classes/inc.AssessmentConstants.php";
+require_once './Modules/Test/classes/inc.AssessmentConstants.php';
 
 /**
  * Single choice question GUI representation
@@ -77,7 +77,6 @@ class assFormulaQuestionGUI extends assQuestionGUI
             $this->object->setTitle($_POST["title"]);
             $this->object->setAuthor($_POST["author"]);
             $this->object->setComment($_POST["comment"]);
-            include_once "./Services/AdvancedEditing/classes/class.ilObjAdvancedEditing.php";
             $questiontext = ilUtil::stripOnlySlashes($_POST["question"]);
             $this->object->setQuestion($questiontext);
             $this->object->setEstimatedWorkingTime(
@@ -197,7 +196,6 @@ class assFormulaQuestionGUI extends assQuestionGUI
         $ilUser = $DIC['ilUser'];
         $user_id = $ilUser->getId();
         $question_id = $this->object->getId();
-        require_once 'Modules/TestQuestionPool/classes/class.ilAssQuestionPreviewSession.php';
         $ilAssQuestionPreviewSession = new ilAssQuestionPreviewSession($user_id, $question_id);
         $ilAssQuestionPreviewSession->setParticipantsSolution(array());
     }
@@ -216,7 +214,6 @@ class assFormulaQuestionGUI extends assQuestionGUI
 
         $this->getQuestionTemplate();
 
-        include_once("./Services/Form/classes/class.ilPropertyFormGUI.php");
         $form = new ilPropertyFormGUI();
         $this->editForm = $form;
 
@@ -318,8 +315,6 @@ class assFormulaQuestionGUI extends assQuestionGUI
         $result_vars = array();
         $results = $this->object->getResults();
         if (count($results)) {
-            require_once 'Services/Form/classes/class.ilMultiSelectInputGUI.php';
-
             uasort($results, function (assFormulaQuestionResult $r1, assFormulaQuestionResult $r2) {
                 $num_r1 = (int) substr($r1->getResult(), 2);
                 $num_r2 = (int) substr($r2->getResult(), 2);
@@ -769,12 +764,10 @@ class assFormulaQuestionGUI extends assQuestionGUI
             if ($this->object->getOriginalId() != null && $this->object->_questionExistsInPool($this->object->getOriginalId())) {
                 $originalexists = true;
             }
-            include_once "./Modules/TestQuestionPool/classes/class.assQuestion.php";
             if (($this->request->raw("calling_test") || ($this->request->isset('calling_consumer') && (int) $this->request->raw('calling_consumer')))
                 && $originalexists && assQuestion::_isWriteable($this->object->getOriginalId(), $ilUser->getId())) {
                 $this->ctrl->redirect($this, "originalSyncForm");
             } elseif ($this->request->raw("calling_test")) {
-                require_once 'Modules/Test/classes/class.ilObjTest.php';
                 $test = new ilObjTest($this->request->raw("calling_test"));
                 #var_dump(assQuestion::_questionExistsInTest($this->object->getId(), $test->getTestId()));
                 $q_id = $this->object->getId();
@@ -801,14 +794,9 @@ class assFormulaQuestionGUI extends assQuestionGUI
 
                     $this->ctrl->setParameter($this, 'q_id', $new_id);
                     $this->ctrl->setParameter($this, 'calling_test', $this->request->raw("calling_test"));
-                    #$this->ctrl->setParameter($this, 'test_ref_id', false);
                 }
                 $this->tpl->setOnScreenMessage('success', $this->lng->txt("msg_obj_modified"), true);
-                if ($this->request->raw('test_express_mode')) {
-                    ilUtil::redirect(ilTestExpressPage::getReturnToPageLink($q_id));
-                } else {
-                    ilUtil::redirect("ilias.php?baseClass=ilObjTestGUI&cmd=questions&ref_id=" . $this->request->raw("calling_test"));
-                }
+                $this->ctrl->redirectByClass('ilAssQuestionPreviewGUI', ilAssQuestionPreviewGUI::CMD_SHOW);
             } else {
                 if ($this->object->getId() != $old_id) {
                     $this->callNewIdListeners($this->object->getId());
@@ -820,7 +808,7 @@ class assFormulaQuestionGUI extends assQuestionGUI
                 } else {
                     $this->tpl->setOnScreenMessage('success', $this->lng->txt("msg_obj_modified"), true);
                 }
-                $this->ctrl->redirectByClass("ilobjquestionpoolgui", "questions");
+                $this->ctrl->redirectByClass("ilAssQuestionPreviewGUI", ilAssQuestionPreviewGUI::CMD_SHOW);
             }
         } else {
             $ilUser->setPref("tst_lastquestiontype", $this->object->getQuestionType());
@@ -915,7 +903,11 @@ class assFormulaQuestionGUI extends assQuestionGUI
         }
 
         $template = new ilTemplate("tpl.il_as_qpl_formulaquestion_output_solution.html", true, true, 'Modules/TestQuestionPool');
-        $questiontext = $this->object->substituteVariables($user_solution, $graphicalOutput, true, $result_output);
+        $correctness_icons = [
+            'correct' => $this->generateCorrectnessIconsForCorrectness(self::CORRECTNESS_OK),
+            'not_correct' => $this->generateCorrectnessIconsForCorrectness(self::CORRECTNESS_NOT_OK)
+        ];
+        $questiontext = $this->object->substituteVariables($user_solution, $graphicalOutput, true, $result_output, $correctness_icons);
 
         $template->setVariable("QUESTIONTEXT", $this->object->prepareTextareaOutput($questiontext, true));
         $questionoutput = $template->get();
@@ -1003,7 +995,6 @@ class assFormulaQuestionGUI extends assQuestionGUI
 
             $actualPassIndex = null;
             if ($this->object->getTestPresentationConfig()->isSolutionInitiallyPrefilled()) {
-                require_once 'Modules/Test/classes/class.ilObjTest.php';
                 $actualPassIndex = ilObjTest::_getPass($active_id);
             }
 

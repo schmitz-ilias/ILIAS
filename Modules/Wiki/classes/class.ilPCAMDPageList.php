@@ -115,7 +115,7 @@ class ilPCAMDPageList extends ilPageContent
             $set = $ilDB->query("SELECT * FROM pg_amd_page_list" .
                 " WHERE id = " . $ilDB->quote($a_data_id, "integer"));
             while ($row = $ilDB->fetchAssoc($set)) {
-                $res[$row["field_id"]] = unserialize($row["sdata"], ["allowed_classes" => false]);
+                $res[$row["field_id"]] = unserialize((string) $row["sdata"], ["allowed_classes" => false]);
             }
         }
         return $res;
@@ -184,7 +184,7 @@ class ilPCAMDPageList extends ilPageContent
         $recs = ilAdvancedMDRecord::_getSelectedRecordsByObject("wiki", $wiki_ref_id, "wpg");
         foreach ($recs as $record) {
             foreach (ilAdvancedMDFieldDefinition::getInstancesByRecordId($record->getRecordId(), true) as $field) {
-                if (isset($list_values[$field->getFieldId()])) {
+                if (isset($list_values[$field->getFieldId()]) && $list_values[$field->getFieldId()] !== "") {
                     $field_form = ilADTFactory::getInstance()->getSearchBridgeForDefinitionInstance($field->getADTDefinition(), true, false);
                     $field->setSearchValueSerialized($field_form, $list_values[$field->getFieldId()]);
                     $found_pages = $field->searchSubObjects($field_form, $wiki_id, "wpg");
@@ -286,7 +286,7 @@ class ilPCAMDPageList extends ilPageContent
         $set = $ilDB->query("SELECT * FROM pg_amd_page_list" .
             " WHERE field_id = " . $ilDB->quote($a_field_id, "integer"));
         while ($row = $ilDB->fetchAssoc($set)) {
-            $data = unserialize(unserialize($row["sdata"], ["allowed_classes" => false]), ["allowed_classes" => false]);
+            $data = unserialize(unserialize((string) $row["sdata"], ["allowed_classes" => false]), ["allowed_classes" => false]);
             if (is_array($data) &&
                 in_array($old_option, $data)) {
                 $idx = array_search($old_option, $data);

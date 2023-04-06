@@ -15,8 +15,6 @@
  *
  *********************************************************************/
 
-require_once 'Modules/TestQuestionPool/exceptions/class.ilTestQuestionPoolException.php';
-
 /**
  * Model class for managing a question hint
  *
@@ -187,7 +185,9 @@ class ilAssQuestionHint
      */
     public function setText($text): void
     {
-        $this->text = $text;
+        if ($text !== null) {
+            $this->text = $this->getHtmlQuestionContentPurifier()->purify($text);
+        }
     }
 
     /**
@@ -210,9 +210,9 @@ class ilAssQuestionHint
 					qht_hint_index,
 					qht_hint_points,
 					qht_hint_text
-					
+
 			FROM	qpl_hints
-			
+
 			WHERE	qht_hint_id = %s
 		";
 
@@ -391,5 +391,10 @@ class ilAssQuestionHint
     public static function getHintIndexLabel(ilLanguage $lng, $hintIndex): string
     {
         return sprintf($lng->txt('tst_question_hints_index_column_label'), $hintIndex);
+    }
+
+    protected function getHtmlQuestionContentPurifier(): ilAssHtmlUserSolutionPurifier
+    {
+        return ilHtmlPurifierFactory::getInstanceByType('qpl_usersolution');
     }
 }

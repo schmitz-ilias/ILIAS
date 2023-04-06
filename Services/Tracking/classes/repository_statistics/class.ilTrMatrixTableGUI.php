@@ -193,7 +193,7 @@ class ilTrMatrixTableGUI extends ilLPTableBaseGUI
             );
         }
         $parent = [];
-        if (is_array($this->obj_ids)) {
+        if (isset($this->obj_ids)) {
             $tmp_cols = array();
             foreach ($this->obj_ids as $obj_id) {
                 if ($obj_id == $this->obj_id) {
@@ -219,6 +219,14 @@ class ilTrMatrixTableGUI extends ilLPTableBaseGUI
                     if ($type == "sess") {
                         $sess = new ilObjSession($obj_id, false);
                         $title = $sess->getPresentationTitle();
+                    }
+
+                    // BT 35475: set titles of referenced objects correctly
+                    if (
+                        $title == '' &&
+                        ($type == 'catr' || $type == 'crsr' || $type == 'grpr')
+                    ) {
+                        $title = ilContainerReference::_lookupTargetTitle((int) $obj_id);
                     }
 
                     // #16453
@@ -418,12 +426,14 @@ class ilTrMatrixTableGUI extends ilLPTableBaseGUI
                         $this->subitem_ids[$item_id] = $collection["subitems"]["item_titles"][$item_id];
 
                         $status = ilLPStatus::LP_STATUS_NOT_ATTEMPTED_NUM;
-                        if (in_array(
-                            $user_id,
-                            $collection["subitems"]["completed"][$item_id]
-                        )) {
+                        if (isset(
+                                $collection["subitems"]["completed"]
+                            ) && in_array(
+                                $user_id,
+                                $collection["subitems"]["completed"][$item_id]
+                            )) {
                             $status = ilLPStatus::LP_STATUS_COMPLETED_NUM;
-                        } elseif (is_array(
+                        } elseif (isset(
                             $collection["subitems"]["in_progress"]
                         ) &&
                             in_array(
@@ -635,7 +645,7 @@ class ilTrMatrixTableGUI extends ilLPTableBaseGUI
                     "(" . $type_text . ") " . $labels[$c]["txt"]
                 );
 
-                if (is_array($this->perc_map) && $this->perc_map[$obj_id]) {
+                if (isset($this->perc_map) && ($this->perc_map[$obj_id] ?? false)) {
                     $cnt++;
                     $a_excel->setCell(
                         $a_row,
@@ -673,9 +683,9 @@ class ilTrMatrixTableGUI extends ilLPTableBaseGUI
                     );
                     $a_excel->setCell($a_row, $cnt, $val);
 
-                    if (is_array($this->perc_map) && $this->perc_map[$obj_id]) {
+                    if (isset($this->perc_map) && ($this->perc_map[$obj_id] ?? false)) {
                         $cnt++;
-                        $perc = (int) $a_set[$c . "_perc"];
+                        $perc = (int) ($a_set[$c . "_perc"] ?? 0);
                         $perc = !$perc
                             ? null
                             : $perc . "%";
@@ -698,7 +708,7 @@ class ilTrMatrixTableGUI extends ilLPTableBaseGUI
                     case "status_changed":
                     */
                 default:
-                    $val = $this->parseValue($c, $a_set[$c], "user");
+                    $val = $this->parseValue($c, $a_set[$c] ?? '', "user");
                     $a_excel->setCell($a_row, $cnt, $val);
                     break;
             }
@@ -731,7 +741,7 @@ class ilTrMatrixTableGUI extends ilLPTableBaseGUI
 
                 $a_csv->addColumn("(" . $type_text . ") " . $labels[$c]["txt"]);
 
-                if (is_array($this->perc_map) && $this->perc_map[$obj_id]) {
+                if (isset($this->perc_map) && ($this->perc_map[$obj_id] ?? false)) {
                     $a_csv->addColumn(
                         $this->lng->txt("trac_percentage") . " (%)"
                     );
@@ -757,7 +767,7 @@ class ilTrMatrixTableGUI extends ilLPTableBaseGUI
                     );
                     $a_csv->addColumn($val);
 
-                    if (is_array($this->perc_map) && $this->perc_map[$obj_id]) {
+                    if (isset($this->perc_map) && ($this->perc_map[$obj_id] ?? false)) {
                         $perc = (int) $a_set[$c . "_perc"];
                         if (!$perc) {
                             $perc = null;
@@ -781,7 +791,7 @@ class ilTrMatrixTableGUI extends ilLPTableBaseGUI
                     case "status_changed":
                     */
                 default:
-                    $val = $this->parseValue($c, $a_set[$c], "user");
+                    $val = $this->parseValue($c, $a_set[$c] ?? '', "user");
                     $a_csv->addColumn($val);
                     break;
             }

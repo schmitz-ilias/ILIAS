@@ -47,7 +47,6 @@ class assTextSubsetGUI extends assQuestionGUI implements ilGuiQuestionScoringAdj
     public function __construct($id = -1)
     {
         parent::__construct();
-        require_once './Modules/TestQuestionPool/classes/class.assTextSubset.php';
         $this->object = new assTextSubset();
         if ($id >= 0) {
             $this->object->loadFromDb($id);
@@ -66,7 +65,6 @@ class assTextSubsetGUI extends assQuestionGUI implements ilGuiQuestionScoringAdj
         $this->answers_from_post = $_POST['answers']['answer'];
         $hasErrors = (!$always) ? $this->editQuestion(true) : false;
         if (!$hasErrors) {
-            require_once 'Services/Form/classes/class.ilPropertyFormGUI.php';
             $this->writeQuestionGenericPostData();
             $this->writeQuestionSpecificPostData(new ilPropertyFormGUI());
             $this->writeAnswerSpecificPostData(new ilPropertyFormGUI());
@@ -84,7 +82,6 @@ class assTextSubsetGUI extends assQuestionGUI implements ilGuiQuestionScoringAdj
         $save = $this->isSaveCommand();
         $this->getQuestionTemplate();
 
-        require_once './Services/Form/classes/class.ilPropertyFormGUI.php';
         $form = new ilPropertyFormGUI();
         $this->editForm = $form;
 
@@ -183,8 +180,6 @@ class assTextSubsetGUI extends assQuestionGUI implements ilGuiQuestionScoringAdj
             }
         }
 
-        // generate the question output
-        include_once "./Services/UICore/classes/class.ilTemplate.php";
         $template = new ilTemplate("tpl.il_as_qpl_textsubset_output_solution.html", true, true, "Modules/TestQuestionPool");
         $solutiontemplate = new ilTemplate("tpl.il_as_tst_solution_output.html", true, true, "Modules/TestQuestionPool");
         $available_answers = &$this->object->getAvailableAnswers();
@@ -200,17 +195,14 @@ class assTextSubsetGUI extends assQuestionGUI implements ilGuiQuestionScoringAdj
                             unset($available_answers[$index]);
                             $correct = true;
                         }
+
+                        $correctness_icon = $this->generateCorrectnessIconsForCorrectness(self::CORRECTNESS_NOT_OK);
                         if ($correct) {
-                            $template->setCurrentBlock("icon_ok");
-                            $template->setVariable("ICON_OK", ilUtil::getImagePath("icon_ok.svg"));
-                            $template->setVariable("TEXT_OK", $this->lng->txt("answer_is_right"));
-                            $template->parseCurrentBlock();
-                        } else {
-                            $template->setCurrentBlock("icon_ok");
-                            $template->setVariable("ICON_NOT_OK", ilUtil::getImagePath("icon_not_ok.svg"));
-                            $template->setVariable("TEXT_NOT_OK", $this->lng->txt("answer_is_wrong"));
-                            $template->parseCurrentBlock();
+                            $correctness_icon = $this->generateCorrectnessIconsForCorrectness(self::CORRECTNESS_OK);
                         }
+                        $template->setCurrentBlock("icon_ok");
+                        $template->setVariable("ICON_OK", $correctness_icon);
+                        $template->parseCurrentBlock();
                     }
                 }
                 $template->setCurrentBlock("textsubset_row");
@@ -252,8 +244,6 @@ class assTextSubsetGUI extends assQuestionGUI implements ilGuiQuestionScoringAdj
     public function getPreview($show_question_only = false, $showInlineFeedback = false): string
     {
         $solutions = is_object($this->getPreviewSession()) ? (array) $this->getPreviewSession()->getParticipantsSolution() : array();
-        // generate the question output
-        include_once "./Services/UICore/classes/class.ilTemplate.php";
         $template = new ilTemplate("tpl.il_as_qpl_textsubset_output.html", true, true, "Modules/TestQuestionPool");
         $width = $this->object->getMaxTextboxWidth();
         for ($i = 0; $i < $this->object->getCorrectAnswers(); $i++) {
@@ -286,8 +276,6 @@ class assTextSubsetGUI extends assQuestionGUI implements ilGuiQuestionScoringAdj
             $solutions = $this->object->getUserSolutionPreferingIntermediate($active_id, $pass);
         }
 
-        // generate the question output
-        include_once "./Services/UICore/classes/class.ilTemplate.php";
         $template = new ilTemplate("tpl.il_as_qpl_textsubset_output.html", true, true, "Modules/TestQuestionPool");
         $width = $this->object->getMaxTextboxWidth();
         for ($i = 0; $i < $this->object->getCorrectAnswers(); $i++) {
@@ -375,8 +363,6 @@ class assTextSubsetGUI extends assQuestionGUI implements ilGuiQuestionScoringAdj
 
     public function populateAnswerSpecificFormPart(\ilPropertyFormGUI $form): ilPropertyFormGUI
     {
-        // Choices
-        include_once "./Modules/TestQuestionPool/classes/class.ilAnswerWizardInputGUI.php";
         $choices = new ilAnswerWizardInputGUI($this->lng->txt("answers"), "answers");
         $choices->setRequired(true);
         $choices->setQuestionObject($this->object);
@@ -512,8 +498,6 @@ class assTextSubsetGUI extends assQuestionGUI implements ilGuiQuestionScoringAdj
 
     public function populateCorrectionsFormProperties(ilPropertyFormGUI $form): void
     {
-        // Choices
-        require_once 'Modules/TestQuestionPool/classes/forms/class.ilAssAnswerCorrectionsInputGUI.php';
         $choices = new ilAssAnswerCorrectionsInputGUI($this->lng->txt("answers"), "answers");
         $choices->setRequired(true);
         $choices->setQuestionObject($this->object);
@@ -526,11 +510,12 @@ class assTextSubsetGUI extends assQuestionGUI implements ilGuiQuestionScoringAdj
      */
     public function saveCorrectionsFormProperties(ilPropertyFormGUI $form): void
     {
-        $points = $form->getInput('answers')['points'];
+        $input = $form->getItemByPostVar('answers');
+        $values = $input->getValues();
 
         foreach ($this->object->getAnswers() as $index => $answer) {
-            /* @var ASS_AnswerBinaryStateImage $answer */
-            $answer->setPoints((float) $points[$index]);
+            $points = (float) str_replace(',', '.', $values[$index]->getPoints());
+            $answer->setPoints($points);
         }
     }
 }

@@ -56,7 +56,10 @@ class ExamplesTest extends ILIAS_UI_TestBase
         $this->dic = new Container();
         $this->dic["tpl"] = $this->getTemplateFactory()->getTemplate("tpl.main.html", false, false);
         $this->dic["lng"] = $this->getLanguage();
-        $this->dic["refinery"] = $this->getRefinery();
+        $this->dic["refinery"] = new \ILIAS\Refinery\Factory(
+            new ILIAS\Data\Factory(),
+            $this->getLanguage()
+        );
         (new InitUIFramework())->init($this->dic);
 
         $this->dic["ui.template_factory"] = $this->getTemplateFactory();
@@ -84,6 +87,8 @@ class ExamplesTest extends ILIAS_UI_TestBase
         $component_factory->method("getActivePluginsInSlot")->willReturn(new ArrayIterator());
         $this->dic["component.factory"] = $component_factory;
 
+        $this->dic["help.text_retriever"] = new ILIAS\UI\Help\TextRetriever\Echoing();
+
         (new InitHttpServices())->init($this->dic);
     }
 
@@ -96,6 +101,9 @@ class ExamplesTest extends ILIAS_UI_TestBase
         $DIC = $this->dic;
 
         foreach ($this->getEntriesFromCrawler() as $entry) {
+            if ($entry->getNamespace() === "\ILIAS\UI\Help\Topic[]") {
+                continue;
+            }
             if (!$entry->isAbstract()) {
                 $this->assertGreaterThan(
                     0,

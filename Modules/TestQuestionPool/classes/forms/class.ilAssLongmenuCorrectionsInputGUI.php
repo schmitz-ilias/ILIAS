@@ -56,6 +56,7 @@ class ilAssLongmenuCorrectionsInputGUI extends ilAnswerWizardInputGUI
     {
         $closeButton = ilJsLinkButton::getInstance();
         $closeButton->setCaption('close');
+        $closeButton->setTarget('');
         $closeButton->setOnClick("$('#modal_{$this->getPostVar()}').modal('hide');");
 
         $modal = ilModalGUI::getInstance();
@@ -75,11 +76,10 @@ class ilAssLongmenuCorrectionsInputGUI extends ilAnswerWizardInputGUI
     protected function buildTagInput(): ilTagInputGUI
     {
         $tagInput = new ilTagInputGUI('', $this->getPostVar() . '_tags');
-        $tagInput->setTypeAhead(true);
         $tagInput->setTypeAheadMinLength(1);
 
         $tagInput->setOptions($this->values['answers_correct']);
-        $tagInput->setTypeAheadList($this->values['answers_all']);
+        $tagInput->setTypeAheadList($this->values['answers_all'][0]);
 
         return $tagInput;
     }

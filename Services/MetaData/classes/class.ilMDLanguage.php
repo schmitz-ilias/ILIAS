@@ -123,7 +123,7 @@ class ilMDLanguage extends ilMDBase
                 $this->setObjId((int) $row->obj_id);
                 $this->setObjType($row->obj_type ?? '');
                 $this->setParentId((int) $row->parent_id);
-                $this->setParentType($row->parent_type ?? '');
+                $this->setParentType($row->parent_type);
                 $this->setLanguage(new ilMDLanguageItem($row->language ?? ''));
             }
         }

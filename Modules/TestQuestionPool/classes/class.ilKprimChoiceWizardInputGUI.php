@@ -16,10 +16,6 @@
  *
  *********************************************************************/
 
-require_once 'Modules/TestQuestionPool/classes/class.ilSingleChoiceWizardInputGUI.php';
-require_once 'Modules/TestQuestionPool/classes/class.ilAssKprimChoiceAnswer.php';
-require_once 'Services/MediaObjects/classes/class.ilObjMediaObject.php';
-
 /**
  * @author		Björn Heyser <bheyser@databay.de>
  * @version		$Id$
@@ -91,7 +87,7 @@ class ilKprimChoiceWizardInputGUI extends ilSingleChoiceWizardInputGUI
                 $answer->setPosition($index);
                 $answer->setAnswertext($value);
                 if (isset($a_value['imagename'])) {
-                    $answer->setImageFile($a_value['imagename'][$index]);
+                    $answer->setImageFile($a_value['imagename'][$index] ?? '');
                 }
 
                 if (isset($a_value['correctness']) && isset($a_value['correctness'][$index]) && strlen($a_value['correctness'][$index])) {
@@ -114,7 +110,6 @@ class ilKprimChoiceWizardInputGUI extends ilSingleChoiceWizardInputGUI
         global $DIC;
         $lng = $DIC['lng'];
 
-        include_once "./Services/AdvancedEditing/classes/class.ilObjAdvancedEditing.php";
         if (is_array($_POST[$this->getPostVar()])) {
             $foundvalues = ilArrayUtil::stripSlashesRecursive(
                 $_POST[$this->getPostVar()],
@@ -129,7 +124,8 @@ class ilKprimChoiceWizardInputGUI extends ilSingleChoiceWizardInputGUI
             // check answers
             if (is_array($foundvalues['answer'])) {
                 foreach ($foundvalues['answer'] as $aidx => $answervalue) {
-                    if (((strlen($answervalue)) == 0) && (isset($foundvalues['imagename']) && strlen($foundvalues['imagename'][$aidx]) == 0)) {
+                    $hasImage = isset($foundvalues['imagename']) ? true : false;
+                    if (((strlen($answervalue)) == 0) && !$hasImage) {
                         $this->setAlert($lng->txt("msg_input_is_required"));
                         return false;
                     }
@@ -318,7 +314,6 @@ class ilKprimChoiceWizardInputGUI extends ilSingleChoiceWizardInputGUI
         $a_tpl->setVariable("PROP_GENERIC", $tpl->get());
         $a_tpl->parseCurrentBlock();
 
-        include_once "./Services/YUI/classes/class.ilYuiUtil.php";
         $this->tpl->addJavascript("./Services/Form/js/ServiceFormWizardInput.js");
         $this->tpl->addJavascript("./Modules/TestQuestionPool/templates/default/kprimchoicewizard.js");
         $this->tpl->addJavascript('Modules/TestQuestionPool/js/ilAssKprimChoice.js');
@@ -346,7 +341,8 @@ class ilKprimChoiceWizardInputGUI extends ilSingleChoiceWizardInputGUI
 
                                 case UPLOAD_ERR_NO_FILE:
                                     if ($this->getRequired() && !$this->isIgnoreMissingUploadsEnabled()) {
-                                        if (isset($foundvalues['imagename']) && (!strlen($foundvalues['imagename'][$index])) && (!strlen($foundvalues['answer'][$index]))) {
+                                        $has_image = isset($foundvalues['imagename'][$index]) ? true : false;
+                                        if (!$has_image && (!strlen($foundvalues['answer'][$index]))) {
                                             $this->setAlert($this->lng->txt("form_msg_file_no_upload"));
                                             return false;
                                         }

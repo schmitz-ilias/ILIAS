@@ -13,8 +13,7 @@
  * https://www.ilias.de
  * https://github.com/ILIAS-eLearning
  *
- ********************************************************************
- */
+ *********************************************************************/
 
 /**
  * DataCollection dataset class
@@ -351,7 +350,7 @@ class ilDataCollectionDataSet extends ilDataSet
                     // For field references, we need to get the new field id of the referenced field
                     // If the field_id does not yet exist (e.g. referenced table not yet created), store temp info and fix before finishing import
                     $value = $a_rec['value'];
-                    $refs = array(ilDclBaseFieldModel::PROP_REFERENCE, ilDclBaseFieldModel::PROP_N_REFERENCE);
+                    $refs = [ilDclBaseFieldModel::PROP_REFERENCE, ilDclBaseFieldModel::PROP_N_REFERENCE];
 
                     if (in_array($prop->getName(), $refs)) {
                         $new_field_id = $a_mapping->getMapping(
@@ -408,7 +407,7 @@ class ilDataCollectionDataSet extends ilDataSet
                                 $value = ($new_mob_id) ? (int) $new_mob_id : null;
                                 $this->import_temp_new_mob_ids[] = $new_mob_id;
                                 break;
-                            case ilDclDatatype::INPUTFORMAT_FILE:
+                            case ilDclDatatype::INPUTFORMAT_FILEUPLOAD:
                                 $new_file_id = $a_mapping->getMapping('Modules/File', 'file', $a_rec['value']);
                                 $value = ($new_file_id) ? (int) $new_file_id : null;
                                 break;
@@ -427,10 +426,16 @@ class ilDataCollectionDataSet extends ilDataSet
                             case ilDclDatatype::INPUTFORMAT_ILIAS_REF:
                                 $value = null;
                                 break;
+                            case ilDclDatatype::INPUTFORMAT_DATETIME:
+                                $value = $a_rec['value'];
+                                if ($value=='0000-00-00 00:00:00') {
+                                    $value = null;
+                                }
+                                break;
                             default:
                                 $value = $a_rec['value'];
-                                if ($a_entity == 'il_dcl_stloc3_value' && (is_null($value) || empty($value))) {
-                                    $value = '0000-00-00 00:00:00';
+                                if ($a_entity == 'il_dcl_stloc3_value' && empty($value)) {
+                                    $value = null;
                                 }
                         }
                         $record_field->setValue($value, true);
@@ -448,7 +453,9 @@ class ilDataCollectionDataSet extends ilDataSet
     public function beforeFinishImport(ilImportMapping $a_mapping): void
     {
         foreach ($this->import_temp_new_mob_ids as $new_mob_id) {
-            ilObjMediaObject::_saveUsage($new_mob_id, "dcl:html", $a_mapping->getTargetId());
+            if ($new_mob_id) {
+                ilObjMediaObject::_saveUsage($new_mob_id, "dcl:html", $a_mapping->getTargetId());
+            }
         }
         foreach ($this->import_temp_refs as $record_field_id => $old_record_id) {
             $new_record_id = $a_mapping->getMapping('Modules/DataCollection', 'il_dcl_record', $old_record_id);
@@ -458,9 +465,10 @@ class ilDataCollectionDataSet extends ilDataSet
             $record_field->setValue($value, true);
             $record_field->doUpdate();
         }
-        foreach ($this->import_temp_refs_props as $field_prop_id => $old_field_id) {
-            $new_field_id = $a_mapping->getMapping('Modules/DataCollection', 'il_dcl_field', $old_field_id);
-            $value = ($new_field_id) ? (int) $new_field_id : 0;
+        foreach ($this->import_temp_refs_props as $field_prop_id => $prop_value) {
+            $new_field_id = $a_mapping->getMapping('Modules/DataCollection', 'il_dcl_field', $prop_value);
+            $value = ($new_field_id) ? (int) $new_field_id : $prop_value;
+
             $field_prop = new ilDclFieldProperty($field_prop_id);
             $field_prop->setValue($value);
             $field_prop->update();
@@ -701,11 +709,15 @@ class ilDataCollectionDataSet extends ilDataSet
 
                 while ($rec = $this->db->fetchObject($set)) {
                     $stloc = $this->record_field_ids_2_storage[$rec->record_field_id];
-                    $value = "value{$stloc}";
+                    $value = null;
+                    if ($stloc != 0) {
+                        $value = "value{$stloc}";
+                        $value = $rec->{$value};
+                    }
                     // Save reocrd field id. Internal ID is not used currently
                     $this->caches["il_dcl_stloc{$stloc}_value"][$rec->record_field_id] = array(
                         'record_field_id' => $rec->record_field_id,
-                        'value' => $rec->{$value},
+                        'value' => $value,
                     );
                 }
 

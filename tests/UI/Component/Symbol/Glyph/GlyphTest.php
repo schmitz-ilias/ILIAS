@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * This file is part of ILIAS, a powerful learning management system
  * published by ILIAS open source e-Learning e.V.
@@ -18,6 +16,8 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+declare(strict_types=1);
+
 require_once("libs/composer/vendor/autoload.php");
 require_once(__DIR__ . "/../../../Base.php");
 
@@ -26,6 +26,8 @@ use ILIAS\UI\Component\Counter as C;
 use ILIAS\UI\Implementation\Component as I;
 use ILIAS\UI\Implementation\Component\Symbol\Glyph\Glyph;
 use ILIAS\UI\Implementation\Component\Symbol\Glyph\Renderer;
+use ILIAS\Data\Factory as DataFactory;
+use ILIAS\UI\HelpTextRetriever;
 
 /**
  * Test on glyph implementation.
@@ -427,7 +429,9 @@ class GlyphTest extends ILIAS_UI_TestBase
             $this->getLanguage(),
             $this->getJavaScriptBinding(),
             $this->getRefinery(),
-            new ilImagePathResolver()
+            new ilImagePathResolver(),
+            $this->createMock(DataFactory::class),
+            $this->createMock(HelpTextRetriever::class)
         );
         $f = $this->getCounterFactory();
 

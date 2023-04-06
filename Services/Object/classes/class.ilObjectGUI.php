@@ -710,6 +710,7 @@ class ilObjectGUI
         $ta = new ilTextAreaInputGUI($this->lng->txt("description"), "desc");
         $ta->setCols(40);
         $ta->setRows(2);
+        $ta->setMaxNumOfChars(ilObject::LONG_DESC_LENGTH);
         $form->addItem($ta);
 
         $form = $this->initDidacticTemplate($form);
@@ -778,8 +779,7 @@ class ilObjectGUI
             $form->addItem($type);
 
             foreach ($options as $id => $data) {
-                $option = new ilRadioOption($data[0], $id, $data[1]);
-
+                $option = new ilRadioOption($data[0] ?? '', (string) $id, $data[1] ?? '');
                 if ($existing_exclusive && $id == 'dtpl_0') {
                     //set default disabled if an exclusive template exists
                     $option->setDisabled(true);
@@ -826,6 +826,7 @@ class ilObjectGUI
             $newObj->setType($this->requested_new_type);
             $newObj->setTitle($form->getInput("title"));
             $newObj->setDescription($form->getInput("desc"));
+            $newObj->processAutoRating();
             $newObj->create();
 
             $this->putObjectInTree($newObj);
@@ -835,7 +836,6 @@ class ilObjectGUI
                 $newObj->applyDidacticTemplate($dtpl);
             }
 
-            $this->handleAutoRating($newObj);
             $this->afterSave($newObj);
         }
 
@@ -891,11 +891,19 @@ class ilObjectGUI
         ilRbacLog::add(ilRbacLog::CREATE_OBJECT, $this->ref_id, $rbac_log);
 
         // use forced callback after object creation
-        if ($this->requested_crtcb > 0) {
-            $callback_type = ilObject::_lookupType($this->requested_crtcb, true);
-            $class_name = "ilObj" . $this->obj_definition->getClassName($callback_type) . "GUI";
-            if (strtolower($class_name) == "ilobjitemgroupgui") {
-                $callback_obj = new $class_name($this->requested_crtcb);
+        $this->callCreationCallback($obj);
+    }
+
+    public function callCreationCallback(ilObject $obj): void
+    {
+        $objDefinition = $this->obj_definition;
+        // use forced callback after object creation
+        if ($this->requested_crtcb) {
+            $callback_type = ilObject::_lookupType((int) $this->requested_crtcb, true);
+            $class_name = "ilObj" . $objDefinition->getClassName($callback_type) . "GUI";
+            $location = $objDefinition->getLocation($callback_type);
+            if (in_array(strtolower($class_name), array("ilobjitemgroupgui"))) {
+                $callback_obj = new $class_name((int) $this->requested_crtcb);
             } else {
                 // #10368
                 $callback_obj = new $class_name(null, $this->requested_crtcb, true, false);
@@ -956,6 +964,7 @@ class ilObjectGUI
         $ta = new ilTextAreaInputGUI($this->lng->txt("description"), "desc");
         $ta->setCols(40);
         $ta->setRows(2);
+        $ta->setMaxNumOfChars(ilObject::LONG_DESC_LENGTH);
         $form->addItem($ta);
 
         $this->initEditCustomForm($form);
@@ -1166,10 +1175,15 @@ class ilObjectGUI
                 $this->ctrl->setParameter($this, "new_type", "");
 
                 $newObj = ilObjectFactory::getInstanceByObjId($new_id);
-
                 // put new object id into tree - already done in import for containers
                 if (!$this->obj_definition->isContainer($new_type)) {
                     $this->putObjectInTree($newObj);
+                } else {
+                    $ref_ids = ilObject::_getAllReferences($newObj->getId());
+                    if (count($ref_ids) === 1) {
+                        $newObj->setRefId((int) current($ref_ids));
+                    }
+                    $this->callCreationCallback($newObj);   // see #24244
                 }
 
                 $this->afterImport($newObj);
@@ -1595,59 +1609,6 @@ class ilObjectGUI
     protected function enableDragDropFileUpload(): void
     {
         $this->tpl->setFileUploadRefId($this->ref_id);
-    }
-
-    /**
-     * Activate rating automatically if parent container setting
-     */
-    protected function handleAutoRating(ilObject $new_obj): void
-    {
-        if (
-            ilObject::hasAutoRating($new_obj->getType(), $new_obj->getRefId()) &&
-            method_exists($new_obj, "setRating")
-        ) {
-            $new_obj->setRating(true);
-            $new_obj->update();
-        }
-    }
-
-    /**
-     * show edit section of custom icons for container
-     */
-    protected function showCustomIconsEditing(
-        $input_colspan = 1,
-        ilPropertyFormGUI $form = null,
-        $as_section = true
-    ): void {
-        if ($this->settings->get("custom_icons")) {
-            if ($form) {
-                $customIcon = $this->custom_icon_factory->getByObjId($this->object->getId(), $this->object->getType());
-
-                if ($as_section) {
-                    $title = new ilFormSectionHeaderGUI();
-                    $title->setTitle($this->lng->txt("icon_settings"));
-                } else {
-                    $title = new ilCustomInputGUI($this->lng->txt("icon_settings"), "");
-                }
-                $form->addItem($title);
-
-                $caption = $this->lng->txt("cont_custom_icon");
-                $icon = new ilImageFileInputGUI($caption, "cont_icon");
-
-                $icon->setSuffixes($customIcon->getSupportedFileExtensions());
-                $icon->setUseCache(false);
-                if ($customIcon->exists()) {
-                    $icon->setImage($customIcon->getFullPath());
-                } else {
-                    $icon->setImage('');
-                }
-                if ($as_section) {
-                    $form->addItem($icon);
-                } else {
-                    $title->addSubItem($icon);
-                }
-            }
-        }
     }
 
     /**

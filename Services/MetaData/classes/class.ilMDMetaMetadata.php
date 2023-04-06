@@ -192,7 +192,7 @@ class ilMDMetaMetadata extends ilMDBase
             while ($row = $res->fetchRow(ilDBConstants::FETCHMODE_OBJECT)) {
                 $this->setRBACId((int) $row->rbac_id);
                 $this->setObjId((int) $row->obj_id);
-                $this->setObjType($row->obj_type ?? '');
+                $this->setObjType($row->obj_type);
                 $this->setMetaDataScheme($row->meta_data_scheme ?? '');
                 $this->setLanguage(new ilMDLanguageItem($row->language ?? ''));
             }

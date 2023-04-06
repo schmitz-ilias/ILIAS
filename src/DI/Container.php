@@ -19,6 +19,9 @@
 namespace ILIAS\DI;
 
 use ILIAS\BackgroundTasks\BackgroundTaskServices;
+use ILIAS\Filesystem\Util\Archive\Archives;
+use ILIAS\Filesystem\Util\Archive\LegacyArchives;
+use ILIAS\Cache\Services;
 use ILIAS\Repository;
 use ILIAS\Skill\Service\SkillService;
 
@@ -38,6 +41,11 @@ class Container extends \Pimple\Container
     public function database(): \ilDBInterface
     {
         return $this["ilDB"];
+    }
+
+    public function globalCache(): Services
+    {
+        return $this["global_cache"];
     }
 
     /**
@@ -395,6 +403,19 @@ class Container extends \Pimple\Container
         return $this->file_service_settings;
     }
 
+    public function archives(): Archives
+    {
+        return new Archives();
+    }
+
+    /**
+     * @deprecated Use archives() instead
+     */
+    public function legacyArchives(): LegacyArchives
+    {
+        return new LegacyArchives();
+    }
+
     public function contentStyle(): \ILIAS\Style\Content\Service
     {
         return new \ILIAS\Style\Content\Service($this);
@@ -408,6 +429,11 @@ class Container extends \Pimple\Container
     public function cron(): \ilCronServices
     {
         return new \ilCronServicesImpl($this);
+    }
+
+    public function mail(): \ILIAS\Mail\Service\MailService
+    {
+        return new \ILIAS\Mail\Service\MailService($this);
     }
 
     /**

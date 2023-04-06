@@ -94,7 +94,6 @@ class ilTestScoring
     {
         $participants = $this->test->getCompleteEvaluationData(false)->getParticipants();
         if (is_array($participants)) {
-            require_once "./Modules/TestQuestionPool/classes/class.assQuestion.php";
             foreach ($participants as $active_id => $userdata) {
                 if (is_object($userdata) && is_array($userdata->getPasses())) {
                     $this->recalculatePasses($userdata, $active_id);
@@ -217,7 +216,9 @@ class ilTestScoring
 
     public function addRecalculatedPassByActive($activeId, $pass)
     {
-        if (!is_array($this->recalculatedPasses[$activeId])) {
+        if (! array_key_exists($activeId, $this->recalculatedPasses)
+            || !is_array($this->recalculatedPasses[$activeId])
+        ) {
             $this->recalculatedPasses[$activeId] = array();
         }
 
@@ -258,11 +259,11 @@ class ilTestScoring
         $query = "
 			SELECT COUNT(*) num_manual_scorings
 			FROM tst_test_result tres
-			
+
 			INNER JOIN tst_active tact
 			ON tact.active_id = tres.active_fi
 			AND tact.test_fi = %s
-			
+
 			WHERE tres.manual = 1
 		";
 

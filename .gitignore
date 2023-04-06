@@ -33,15 +33,15 @@
 /Services/UICore/artifacts/ctrl_base_classes.php
 /Services/UICore/artifacts/ctrl_security.php
 /Services/Component/artifacts/*
+/Services/EventHandling/artifacts/*
 
 # Directories
 /data
 /Customizing/global
 /Customizing/clients
-/setup/sql/ilDBTemplate
 virtual-data
 /libs/composer/vendor
-/node_modules/**/.cache
+/node_modules
 
 # /dicto
 /dicto/results/*
@@ -57,3 +57,5 @@ phpstan-baseline.neon
 
 # File Delivery
 override.php
+Services/ResourceStorage/artifacts/flavour_data.php
+Services/FileHandlingDemo

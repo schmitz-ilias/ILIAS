@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * This file is part of ILIAS, a powerful learning management system
  * published by ILIAS open source e-Learning e.V.
@@ -18,6 +16,8 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+declare(strict_types=1);
+
 use ILIAS\HTTP\GlobalHttpState;
 use ILIAS\Refinery\Factory as Refinery;
 use ILIAS\UI\Component\Item\Item;
@@ -30,8 +30,9 @@ use ILIAS\UI\Component\Item\Item;
 class ilPDMailBlockGUI extends ilBlockGUI
 {
     public static string $block_type = 'pdmail';
-    private GlobalHttpState $http;
-    private Refinery $refinery;
+
+    private readonly GlobalHttpState $http;
+    private readonly Refinery $refinery;
     private int $requestMailObjId = 0;
     protected ilRbacSystem $rbacsystem;
     protected ilSetting $setting;

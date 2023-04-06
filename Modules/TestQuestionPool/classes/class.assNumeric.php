@@ -126,7 +126,6 @@ class assNumeric extends assQuestion implements ilObjQuestionScoringAdjustable, 
             $this->setAuthor($data["author"]);
             $this->setPoints($data["points"]);
             $this->setOwner($data["owner"]);
-            require_once './Services/RTE/classes/class.ilRTE.php';
             $this->setQuestion(ilRTE::_replaceMediaObjectImageSrc((string) $data["question_text"], 1));
             $this->setMaxChars($data["maxnumofchars"]);
             $this->setEstimatedWorkingTime(substr($data["working_time"], 0, 2), substr($data["working_time"], 3, 2), substr($data["working_time"], 6, 2));
@@ -149,7 +148,6 @@ class assNumeric extends assQuestion implements ilObjQuestionScoringAdjustable, 
             array($question_id)
         );
 
-        require_once './Modules/TestQuestionPool/classes/class.assNumericRange.php';
         if ($result->numRows() > 0) {
             /** @noinspection PhpAssignmentInConditionInspection */
             while ($data = $ilDB->fetchAssoc($result)) {
@@ -184,7 +182,7 @@ class assNumeric extends assQuestion implements ilObjQuestionScoringAdjustable, 
         $thisObjId = $this->getObjId();
 
         $clone = $this;
-        require_once './Modules/TestQuestionPool/classes/class.assQuestion.php';
+
         $original_id = assQuestion::_getOriginalId($this->id);
         $clone->id = -1;
 
@@ -235,7 +233,7 @@ class assNumeric extends assQuestion implements ilObjQuestionScoringAdjustable, 
         }
         // duplicate the question in database
         $clone = $this;
-        include_once("./Modules/TestQuestionPool/classes/class.assQuestion.php");
+
         $original_id = assQuestion::_getOriginalId($this->id);
         $clone->id = -1;
         $source_questionpool_id = $this->getObjId();
@@ -260,8 +258,6 @@ class assNumeric extends assQuestion implements ilObjQuestionScoringAdjustable, 
         if ($this->getId() <= 0) {
             throw new RuntimeException('The question has not been saved. It cannot be duplicated');
         }
-
-        include_once("./Modules/TestQuestionPool/classes/class.assQuestion.php");
 
         $sourceQuestionId = $this->id;
         $sourceParentId = $this->getObjId();
@@ -359,8 +355,10 @@ class assNumeric extends assQuestion implements ilObjQuestionScoringAdjustable, 
         }
         $result = $this->getCurrentSolutionResultSet($active_id, $pass, $authorizedSolution);
         $data = $ilDB->fetchAssoc($result);
-
-        $enteredvalue = $data["value1"];
+        $enteredvalue = '';
+        if (is_array($data) && array_key_exists('value1', $data)) {
+            $enteredvalue = $data["value1"];
+        }
 
         $points = 0;
         if ($this->contains($enteredvalue)) {
@@ -382,7 +380,6 @@ class assNumeric extends assQuestion implements ilObjQuestionScoringAdjustable, 
      */
     public function contains($value): bool
     {
-        require_once './Services/Math/classes/class.EvalMath.php';
         $eval = new EvalMath();
         $eval->suppress_errors = true;
         $result = $eval->e($value);
@@ -426,7 +423,6 @@ class assNumeric extends assQuestion implements ilObjQuestionScoringAdjustable, 
 
     public function isValidSolutionSubmit($numeric_solution): bool
     {
-        require_once './Services/Math/classes/class.EvalMath.php';
         $math = new EvalMath();
         $math->suppress_errors = true;
         $result = $math->evaluate($numeric_solution);
@@ -451,7 +447,6 @@ class assNumeric extends assQuestion implements ilObjQuestionScoringAdjustable, 
         $ilDB = $DIC['ilDB'];
 
         if (is_null($pass)) {
-            require_once './Modules/Test/classes/class.ilObjTest.php';
             $pass = ilObjTest::_getPass($active_id);
         }
 
@@ -486,7 +481,6 @@ class assNumeric extends assQuestion implements ilObjQuestionScoringAdjustable, 
         });
 
         if ($entered_values) {
-            require_once './Modules/Test/classes/class.ilObjAssessmentFolder.php';
             if (ilObjAssessmentFolder::_enabledAssessmentLogging()) {
                 assQuestion::logAction(
                     $this->lng->txtlng(
@@ -499,7 +493,6 @@ class assNumeric extends assQuestion implements ilObjQuestionScoringAdjustable, 
                 );
             }
         } else {
-            include_once("./Modules/Test/classes/class.ilObjAssessmentFolder.php");
             if (ilObjAssessmentFolder::_enabledAssessmentLogging()) {
                 assQuestion::logAction(
                     $this->lng->txtlng(
@@ -561,7 +554,7 @@ class assNumeric extends assQuestion implements ilObjQuestionScoringAdjustable, 
 
         $next_id = $ilDB->nextId('qpl_num_range');
         $ilDB->manipulateF(
-            "INSERT INTO qpl_num_range (range_id, question_fi, lowerlimit, upperlimit, points, aorder, tstamp) 
+            "INSERT INTO qpl_num_range (range_id, question_fi, lowerlimit, upperlimit, points, aorder, tstamp)
 							 VALUES (%s, %s, %s, %s, %s, %s, %s)",
             array( 'integer', 'integer', 'text', 'text', 'float', 'integer', 'integer' ),
             array( $next_id, $this->id, $this->getLowerLimit(), $this->getUpperLimit(
@@ -621,19 +614,21 @@ class assNumeric extends assQuestion implements ilObjQuestionScoringAdjustable, 
     /**
      * {@inheritdoc}
      */
-    public function setExportDetailsXLS(ilAssExcelFormatHelper $worksheet, int $startrow, int $active_id, int $pass): int
+    public function setExportDetailsXLS(ilAssExcelFormatHelper $worksheet, int $startrow, int $col, int $active_id, int $pass): int
     {
-        parent::setExportDetailsXLS($worksheet, $startrow, $active_id, $pass);
+        parent::setExportDetailsXLS($worksheet, $startrow, $col, $active_id, $pass);
 
         $solutions = $this->getSolutionValues($active_id, $pass);
 
         $i = 1;
-        $worksheet->setCell($startrow + $i, 0, $this->lng->txt("result"));
-        $worksheet->setBold($worksheet->getColumnCoord(0) . ($startrow + $i));
+        $worksheet->setCell($startrow + $i, $col, $this->lng->txt("result"));
+        $worksheet->setBold($worksheet->getColumnCoord($col) . ($startrow + $i));
 
-        $worksheet->setBold($worksheet->getColumnCoord(0) . ($startrow + $i));
-        if (strlen($solutions[0]["value1"])) {
-            $worksheet->setCell($startrow + $i, 1, $solutions[0]["value1"]);
+        $worksheet->setBold($worksheet->getColumnCoord($col) . ($startrow + $i));
+        if (array_key_exists(0, $solutions) &&
+            array_key_exists('value1', $solutions[0]) &&
+            strlen($solutions[0]["value1"])) {
+            $worksheet->setCell($startrow + $i, $col + 1, $solutions[0]["value1"]);
         }
         $i++;
 
@@ -650,7 +645,6 @@ class assNumeric extends assQuestion implements ilObjQuestionScoringAdjustable, 
      */
     public function getOperators($expression): array
     {
-        require_once "./Modules/TestQuestionPool/classes/class.ilOperatorsExpressionMapping.php";
         return ilOperatorsExpressionMapping::getOperatorsByExpression($expression);
     }
 

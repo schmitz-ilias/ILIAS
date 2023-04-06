@@ -23,9 +23,8 @@ class ilEssayKeywordWizardInputGUI extends ilSingleChoiceWizardInputGUI
         if (is_array($a_value)) {
             if (is_array($a_value['answer'])) {
                 foreach ($a_value['answer'] as $index => $value) {
-                    include_once "./Modules/TestQuestionPool/classes/class.assAnswerMultipleResponseImage.php";
                     if (isset($a_value['points'])) {
-                        $value = $a_value['points'][$index];
+                        $pvalue = $a_value['points'][$index];
                     } else {
                         $value = 0.0;
                     }
@@ -34,7 +33,7 @@ class ilEssayKeywordWizardInputGUI extends ilSingleChoiceWizardInputGUI
                     } else {
                         $value_unchecked = 0.0;
                     }
-                    $answer = new ASS_AnswerMultipleResponseImage($value, (float)$value, $index, $value_unchecked);
+                    $answer = new ASS_AnswerMultipleResponseImage($value, (float) $pvalue, $index, $value_unchecked);
                     $this->values[] = $answer;
                 }
             }
@@ -50,7 +49,6 @@ class ilEssayKeywordWizardInputGUI extends ilSingleChoiceWizardInputGUI
         global $DIC;
         $lng = $DIC['lng'];
 
-        include_once "./Services/AdvancedEditing/classes/class.ilObjAdvancedEditing.php";
         if (is_array($_POST[$this->getPostVar()])) {
             $foundvalues = ilArrayUtil::stripSlashesRecursive(
                 $_POST[$this->getPostVar()],
@@ -66,7 +64,7 @@ class ilEssayKeywordWizardInputGUI extends ilSingleChoiceWizardInputGUI
             // check answers
             if (is_array($foundvalues['answer'])) {
                 foreach ($foundvalues['answer'] as $aidx => $answervalue) {
-                    if (((strlen($answervalue)) == 0) && (strlen($foundvalues['imagename'][$aidx]) == 0)) {
+                    if (((strlen($answervalue)) == 0) && (!isset($foundvalues['imagename']) || strlen($foundvalues['imagename'][$aidx]) == 0)) {
                         $this->setAlert($lng->txt("msg_input_is_required"));
                         return false;
                     }

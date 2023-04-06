@@ -983,9 +983,7 @@ class ilObjGroupGUI extends ilContainerGUI
     public function unsubscribeObject(): void
     {
         $this->checkPermission('leave');
-
         $this->object->members_obj->delete($this->user->getId());
-
         $this->object->members_obj->sendNotification(
             ilGroupMembershipMailNotification::TYPE_UNSUBSCRIBE_MEMBER,
             $this->user->getId()
@@ -1289,7 +1287,7 @@ class ilObjGroupGUI extends ilContainerGUI
 
                     $info->addProperty(
                         $this->lng->txt('mem_free_places'),
-                        (string) $reg_info['reg_info_free_places']
+                        (string) ($reg_info['reg_info_free_places'] ?? '0')
                     );
                 }
             }

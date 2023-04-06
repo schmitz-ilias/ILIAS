@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * This file is part of ILIAS, a powerful learning management system
  * published by ILIAS open source e-Learning e.V.
@@ -17,6 +15,8 @@ declare(strict_types=1);
  * https://github.com/ILIAS-eLearning
  *
  *********************************************************************/
+
+declare(strict_types=1);
 
 namespace ILIAS\UI\Implementation\Component\Input\Field;
 
@@ -126,6 +126,9 @@ class Renderer extends AbstractComponentRenderer
             case ($component instanceof F\Hidden):
                 return $this->renderHiddenField($component);
 
+            case ($component instanceof F\ColorPicker):
+                return $this->renderColorPickerField($component);
+
             default:
                 throw new LogicException("Cannot render '" . get_class($component) . "'");
         }
@@ -135,13 +138,14 @@ class Renderer extends AbstractComponentRenderer
         FI\FormInput $component,
         string $input_html,
         string $id_pointing_to_input = '',
-        string $dependant_group_html = ''
+        string $dependant_group_html = '',
+        bool $bind_label_with_for = true
     ): string {
         $tpl = $this->getTemplate("tpl.context_form.html", true, true);
 
         $tpl->setVariable("INPUT", $input_html);
 
-        if ($id_pointing_to_input) {
+        if ($id_pointing_to_input && $bind_label_with_for) {
             $tpl->setCurrentBlock('for');
             $tpl->setVariable("ID", $id_pointing_to_input);
             $tpl->parseCurrentBlock();
@@ -289,7 +293,9 @@ class Renderer extends AbstractComponentRenderer
         $dependant_group_html = $default_renderer->render($component->getInputs());
 
         $this->maybeDisable($component, $tpl);
-        return $this->wrapInFormContext($component, $tpl->get(), "", $dependant_group_html);
+        $id = $this->bindJSandApplyId($component, $tpl);
+
+        return $this->wrapInFormContext($component, $tpl->get(), $id, $dependant_group_html);
     }
 
     protected function renderSwitchableGroup(F\SwitchableGroup $component, RendererInterface $default_renderer): string
@@ -377,7 +383,7 @@ class Renderer extends AbstractComponentRenderer
             $sig_reveal = $component->getRevealSignal();
             $sig_mask = $component->getMaskSignal();
             $component = $component->withAdditionalOnLoadCode(function ($id) use ($sig_reveal, $sig_mask) {
-                $container_id = $id."_container";
+                $container_id = $id . "_container";
                 return
                     "$(document).on('$sig_reveal', function() {
                         $('#$container_id').addClass('revealed');
@@ -399,7 +405,7 @@ class Renderer extends AbstractComponentRenderer
             $tpl->setVariable('PASSWORD_MASK', $default_renderer->render($glyph_mask));
         }
         $id = $this->bindJSandApplyId($component, $tpl);
-        $tpl->setVariable('ID_CONTAINER', $id."_container");
+        $tpl->setVariable('ID_CONTAINER', $id . "_container");
         $this->applyValue($component, $tpl, $this->escapeSpecialChars());
         $this->maybeDisable($component, $tpl);
         return $this->wrapInFormContext($component, $tpl->get(), $id);
@@ -716,7 +722,9 @@ class Renderer extends AbstractComponentRenderer
         return $this->wrapInFormContext(
             $input,
             $template->get(),
-            $js_id
+            $js_id,
+            "",
+            false
         );
     }
 
@@ -823,7 +831,8 @@ class Renderer extends AbstractComponentRenderer
             Component\Input\Field\Duration::class,
             Component\Input\Field\File::class,
             Component\Input\Field\Url::class,
-            Hidden::class,
+            Component\Input\Field\ColorPicker::class,
+            Component\Input\Field\Hidden::class,
         ];
     }
 
@@ -843,7 +852,7 @@ class Renderer extends AbstractComponentRenderer
             $template->setVariable('FILE_NAME', $file_info->getName());
             $template->setVariable(
                 'FILE_SIZE',
-                (new DataSize($file_info->getSize(), DataSize::MB))->inBytes() . " MB"
+                (string) (new DataSize($file_info->getSize(), DataSize::Byte))
             );
         }
 
@@ -884,7 +893,9 @@ class Renderer extends AbstractComponentRenderer
                             {$input->getMaxFileSize()},
                             '{$this->prepareDropzoneJsMimeTypes($input->getAcceptedMimeTypes())}',
                             $is_disabled,
-                            $translations
+                            $translations,
+                            '{$input->getUploadHandler()->supportsChunkedUploads()}',
+                            {$input->getMaxFileSize()}
                         );
                     });
                 ";
@@ -947,5 +958,15 @@ class Renderer extends AbstractComponentRenderer
         }
 
         return $mime_type_string;
+    }
+
+    protected function renderColorPickerField(F\ColorPicker $component): string
+    {
+        $tpl = $this->getTemplate("tpl.colorpicker.html", true, true);
+        $this->applyName($component, $tpl);
+        $tpl->setVariable('VALUE', $component->getValue());
+        $id = $this->bindJSandApplyId($component, $tpl);
+
+        return $this->wrapInFormContext($component, $tpl->get());
     }
 }

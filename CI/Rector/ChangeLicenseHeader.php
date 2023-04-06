@@ -48,13 +48,16 @@ final class ChangeLicenseHeader extends AbstractRector
 
     private Comment $standard_comment;
     private array $previous_search = [
+        Node\Stmt\If_::class,
+        Node\Expr\Empty_::class,
+        Node\Stmt\Global_::class,
         Node\Expr\Include_::class,
         Node\Stmt\Use_::class,
         Node\Stmt\Namespace_::class,
         Node\Name::class,
         Node\Stmt\Class_::class,
         Node\Stmt\Expression::class,
-        Node\Stmt\Declare_::class
+        Node\Stmt\Declare_::class,
     ];
 
     public function __construct()
@@ -79,7 +82,7 @@ final class ChangeLicenseHeader extends AbstractRector
      */
     public function refactor(Node $node): ?Node
     {
-        if (preg_match(self::IGNORE_SUBPATHS, $this->file->getSmartFileInfo()->getPathname()) > 0) {
+        if (preg_match(self::IGNORE_SUBPATHS, $this->file->getFilePath()) > 0) {
             return $node;
         }
         $node->setAttribute('comments', $this->filterComments($node));
@@ -88,6 +91,9 @@ final class ChangeLicenseHeader extends AbstractRector
         while (is_object($previous) && in_array(get_class($previous), $this->previous_search)) {
             if (get_class($previous) === Node\Name::class) {
                 $previous = $previous->getAttribute(AttributeKeys::PARENT_NODE);
+            }
+            if ($previous instanceof Node\Expr\Empty_) {
+                $this->removeNode($previous);
             }
             $current = $previous;
             $current->setAttribute(

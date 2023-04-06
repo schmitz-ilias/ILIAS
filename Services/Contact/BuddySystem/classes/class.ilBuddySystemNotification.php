@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * This file is part of ILIAS, a powerful learning management system
  * published by ILIAS open source e-Learning e.V.
@@ -18,6 +16,8 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+declare(strict_types=1);
+
 use ILIAS\Notifications\Model\ilNotificationConfig;
 use ILIAS\Notifications\Model\ilNotificationLink;
 use ILIAS\Notifications\Model\ilNotificationParameter;
@@ -29,19 +29,11 @@ use ILIAS\Contact\Provider\ContactNotificationProvider;
  */
 class ilBuddySystemNotification
 {
-    protected ilObjUser $sender;
-    protected ilSetting $settings;
     /** @var int[] */
     protected array $recipientIds = [];
 
-    /**
-     * @param ilObjUser $user
-     * @param ilSetting $settings
-     */
-    public function __construct(ilObjUser $user, ilSetting $settings)
+    public function __construct(protected ilObjUser $sender, protected ilSetting $settings)
     {
-        $this->sender = $user;
-        $this->settings = $settings;
     }
 
     /**

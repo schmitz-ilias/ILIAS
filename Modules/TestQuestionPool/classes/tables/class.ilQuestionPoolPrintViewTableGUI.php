@@ -42,6 +42,7 @@ class ilQuestionPoolPrintViewTableGUI extends ilTable2GUI
         $this->lng = $lng;
         $this->ctrl = $ilCtrl;
         $this->outputmode = $outputmode;
+        $this->ctrl->setParameterByClass('ilObjQuestionPoolGUI', 'output', $outputmode);
 
         $this->setFormName('printviewform');
         $this->setStyle('table', 'fullwidth');
@@ -53,11 +54,9 @@ class ilQuestionPoolPrintViewTableGUI extends ilTable2GUI
         $this->setFormAction($this->ctrl->getFormAction($a_parent_obj, $a_parent_cmd));
         $this->setDefaultOrderField("title");
         $this->setDefaultOrderDirection("asc");
-        $this->setLimit(999);
 
         $this->enable('sort');
         $this->enable('header');
-        //		$this->disable('numinfo');
         $this->disable('select_all');
     }
 
@@ -170,7 +169,6 @@ class ilQuestionPoolPrintViewTableGUI extends ilTable2GUI
         }
         if ((strcmp($this->outputmode, "detailed") == 0) || (strcmp($this->outputmode, "detailed_printview") == 0)) {
             $this->tpl->setCurrentBlock("overview_row_detail");
-            include_once "./Modules/TestQuestionPool/classes/class.assQuestion.php";
             $question_gui = assQuestion::instantiateQuestionGUI($a_set["question_id"]);
             $question_gui->setRenderPurpose(assQuestionGUI::RENDER_PURPOSE_PREVIEW);
             if (strcmp($this->outputmode, "detailed") == 0) {

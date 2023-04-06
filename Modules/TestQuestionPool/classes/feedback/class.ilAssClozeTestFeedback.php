@@ -731,7 +731,6 @@ class ilAssClozeTestFeedback extends ilAssMultiOptionQuestionFeedback
      */
     protected function fetchFeedbackIdsForGapQuestionMode(): array
     {
-        require_once 'Modules/TestQuestionPool/classes/feedback/class.ilAssSpecificFeedbackIdentifierList.php';
         $feedbackIdentifiers = new ilAssSpecificFeedbackIdentifierList();
         $feedbackIdentifiers->load($this->questionOBJ->getId());
 
@@ -753,7 +752,6 @@ class ilAssClozeTestFeedback extends ilAssMultiOptionQuestionFeedback
      */
     protected function fetchFeedbackIdsForGapAnswersMode(): array
     {
-        require_once 'Modules/TestQuestionPool/classes/feedback/class.ilAssSpecificFeedbackIdentifierList.php';
         $feedbackIdentifiers = new ilAssSpecificFeedbackIdentifierList();
         $feedbackIdentifiers->load($this->questionOBJ->getId());
 
@@ -798,7 +796,7 @@ class ilAssClozeTestFeedback extends ilAssMultiOptionQuestionFeedback
         return $this->getSpecificAnswerFeedbackTestPresentation($this->questionOBJ->getId(), $gapIndex, $answerIndex);
     }
 
-    public function determineAnswerIndexForAnswerValue(assClozeGap $gap, int $answerValue): int
+    public function determineAnswerIndexForAnswerValue(assClozeGap $gap, string $answerValue): int
     {
         switch ($gap->getType()) {
             case CLOZE_TEXT:
@@ -842,7 +840,6 @@ class ilAssClozeTestFeedback extends ilAssMultiOptionQuestionFeedback
                     return self::FB_NUMERIC_GAP_VALUE_HIT_INDEX;
                 }
 
-                require_once 'Services/Math/classes/class.EvalMath.php';
                 $math = new EvalMath();
 
                 $item = $gap->getItem(0);

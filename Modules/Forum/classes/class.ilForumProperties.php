@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * This file is part of ILIAS, a powerful learning management system
  * published by ILIAS open source e-Learning e.V.
@@ -18,6 +16,8 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+declare(strict_types=1);
+
 /**
  * @author  Michael Jansen <mjansen@databay.de>
  * @ingroup ModulesForum
@@ -28,8 +28,6 @@ class ilForumProperties
     public const VIEW_DATE = 2;
     public const VIEW_DATE_ASC = 2;
     public const VIEW_DATE_DESC = 3;
-    public const FORUM_OVERVIEW_WITH_NEW_POSTS = 0;
-    public const FORUM_OVERVIEW_NO_NEW_POSTS = 1;
     public const FILE_UPLOAD_GLOBALLY_ALLOWED = 0;
     public const FILE_UPLOAD_INDIVIDUAL = 1;
     public const THREAD_SORTING_DEFAULT = 0;

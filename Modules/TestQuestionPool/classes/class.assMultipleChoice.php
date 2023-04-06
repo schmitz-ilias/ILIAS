@@ -238,7 +238,6 @@ class assMultipleChoice extends assQuestion implements ilObjQuestionScoringAdjus
             $this->setAuthor($data["author"]);
             $this->setPoints($data["points"]);
             $this->setOwner($data["owner"]);
-            include_once("./Services/RTE/classes/class.ilRTE.php");
             $this->setQuestion(ilRTE::_replaceMediaObjectImageSrc((string) $data["question_text"], 1));
             $shuffle = (is_null($data['shuffle'])) ? true : $data['shuffle'];
             $this->setShuffle((bool) $shuffle);
@@ -266,14 +265,12 @@ class assMultipleChoice extends assQuestion implements ilObjQuestionScoringAdjus
             array('integer'),
             array($question_id)
         );
-        include_once "./Modules/TestQuestionPool/classes/class.assAnswerMultipleResponseImage.php";
         if ($result->numRows() > 0) {
             while ($data = $ilDB->fetchAssoc($result)) {
                 $imagefilename = $this->getImagePath() . $data["imagefile"];
                 if (!@file_exists($imagefilename)) {
                     $data["imagefile"] = "";
                 }
-                include_once("./Services/RTE/classes/class.ilRTE.php");
                 $data["answertext"] = ilRTE::_replaceMediaObjectImageSrc($data["answertext"], 1);
 
                 $answer = new ASS_AnswerMultipleResponseImage($data["answertext"], $data["points"], $data["aorder"]);
@@ -301,7 +298,7 @@ class assMultipleChoice extends assQuestion implements ilObjQuestionScoringAdjus
         $thisObjId = $this->getObjId();
 
         $clone = $this;
-        include_once("./Modules/TestQuestionPool/classes/class.assQuestion.php");
+
         $original_id = assQuestion::_getOriginalId($this->id);
         $clone->id = -1;
 
@@ -348,7 +345,7 @@ class assMultipleChoice extends assQuestion implements ilObjQuestionScoringAdjus
         }
         // duplicate the question in database
         $clone = $this;
-        include_once("./Modules/TestQuestionPool/classes/class.assQuestion.php");
+
         $original_id = assQuestion::_getOriginalId($this->id);
         $clone->id = -1;
         $source_questionpool_id = $this->getObjId();
@@ -374,8 +371,6 @@ class assMultipleChoice extends assQuestion implements ilObjQuestionScoringAdjus
         if ($this->getId() <= 0) {
             throw new RuntimeException('The question has not been saved. It cannot be duplicated');
         }
-
-        include_once("./Modules/TestQuestionPool/classes/class.assQuestion.php");
 
         $sourceQuestionId = $this->id;
         $sourceParentId = $this->getObjId();
@@ -446,7 +441,7 @@ class assMultipleChoice extends assQuestion implements ilObjQuestionScoringAdjus
         $order = 0,
         $answerimage = ""
     ): void {
-        include_once "./Modules/TestQuestionPool/classes/class.assAnswerMultipleResponseImage.php";
+        $answertext = $this->getHtmlQuestionContentPurifier()->purify($answertext);
         if (array_key_exists($order, $this->answers)) {
             // insert answer
             $answer = new ASS_AnswerMultipleResponseImage($answertext, $points, $order, -1, 0);
@@ -646,7 +641,6 @@ class assMultipleChoice extends assQuestion implements ilObjQuestionScoringAdjus
         $ilDB = $DIC['ilDB'];
 
         if (is_null($pass)) {
-            include_once "./Modules/Test/classes/class.ilObjTest.php";
             $pass = ilObjTest::_getPass($active_id);
         }
 
@@ -673,7 +667,6 @@ class assMultipleChoice extends assQuestion implements ilObjQuestionScoringAdjus
         });
 
         if ($entered_values) {
-            include_once("./Modules/Test/classes/class.ilObjAssessmentFolder.php");
             if (ilObjAssessmentFolder::_enabledAssessmentLogging()) {
                 assQuestion::logAction($this->lng->txtlng(
                     "assessment",
@@ -682,7 +675,6 @@ class assMultipleChoice extends assQuestion implements ilObjQuestionScoringAdjus
                 ), $active_id, $this->getId());
             }
         } else {
-            include_once("./Modules/Test/classes/class.ilObjAssessmentFolder.php");
             if (ilObjAssessmentFolder::_enabledAssessmentLogging()) {
                 assQuestion::logAction($this->lng->txtlng(
                     "assessment",
@@ -824,7 +816,6 @@ class assMultipleChoice extends assQuestion implements ilObjQuestionScoringAdjus
             if (!ilFileUtils::moveUploadedFile($image_tempfilename, $image_filename, $imagepath . $image_filename)) {
                 $result = 2;
             } else {
-                include_once "./Services/MediaObjects/classes/class.ilObjMediaObject.php";
                 $mimetype = ilObjMediaObject::getMimeType($imagepath . $image_filename);
                 if (!preg_match("/^image/", $mimetype)) {
                     unlink($imagepath . $image_filename);
@@ -996,16 +987,16 @@ class assMultipleChoice extends assQuestion implements ilObjQuestionScoringAdjus
     /**
      * {@inheritdoc}
      */
-    public function setExportDetailsXLS(ilAssExcelFormatHelper $worksheet, int $startrow, int $active_id, int $pass): int
+    public function setExportDetailsXLS(ilAssExcelFormatHelper $worksheet, int $startrow, int $col, int $active_id, int $pass): int
     {
-        parent::setExportDetailsXLS($worksheet, $startrow, $active_id, $pass);
+        parent::setExportDetailsXLS($worksheet, $startrow, $col, $active_id, $pass);
 
         $solution = $this->getSolutionValues($active_id, $pass);
 
         $i = 1;
         foreach ($this->getAnswers() as $id => $answer) {
-            $worksheet->setCell($startrow + $i, 0, $answer->getAnswertext());
-            $worksheet->setBold($worksheet->getColumnCoord(0) . ($startrow + $i));
+            $worksheet->setCell($startrow + $i, $col, $answer->getAnswertext());
+            $worksheet->setBold($worksheet->getColumnCoord($col) . ($startrow + $i));
             $checked = false;
             foreach ($solution as $solutionvalue) {
                 if ($id == $solutionvalue["value1"]) {
@@ -1013,9 +1004,9 @@ class assMultipleChoice extends assQuestion implements ilObjQuestionScoringAdjus
                 }
             }
             if ($checked) {
-                $worksheet->setCell($startrow + $i, 1, 1);
+                $worksheet->setCell($startrow + $i, $col + 1, 1);
             } else {
-                $worksheet->setCell($startrow + $i, 1, 0);
+                $worksheet->setCell($startrow + $i, $col + 1, 0);
             }
             $i++;
         }
@@ -1049,7 +1040,6 @@ class assMultipleChoice extends assQuestion implements ilObjQuestionScoringAdjus
      */
     public function toJSON(): string
     {
-        require_once './Services/RTE/classes/class.ilRTE.php';
         $result = array();
         $result['id'] = $this->getId();
         $result['type'] = (string) $this->getQuestionType();
@@ -1223,15 +1213,15 @@ class assMultipleChoice extends assQuestion implements ilObjQuestionScoringAdjus
         $query = "
 			SELECT		SUM(qpl_a_mc.points) points_for_checked_answers,
 						test_question_id
-			
+
 			FROM		tst_test_question
-			
+
 			INNER JOIN	qpl_a_mc
 			ON			qpl_a_mc.question_fi = tst_test_question.question_fi
-			
+
 			WHERE		tst_test_question.question_fi = %s
 			AND			tst_test_question.obligatory = 1
-			
+
 			GROUP BY	test_question_id
 		";
 
@@ -1273,7 +1263,6 @@ class assMultipleChoice extends assQuestion implements ilObjQuestionScoringAdjus
                 $value = $post->retrieve("multiple_choice_result_$index", $this->dic->refinery()->kindlyTo()->string());
                 if (is_numeric($value)) {
                     $solutionSubmit[] = $value;
-
                 }
             }
         }
@@ -1283,10 +1272,13 @@ class assMultipleChoice extends assQuestion implements ilObjQuestionScoringAdjus
     /**
      * @param $found_values
      * @param $active_id
-     * @return int
+     * @return float
      */
-    protected function calculateReachedPointsForSolution($found_values, $active_id = 0): int
+    protected function calculateReachedPointsForSolution($found_values, $active_id = 0): float
     {
+        if ($found_values == null) {
+            $found_values = [];
+        }
         $points = 0;
         foreach ($this->answers as $key => $answer) {
             if (in_array($key, $found_values)) {
@@ -1313,7 +1305,6 @@ class assMultipleChoice extends assQuestion implements ilObjQuestionScoringAdjus
      */
     public function getOperators($expression): array
     {
-        require_once "./Modules/TestQuestionPool/classes/class.ilOperatorsExpressionMapping.php";
         return ilOperatorsExpressionMapping::getOperatorsByExpression($expression);
     }
 

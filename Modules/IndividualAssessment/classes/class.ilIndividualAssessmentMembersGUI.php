@@ -57,6 +57,7 @@ class ilIndividualAssessmentMembersGUI
     protected ILIAS\Refinery\Factory $refinery;
     protected ILIAS\HTTP\Wrapper\RequestWrapper $request_wrapper;
     protected ILIAS\HTTP\Wrapper\ArrayBasedRequestWrapper $post_wrapper;
+    protected ilIndividualAssessmentDateFormatter $date_formatter;
 
     public function __construct(
         ilObjIndividualAssessment $object,
@@ -72,7 +73,8 @@ class ilIndividualAssessmentMembersGUI
         ilErrorHandling $error_object,
         ilIndividualAssessmentMemberGUI $member_gui,
         ILIAS\Refinery\Factory $refinery,
-        ILIAS\HTTP\Wrapper\WrapperFactory $wrapper
+        ILIAS\HTTP\Wrapper\WrapperFactory $wrapper,
+        ilIndividualAssessmentDateFormatter $date_formatter
     ) {
         $this->object = $object;
         $this->ctrl = $ctrl;
@@ -89,6 +91,7 @@ class ilIndividualAssessmentMembersGUI
         $this->refinery = $refinery;
         $this->request_wrapper = $wrapper->query();
         $this->post_wrapper = $wrapper->post();
+        $this->date_formatter = $date_formatter;
 
         $this->ref_id = $object->getRefId();
     }
@@ -96,9 +99,9 @@ class ilIndividualAssessmentMembersGUI
     public function executeCommand(): void
     {
         if (!$this->iass_access->mayEditMembers()
-            && !$this->iass_access->mayGradeUser()
-            && !$this->iass_access->mayViewUser()
-            && !$this->iass_access->mayAmendGradeUser()
+            && !$this->iass_access->mayGradeAnyUser()
+            && !$this->iass_access->mayViewAnyUser()
+            && !$this->iass_access->mayAmendAllUsers()
         ) {
             $this->handleAccessViolation();
         }
@@ -181,7 +184,8 @@ class ilIndividualAssessmentMembersGUI
             $this->iass_access,
             $this->factory,
             $this->renderer,
-            $this->user->getId()
+            $this->user,
+            $this->date_formatter
         );
 
         $filter = $this->getFilterValue();
@@ -332,7 +336,7 @@ class ilIndividualAssessmentMembersGUI
 
         $ret[$this->txt("iass_filter_all")] = $this->getLinkForStatusFilter(null);
 
-        if ($this->maybeViewLearningProgress()) {
+        if ($this->iass_access->mayViewAnyUser()) {
             $ret[$this->txt("iass_filter_not_started")] =
                 $this->getLinkForStatusFilter(ilIndividualAssessmentMembers::LP_ASSESSMENT_NOT_COMPLETED);
             $ret[$this->txt("iass_filter_not_finalized")] =
@@ -438,11 +442,6 @@ class ilIndividualAssessmentMembersGUI
     public function handleAccessViolation(): void
     {
         $this->error_object->raiseError($this->txt("msg_no_perm_read"), $this->error_object->WARNING);
-    }
-
-    protected function maybeViewLearningProgress(): bool
-    {
-        return $this->iass_access->mayViewUser();
     }
 
     protected function txt(string $code): string

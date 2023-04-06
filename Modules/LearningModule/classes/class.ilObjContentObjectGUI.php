@@ -31,6 +31,7 @@ use ILIAS\LearningModule\Editing\EditingGUIRequest;
  */
 class ilObjContentObjectGUI extends ilObjectGUI
 {
+    protected ilRbacSystem $rbacsystem;
     protected \ILIAS\LearningModule\ReadingTime\SettingsGUI $reading_time_gui;
     protected ilLMMenuEditor $lmme_obj;
     protected ilObjLearningModule $lm_obj;
@@ -66,6 +67,8 @@ class ilObjContentObjectGUI extends ilObjectGUI
     protected ilObjLearningModule $lm;
     protected EditingGUIRequest $edit_request;
     protected \ILIAS\Style\Content\Service $content_style_service;
+
+    protected ilLMTree $lm_tree;
 
     /**
      * @param mixed $a_data
@@ -333,6 +336,10 @@ class ilObjContentObjectGUI extends ilObjectGUI
                 break;
 
             case "ilexportgui":
+                // it is important to reset the "transl" parameter here
+                // otherwise it will effect the HTML export and overwrite the selected language
+                $this->ctrl->setParameterByClass(ilObjLearningModuleGUI::class, "transl", "");
+                $this->ctrl->setParameterByClass(ilLMEditorGUI::class, "transl", "");
                 $exp_gui = new ilExportGUI($this);
                 $exp_gui->addFormat("xml");
                 $ot = ilObjectTranslation::getInstance($this->lm->getId());
@@ -380,6 +387,7 @@ class ilObjContentObjectGUI extends ilObjectGUI
 
             case "ilcommonactiondispatchergui":
                 $gui = ilCommonActionDispatcherGUI::getInstanceFromAjaxCall();
+                $this->prepareOutput();
                 $this->ctrl->forwardCommand($gui);
                 break;
 

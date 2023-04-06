@@ -122,8 +122,6 @@ class assFormulaQuestionResult
             $resultunits = $this->getAvailableResultUnits($question_id);
         }
 
-        include_once "./Services/Math/classes/class.ilMath.php";
-        include_once "./Services/Math/classes/class.EvalMath.php";
         $formula = $this->substituteFormula($variables, $results);
         if (preg_match_all("/(\\\$v\\d+)/ims", $formula, $matches)) {
             foreach ($matches[1] as $variable) {
@@ -159,7 +157,6 @@ class assFormulaQuestionResult
 
     public function findValidRandomVariables($variables, $results): void
     {
-        include_once "./Services/Math/classes/class.EvalMath.php";
         $i = 0;
         $inRange = false;
         while ($i < 1000 && !$inRange) {
@@ -197,7 +194,6 @@ class assFormulaQuestionResult
     public function suggestRange($variables, $results): void
     {
         //		@todo Check this
-        include_once "./Services/Math/classes/class.EvalMath.php";
         $range_min = null;
         $range_max = null;
         for ($i = 0; $i < 1000; $i++) {
@@ -222,7 +218,6 @@ class assFormulaQuestionResult
                 $range_max = $result;
             }
         }
-        include_once "./Services/Math/classes/class.ilMath.php";
         if (is_object($this->getUnit())) {
             $range_min = ilMath::_div($range_min, $this->getUnit()->getFactor());
             $range_max = ilMath::_div($range_max, $this->getUnit()->getFactor());
@@ -246,8 +241,6 @@ class assFormulaQuestionResult
         }
         $value = str_replace(' ', '', $value);
 
-        include_once "./Services/Math/classes/class.EvalMath.php";
-        include_once "./Services/Math/classes/class.ilMath.php";
         $formula = $this->substituteFormula($variables, $results);
 
         $check_valid_chars = true;
@@ -277,29 +270,26 @@ class assFormulaQuestionResult
         $math = new EvalMath();
         $math->suppress_errors = true;
         $result = $math->evaluate($formula); // baseunit-result!!
+        $resultWithRespectedUnit = $result;
 
-        $resultWithRespectedUnit = ilMath::_round($result, $this->getPrecision());
         if (is_object($this->getUnit())) {
             //there is a "fix" result_unit defined!
 
             // if expected resultunit != baseunit convert to "fix" result_unit
             if ($this->getUnit()->getBaseUnit() != -1) {
-                $resultWithRespectedUnit = ilMath::_div($result, $this->getUnit()->getFactor(), $this->getPrecision());
-            } else {
-                //if resultunit == baseunit calculate to get correct precision
-                $resultWithRespectedUnit = ilMath::_mul($result, 1, $this->getPrecision());
+                $resultWithRespectedUnit = ilMath::_div($result, $this->getUnit()->getFactor());
             }
         } elseif ($this->getUnit() == null && $unit != null) {
             // there is no "fix" result_unit defined, but the user has selected a unit ...
             // so .... there are "available resultunits" in multi-selectbox selected
             // -> check if selected user-unit is baseunit
-            if ($unit->getFactor() == 1 && strlen(trim($unit->getFactor())) == 1) {
+            if ($unit->getFactor() != 1 && strlen(trim($unit->getFactor())) != 1) {
                 // result is already calculated to baseunit.... -> get correct precision..
-                $resultWithRespectedUnit = ilMath::_mul($result, 1, $this->getPrecision());
-            } else {
-                $resultWithRespectedUnit = ilMath::_div($result, $unit->getFactor(), $this->getPrecision());
+                $resultWithRespectedUnit = ilMath::_div($result, $unit->getFactor());
             }
         }
+
+        $result = substr($result, 0, strlen($resultWithRespectedUnit));
 
         //	check for valid chars ("0-9",",|.|/","0-9","e|E","+|-","0-9")
         $has_valid_chars = preg_match("/^-?([0-9]*)(,|\\.|\\/){0,1}([0-9]*)([eE][\\+|-]([0-9])+)?$/", $value, $matches);
@@ -311,6 +301,7 @@ class assFormulaQuestionResult
             (!isset($matches[1]) || !strlen($matches[1]) || !isset($matches[3]) || !strlen($matches[3]) || $matches[3] == 0)) {
             $check_valid_chars = false;
         }
+
         // result_type extension
         switch ($this->getResultType()) {
             case assFormulaQuestionResult::RESULT_DEC:
@@ -320,8 +311,6 @@ class assFormulaQuestionResult
                 } else {
                     $frac_value = $value;
                 }
-
-                $frac_value = ilMath::_round($frac_value, $this->getPrecision());
 
                 if (substr_count($value, '/') >= 1) {
                     $check_fraction = false;
@@ -334,7 +323,8 @@ class assFormulaQuestionResult
             case assFormulaQuestionResult::RESULT_CO_FRAC:
                 $exp_val = explode('/', $value);
                 if (count($exp_val) == 1) {
-                    $frac_value = ilMath::_div($exp_val[0], 1, $this->getPrecision());
+                    $frac_value = ilMath::_div($exp_val[0], 1);
+
                     if (ilMath::_equals($frac_value, $resultWithRespectedUnit, $this->getPrecision())) {
                         $check_fraction = true;
                     } else {
@@ -342,7 +332,7 @@ class assFormulaQuestionResult
                     }
                 } else {
                     try {
-                        $frac_value = ilMath::_div($exp_val[0], $exp_val[1], $this->getPrecision());
+                        $frac_value = ilMath::_div($exp_val[0], $exp_val[1]);
                     } catch (ilMathDivisionByZeroException $ex) {
                         if ($result) {
                             return false;
@@ -375,7 +365,7 @@ class assFormulaQuestionResult
                 } elseif (substr_count($value, '/') == 1) {
                     $exp_val = explode('/', $value);
                     try {
-                        $frac_value = ilMath::_div($exp_val[0], $exp_val[1], $this->getPrecision());
+                        $frac_value = ilMath::_div($exp_val[0], $exp_val[1]);
                     } catch (ilMathDivisionByZeroException $ex) {
                         if ($result) {
                             return false;
@@ -386,7 +376,7 @@ class assFormulaQuestionResult
                 } else {
                     $frac_value = $value;
                 }
-                $frac_value = ilMath::_round($frac_value, $this->getPrecision());
+
                 $check_fraction = true;
                 break;
         }
@@ -396,6 +386,9 @@ class assFormulaQuestionResult
                 $value = ilMath::_mul($frac_value, $unit->getFactor(), 100);
             }
         }
+
+        $frac_value = ilMath::_round($frac_value, $this->getPrecision());
+        $resultWithRespectedUnit = ilMath::_round($resultWithRespectedUnit, $this->getPrecision());
 
         $checkvalue = false;
         if (isset($frac_value)) {
@@ -451,8 +444,6 @@ class assFormulaQuestionResult
             }
         } else {
             $points = 0;
-            include_once "./Services/Math/classes/class.EvalMath.php";
-            include_once "./Services/Math/classes/class.ilMath.php";
             $formula = $this->substituteFormula($variables, $results);
 
             if (preg_match_all("/(\\\$v\\d+)/ims", $formula, $matches)) {
@@ -570,8 +561,6 @@ class assFormulaQuestionResult
                 return array("points" => 0);
             }
         } else {
-            include_once "./Services/Math/classes/class.EvalMath.php";
-            include_once "./Services/Math/classes/class.ilMath.php";
             $totalpoints = 0;
             $formula = $this->substituteFormula($variables, $results);
             if (preg_match_all("/(\\\$v\\d+)/ims", $formula, $matches)) {
@@ -634,14 +623,6 @@ class assFormulaQuestionResult
 
     public function setRangeMin($range_min): void
     {
-        //		include_once "./Services/Math/classes/class.EvalMath.php";
-        //		$math = new EvalMath();
-        //		$math->suppress_errors = TRUE;
-        //		$result = $math->evaluate($range_min);
-        //		$val = (strlen($result) > 8) ? strtoupper(sprintf("%e", $result)) : $result;
-        //		$this->range_min = $val;
-
-        include_once "./Services/Math/classes/class.EvalMath.php";
         $math = new EvalMath();
         $math->suppress_errors = true;
         $result = $math->evaluate((string) $range_min);
@@ -657,7 +638,6 @@ class assFormulaQuestionResult
     {
         if (is_numeric($this->getRangeMin())) {
             if (is_object($this->getUnit())) {
-                include_once "./Services/Math/classes/class.ilMath.php";
                 return ilMath::_mul($this->getRangeMin(), $this->getUnit()->getFactor(), 100);
             }
         }
@@ -666,14 +646,6 @@ class assFormulaQuestionResult
 
     public function setRangeMax($range_max): void
     {
-        //		include_once "./Services/Math/classes/class.EvalMath.php";
-        //		$math = new EvalMath();
-        //		$math->suppress_errors = TRUE;
-        //		$result = $math->evaluate($range_max);
-        //		$val = (strlen($result) > 8) ? strtoupper(sprintf("%e", $result)) : $result;
-        //		$this->range_max = $val;
-
-        include_once "./Services/Math/classes/class.EvalMath.php";
         $math = new EvalMath();
         $math->suppress_errors = true;
         $result = $math->evaluate((string) $range_max);
@@ -689,7 +661,6 @@ class assFormulaQuestionResult
     {
         if (is_numeric($this->getRangeMax())) {
             if (is_object($this->getUnit())) {
-                include_once "./Services/Math/classes/class.ilMath.php";
                 return ilMath::_mul($this->getRangeMax(), $this->getUnit()->getFactor(), 100);
             }
         }

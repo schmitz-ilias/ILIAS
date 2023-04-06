@@ -17,6 +17,9 @@
  *********************************************************************/
 
 /**
+ * User interface which displays the competences which a learner has shown in a
+ * test.
+ *
  * @author		Björn Heyser <bheyser@databay.de>
  * @version		$Id: class.ilTestSkillGUI.php 46688 2013-12-09 15:23:17Z bheyser $
  *
@@ -124,8 +127,6 @@ class ilTestSkillEvaluationGUI
     {
         $cmd = $this->ctrl->getCmd(self::CMD_SHOW) . 'Cmd';
 
-        $this->manageTabs($cmd);
-
         $this->$cmd();
     }
 
@@ -134,32 +135,13 @@ class ilTestSkillEvaluationGUI
         return false;
     }
 
-    private function manageTabs($cmd)
-    {
-        #$this->tabs->clearTargets();
-#
-        #		$this->tabs->setBackTarget(
-        #			$this->lng->txt('tst_results_back_introduction'),
-        #			$this->ctrl->getLinkTargetByClass('ilObjTestGUI', 'infoScreen')
-        #		);
-
-        #		if( $this->getObjectiveOrientedContainer()->isObjectiveOrientedPresentationRequired() )
-        #		{
-        #			require_once 'Services/Link/classes/class.ilLink.php';
-        #			$courseLink = ilLink::_getLink($this->getObjectiveOrientedContainer()->getRefId());
-        #			$this->tabs->setBack2Target($this->lng->txt('back_to_objective_container'), $courseLink);
-        #		}
-    }
-
     protected function init($skillProfileEnabled)
     {
-        require_once 'Modules/Test/classes/class.ilTestPassesSelector.php';
         $this->testPassesSelector = new ilTestPassesSelector($this->db, $this->testOBJ);
         $this->testPassesSelector->setActiveId($this->testSession->getActiveId());
         $this->testPassesSelector->setLastFinishedPass($this->testSession->getLastFinishedPass());
 
         $assSettings = new ilSetting('assessment');
-        require_once 'Modules/Test/classes/class.ilTestSkillEvaluation.php';
         $skillEvaluation = new ilTestSkillEvaluation(
             $this->db,
             $this->testOBJ->getTestId(),

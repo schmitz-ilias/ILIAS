@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * This file is part of ILIAS, a powerful learning management system
  * published by ILIAS open source e-Learning e.V.
@@ -18,6 +16,8 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+declare(strict_types=1);
+
 /**
  * Class ilChatroomServerSettings
  * @author  Andreas Kordosz <akordosz@databay.de>
@@ -29,8 +29,8 @@ class ilChatroomServerSettings
     private const DEFAULT_PORT = 8585;
     private const DEFAULT_PROCOTOL = 'http://';
     private const DEFAULT_HOST = '192.168.1.94';
+    final public const PREFIX = '/backend';
 
-    public const PREFIX = '/backend';
     private int $port = self::DEFAULT_PORT;
     private string $protocol = self::DEFAULT_PROCOTOL;
     private string $domain = self::DEFAULT_HOST;
@@ -80,9 +80,7 @@ class ilChatroomServerSettings
     /**
      * Creates URL by calling $this->getBaseURL and using given $action and
      * $scope and returns it.
-     * @param string $action
      * @param string|int|null $scope
-     * @return string
      */
     public function getURL(string $action, $scope = null): string
     {
@@ -100,7 +98,7 @@ class ilChatroomServerSettings
         if ($this->getIliasUrlEnabled()) {
             $url = $this->getIliasUrl();
 
-            if (strpos($url, '://') === false) {
+            if (!str_contains($url, '://')) {
                 $url = $this->getProtocol() . $url;
             }
 
@@ -127,7 +125,7 @@ class ilChatroomServerSettings
 
     public function setProtocol(string $protocol): void
     {
-        if (strpos($protocol, '://') === false) {
+        if (!str_contains($protocol, '://')) {
             $this->protocol = $protocol . '://';
         }
     }
@@ -145,7 +143,6 @@ class ilChatroomServerSettings
     /**
      * Creates base URL by calling $this->getProtocol(), $this->getDomain() and
      * $this->getPort() and returnes it.
-     * @return string
      */
     public function getBaseURL(): string
     {
@@ -187,7 +184,7 @@ class ilChatroomServerSettings
         if ($this->getClientUrlEnabled()) {
             $url = $this->getClientUrl();
 
-            if (strpos($url, '://') === false) {
+            if (!str_contains($url, '://')) {
                 $url = $this->getProtocol() . $url;
             }
 

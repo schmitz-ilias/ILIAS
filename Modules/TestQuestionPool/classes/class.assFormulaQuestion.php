@@ -16,13 +16,7 @@
  *
  *********************************************************************/
 
-include_once "./Modules/TestQuestionPool/classes/class.assQuestion.php";
-include_once "./Modules/TestQuestionPool/classes/class.assFormulaQuestionResult.php";
-include_once "./Modules/TestQuestionPool/classes/class.assFormulaQuestionVariable.php";
-include_once "./Modules/TestQuestionPool/classes/class.ilUnitConfigurationRepository.php";
-include_once "./Modules/Test/classes/inc.AssessmentConstants.php";
-include_once "./Modules/TestQuestionPool/interfaces/interface.iQuestionCondition.php";
-require_once './Modules/TestQuestionPool/classes/class.ilUserQuestionResult.php';
+require_once './Modules/Test/classes/inc.AssessmentConstants.php';
 
 /**
  * Class for single choice questions
@@ -260,14 +254,11 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
     }
 
     /**
-     * @param array $userdata
-     * @param bool $graphicalOutput
-     * @param bool $forsolution
-     * @param bool $result_output
-     * @param ilAssQuestionPreviewSession|null $previewSession
+     * @param int[] $selections
+     * @param string[] $correctness_icons
      * @return bool|mixed|string
      */
-    public function substituteVariables(array $userdata, $graphicalOutput = false, $forsolution = false, $result_output = false)
+    public function substituteVariables(array $userdata, bool $graphicalOutput = false, bool $forsolution = false, bool $result_output = false, array $correctness_icons = [])
     {
         if ((count($this->results) == 0) && (count($this->variables) == 0)) {
             return false;
@@ -299,7 +290,11 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
                 ) {
                     $is_frac = true;
                 }
-                if ($forsolution) {
+                if (is_array($userdata) &&
+                    isset($userdata[$result]) &&
+                    isset($userdata[$result]["value"])) {
+                    $input = $this->generateResultInputHtml($result, $userdata[$result]["value"]);
+                } elseif ($forsolution) {
                     $value = $resObj->calculateFormula($this->getVariables(), $this->getResults(), parent::getId());
                     $value = sprintf("%." . $resObj->getPrecision() . "f", $value);
 
@@ -315,8 +310,6 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
                     $input = '<span class="ilc_qinput_TextInput solutionbox">' . ilLegacyFormElementsUtil::prepareFormOutput(
                         $value
                     ) . '</span>';
-                } elseif (is_array($userdata) && isset($userdata[$result])) {
-                    $input = $this->generateResultInputHtml($result, $userdata[$result]["value"]);
                 } else {
                     $input = $this->generateResultInputHTML($result, '');
                 }
@@ -326,7 +319,7 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
                     if ($forsolution) {
                         if (is_array($userdata)) {
                             foreach ($this->getResultUnits($resObj) as $unit) {
-                                if ($userdata[$result]["unit"] == $unit->getId()) {
+                                if (isset($userdata[$result]["unit"]) && $userdata[$result]["unit"] == $unit->getId()) {
                                     $units = $unit->getUnit();
                                 }
                             }
@@ -400,24 +393,23 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
 
                     $template = new ilTemplate("tpl.il_as_qpl_formulaquestion_output_solution_image.html", true, true, 'Modules/TestQuestionPool');
 
+                    $correctness_icon = $correctness_icons['not_correct'];
                     if ($resObj->isCorrect($this->getVariables(), $this->getResults(), $user_value, $resunit)) {
-                        $template->setCurrentBlock("icon_ok");
-                        $template->setVariable("ICON_OK", ilUtil::getImagePath("icon_ok.svg"));
-                        $template->setVariable("TEXT_OK", $this->lng->txt("answer_is_right"));
-                        $template->parseCurrentBlock();
-                    } else {
-                        $template->setCurrentBlock("icon_not_ok");
-                        $template->setVariable("ICON_NOT_OK", ilUtil::getImagePath("icon_not_ok.svg"));
-                        $template->setVariable("TEXT_NOT_OK", $this->lng->txt("answer_is_wrong"));
-                        $template->parseCurrentBlock();
+                        $correctness_icon = $correctness_icons['correct'];
                     }
+                    $template->setCurrentBlock("icon_ok");
+                    $template->setVariable("ICON_OK", $correctness_icon);
+                    $template->parseCurrentBlock();
+
                     $checkSign = $template->get();
                 }
                 $resultOutput = "";
                 if ($result_output) {
                     $template = new ilTemplate("tpl.il_as_qpl_formulaquestion_output_solution_result.html", true, true, 'Modules/TestQuestionPool');
 
-                    if (is_array($userdata) && array_key_exists($resObj->getResult(), $userdata)) {
+                    if (is_array($userdata) &&
+                        array_key_exists($resObj->getResult(), $userdata) &&
+                        array_key_exists('value', $userdata[$resObj->getResult()])) {
                         $found = $resObj->getResultInfo(
                             $this->getVariables(),
                             $this->getResults(),
@@ -659,7 +651,6 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
 
             $this->unitrepository = new ilUnitConfigurationRepository($question_id);
 
-            include_once("./Services/RTE/classes/class.ilRTE.php");
             $this->setQuestion(ilRTE::_replaceMediaObjectImageSrc((string) $data["question_text"], 1));
             $this->setEstimatedWorkingTime(substr($data["working_time"], 0, 2), substr($data["working_time"], 3, 2), substr($data["working_time"], 6, 2));
 
@@ -725,7 +716,7 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
         $thisObjId = $this->getObjId();
 
         $clone = $this;
-        include_once("./Modules/TestQuestionPool/classes/class.assQuestion.php");
+
         $original_id = assQuestion::_getOriginalId($this->id);
         $clone->id = -1;
 
@@ -772,7 +763,7 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
         }
         // duplicate the question in database
         $clone = $this;
-        include_once("./Modules/TestQuestionPool/classes/class.assQuestion.php");
+
         $original_id = assQuestion::_getOriginalId($this->id);
         $clone->id = -1;
         $source_questionpool_id = $this->getObjId();
@@ -799,8 +790,6 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
         if ($this->getId() <= 0) {
             throw new RuntimeException('The question has not been saved. It cannot be duplicated');
         }
-
-        include_once("./Modules/TestQuestionPool/classes/class.assQuestion.php");
 
         $sourceQuestionId = $this->id;
         $sourceParentId = $this->getObjId();
@@ -938,7 +927,6 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
         $ilDB = $DIC['ilDB'];
 
         if (is_null($pass)) {
-            include_once "./Modules/Test/classes/class.ilObjTest.php";
             $pass = ilObjTest::_getPass($active_id);
         }
 
@@ -1003,7 +991,6 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
         });
 
         if ($entered_values) {
-            include_once("./Modules/Test/classes/class.ilObjAssessmentFolder.php");
             if (ilObjAssessmentFolder::_enabledAssessmentLogging()) {
                 assQuestion::logAction($this->lng->txtlng(
                     "assessment",
@@ -1012,7 +999,6 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
                 ), $active_id, $this->getId());
             }
         } else {
-            include_once("./Modules/Test/classes/class.ilObjAssessmentFolder.php");
             if (ilObjAssessmentFolder::_enabledAssessmentLogging()) {
                 assQuestion::logAction($this->lng->txtlng(
                     "assessment",
@@ -1200,28 +1186,28 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
     /**
      * {@inheritdoc}
      */
-    public function setExportDetailsXLS(ilAssExcelFormatHelper $worksheet, int $startrow, int $active_id, int $pass): int
+    public function setExportDetailsXLS(ilAssExcelFormatHelper $worksheet, int $startrow, int $col, int $active_id, int $pass): int
     {
-        parent::setExportDetailsXLS($worksheet, $startrow, $active_id, $pass);
+        parent::setExportDetailsXLS($worksheet, $startrow, $col, $active_id, $pass);
 
         $solution = $this->getSolutionValues($active_id, $pass);
 
         $i = 1;
         foreach ($solution as $solutionvalue) {
-            $worksheet->setCell($startrow + $i, 0, $solutionvalue["value1"]);
-            $worksheet->setBold($worksheet->getColumnCoord(0) . ($startrow + $i));
+            $worksheet->setCell($startrow + $i, $col, $solutionvalue["value1"]);
+            $worksheet->setBold($worksheet->getColumnCoord($col) . ($startrow + $i));
             if (strpos($solutionvalue["value1"], "_unit")) {
                 $unit = $this->getUnitrepository()->getUnit($solutionvalue["value2"]);
                 if (is_object($unit)) {
-                    $worksheet->setCell($startrow + $i, 1, $unit->getUnit());
+                    $worksheet->setCell($startrow + $i, $col + 1, $unit->getUnit());
                 }
             } else {
-                $worksheet->setCell($startrow + $i, 1, $solutionvalue["value2"]);
+                $worksheet->setCell($startrow + $i, $col + 1, $solutionvalue["value2"]);
             }
             if (preg_match("/(\\\$v\\d+)/", $solutionvalue["value1"], $matches)) {
                 $var = $this->getVariable($solutionvalue["value1"]);
                 if (is_object($var) && (is_object($var->getUnit()))) {
-                    $worksheet->setCell($startrow + $i, 2, $var->getUnit()->getUnit());
+                    $worksheet->setCell($startrow + $i, $col + 2, $var->getUnit()->getUnit());
                 }
             }
             $i++;
@@ -1343,20 +1329,22 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
 
         foreach ($this->getResults() as $index => $a) {
             $key = "result_$index";
-            if (
-                $post->has($key)
-                ||
-               $post->has($key . "_unit")
-            ) {
-                $value =$post->retrieve(
+            if ($post->has($key)) {
+                $value = $post->retrieve(
                     $key,
                     $this->dic->refinery()->kindlyTo()->string()
                 );
 
                 $solutionSubmit[$key] = $value;
             }
+            if ($post->has($key . "_unit")) {
+                $value = $post->retrieve(
+                    $key . "_unit",
+                    $this->dic->refinery()->kindlyTo()->string()
+                );
+                $solutionSubmit[$key . "_unit"] = $value;
+            }
         }
-
         return $solutionSubmit;
     }
 
@@ -1386,7 +1374,6 @@ class assFormulaQuestion extends assQuestion implements iQuestionCondition
      */
     public function getOperators($expression): array
     {
-        require_once "./Modules/TestQuestionPool/classes/class.ilOperatorsExpressionMapping.php";
         return ilOperatorsExpressionMapping::getOperatorsByExpression($expression);
     }
 

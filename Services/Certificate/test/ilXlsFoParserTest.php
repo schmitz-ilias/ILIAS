@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * This file is part of ILIAS, a powerful learning management system
  * published by ILIAS open source e-Learning e.V.
@@ -17,6 +15,8 @@ declare(strict_types=1);
  * https://github.com/ILIAS-eLearning
  *
  *********************************************************************/
+
+declare(strict_types=1);
 
 /**
  * @author  Niels Theen <ntheen@databay.de>
@@ -115,7 +115,7 @@ class ilXlsFoParserTest extends ilCertificateBaseTestCase
         $this->assertSame('Something Processed', $output);
     }
 
-    public function testParseButXmlCheckerFindsAnError(): void
+    public function testParseButXmlCheckerFindsAnError(): never
     {
         $this->expectException(Exception::class);
 
