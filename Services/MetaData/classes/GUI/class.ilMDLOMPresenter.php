@@ -329,18 +329,7 @@ class ilMDLOMPresenter
 
     public function getUserDateFormat(): DateFormat
     {
-        switch ($this->user->getDateFormat()) {
-            case ilCalendarSettings::DATE_FORMAT_DMY:
-                return $this->date_factory->germanShort();
-
-            case ilCalendarSettings::DATE_FORMAT_MDY:
-                return $this->date_factory->custom()->month()->slash()
-                    ->day()->slash()->year()->get();
-
-            case ilCalendarSettings::DATE_FORMAT_YMD:
-            default:
-                return $this->date_factory->standard();
-        }
+        return $this->user->getDateFormat();
     }
 
     public function txt(string $key): string

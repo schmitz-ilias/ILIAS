@@ -76,10 +76,9 @@ class ilMDFullEditorActionModalProvider
             if (($len = strlen($descr) - self::MAX_MODAL_CHARS) > 0) {
                 $descr = substr($descr, 0, -$len - 1) . "\xe2\x80\xa6";
             }
-            $items[] = $this->factory->modal()->interruptiveItem(
+            $items[] = $this->factory->modal()->interruptiveItem()->keyValue(
                 'md_delete_' . $index,
                 $title,
-                null,
                 $descr
             );
             $index++;

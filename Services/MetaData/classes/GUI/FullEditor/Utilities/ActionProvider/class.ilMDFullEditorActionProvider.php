@@ -82,7 +82,8 @@ class ilMDFullEditorActionProvider
         $element = $root->getSubElementsByPath($path_to_element)[0];
         $index = 1 + array_search(
             $element,
-            $root->getSubElementsByPath($clean_path)
+            $root->getSubElementsByPath($clean_path),
+            true
         );
 
         $indices_not_deletable = $quirk_structure

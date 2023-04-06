@@ -132,12 +132,13 @@ class ilMDEditorTreeRecursion implements TreeRecursion
         $mode = $tag->getCollectionMode();
 
         // expanded
-        $is_expanded = in_array($this->current_elements[0], $elements);
+        $is_expanded = in_array($this->current_elements[0], $elements, true);
         foreach ($elements as $el) {
             $is_expanded =
                 $is_expanded || in_array(
                     $el,
-                    $this->getAllSuperElements($this->current_elements[0])
+                    $this->getAllSuperElements($this->current_elements[0]),
+                    true
                 );
         }
 
