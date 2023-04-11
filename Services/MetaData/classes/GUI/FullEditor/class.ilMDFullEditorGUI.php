@@ -652,7 +652,12 @@ class ilMDFullEditorGUI
         array $update_signals,
         array $delete_signals
     ): Panel {
-        $subpanels = [];
+        $content = [];
+
+        $content[] = $this->factory->messageBox()->info(
+            $this->presenter->txt('meta_full_editor_navigation_info')
+        );
+
         foreach ($root->getSubElements() as $key => $el) {
             if ($el->isScaffold()) {
                 continue;
@@ -666,7 +671,7 @@ class ilMDFullEditorGUI
                 $delete[$path->getPathAsString()] =
                     $delete_signals[$path->getPathAsString()];
             }
-            $subpanels[] = $this->getPanel(
+            $content[] = $this->getPanel(
                 $root,
                 $path,
                 $create_signals,
@@ -677,7 +682,7 @@ class ilMDFullEditorGUI
         }
         return $this->factory->panel()->standard(
             $this->presenter->getElementName($root),
-            $subpanels
+            $content
         );
     }
 
