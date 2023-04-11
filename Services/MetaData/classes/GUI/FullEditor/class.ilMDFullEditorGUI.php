@@ -151,7 +151,8 @@ class ilMDFullEditorGUI
                 $form = $this->form_provider->getCreateForm(
                     $root,
                     $path,
-                    $path
+                    $path,
+                    false
                 );
                 $req = null;
                 if (
@@ -249,7 +250,8 @@ class ilMDFullEditorGUI
             $form = $this->form_provider->getCreateForm(
                 $root,
                 $appended_path,
-                $base_path
+                $base_path,
+                false
             );
 
             $modals[$appended_path->getPathAsString()] =
@@ -289,7 +291,8 @@ class ilMDFullEditorGUI
                     $form = $this->form_provider->getUpdateForm(
                         $root,
                         $appended_path,
-                        $path
+                        $path,
+                        false
                     );
                     $req = null;
                     if (

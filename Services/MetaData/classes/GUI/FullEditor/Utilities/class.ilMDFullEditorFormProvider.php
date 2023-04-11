@@ -50,7 +50,8 @@ class ilMDFullEditorFormProvider
     public function getUpdateForm(
         ilMDRootElement $root,
         ilMDPathFromRoot $path_to_element,
-        ilMDPathFromRoot $base_path
+        ilMDPathFromRoot $base_path,
+        bool $with_title = true
     ): StandardForm {
         $link = $this->action_provider
             ->getLink()
@@ -65,6 +66,7 @@ class ilMDFullEditorFormProvider
             $path_to_element,
             $base_path,
             $link,
+            $with_title,
             false
         );
     }
@@ -72,7 +74,8 @@ class ilMDFullEditorFormProvider
     public function getCreateForm(
         ilMDRootElement $root,
         ilMDPathFromRoot $path_to_element,
-        ilMDPathFromRoot $base_path
+        ilMDPathFromRoot $base_path,
+        bool $with_title = true
     ): StandardForm {
         $ui_struct = $this->ui_dict->getStructure()
                        ->movePointerToEndOfPath($path_to_element);
@@ -94,6 +97,7 @@ class ilMDFullEditorFormProvider
                 $path_to_element,
                 $base_path,
                 $link,
+                $with_title,
                 $empty
             );
         }
@@ -113,6 +117,7 @@ class ilMDFullEditorFormProvider
             $path_to_element,
             $base_path,
             $link,
+            $with_title,
             $empty
         );
     }
@@ -123,14 +128,16 @@ class ilMDFullEditorFormProvider
         ilMDPathFromRoot $action_path,
         ilMDPathFromRoot $base_path,
         URI $link,
+        bool $with_title = true,
         bool $empty = false
     ): StandardForm {
         $section = [];
         if (!$empty) {
-            $section = [$this->input_provider->getInputSection(
+            $section = [$this->input_provider->getInputFields(
                 $root,
                 $path_to_element,
-                $action_path
+                $action_path,
+                $with_title
             )];
         }
 

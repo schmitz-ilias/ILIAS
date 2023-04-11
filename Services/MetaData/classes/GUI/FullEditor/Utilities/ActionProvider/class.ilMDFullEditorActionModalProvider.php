@@ -143,26 +143,25 @@ class ilMDFullEditorActionModalProvider
         ?Request $request = null
     ): RoundtripModal {
         $elements = $root->getSubElementsByPath($action_path);
-        $button = $this->factory->button()->standard(
-            $form->getSubmitCaption() ?? $this->presenter->txt('save'),
-            '#'
-        )->withOnLoadCode(function ($id) {
-            return 'il.MetaModalFormButtonHandler.init("' . $id . '");';
-        });
-
-        // For error handling, pass the request to the form
-        if ($request) {
-            $form = $form->withRequest($request);
-        }
 
         $modal = $this->factory->modal()->roundtrip(
             $this->getModalTitle($action_cmd, $elements[0]),
-            $form
-        )->withActionButtons([$button]);
+            null,
+            $form->getInputs(),
+            $form->getPostURL()
+        );
 
-        // For error handling, make the modal open on load
+        // For error handling, make the modal open on load and pass request
         if ($request) {
-            $modal = $modal->withOnLoad($modal->getShowSignal());
+            $modal = $modal
+                ->withOnLoad($modal->getShowSignal())
+                ->withRequest($request);
+            /**
+             * TODO: figure out how to show a useful error here (groups don't
+             *  automatically render their error, and I can't figure out how to
+             *  pass the error someplace else)
+             */
+            $modal->getData();
         }
 
         return $modal;

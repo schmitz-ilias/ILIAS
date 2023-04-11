@@ -20,6 +20,7 @@ declare(strict_types=1);
 
 use ILIAS\UI\Component\Input\Field\FormInput;
 use ILIAS\UI\Component\Input\Field\Section;
+use ILIAS\UI\Component\Input\Field\Group;
 use ILIAS\UI\Component\Input\Field\Factory;
 use ILIAS\Refinery\Factory as Refinery;
 use ILIAS\Data\DateFormat\DateFormat;
@@ -70,11 +71,12 @@ class ilMDFullEditorInputProvider
         $this->db_dict = $db_dict;
     }
 
-    public function getInputSection(
+    public function getInputFields(
         ilMDRootElement $root,
         ilMDPathFromRoot $path,
-        ilMDPathFromRoot $action_path
-    ): Section {
+        ilMDPathFromRoot $action_path,
+        bool $with_title
+    ): Section|Group {
         $element = $this->getUniqueElement($root, $path);
         $data_els = $this->data_finder->getDataElements($element);
         $inputs = [];
@@ -100,11 +102,20 @@ class ilMDFullEditorInputProvider
                 $exclude_required[] = $arr['path']->getPathAsString();
             }
         }
-        $section = $this->factory->section(
-            $inputs,
-            $this->presenter->getElementNameWithParents($element, false)
+
+        if ($with_title) {
+            $fields = $this->factory->section(
+                $inputs,
+                $this->presenter->getElementNameWithParents($element, false)
+            );
+        } else {
+            $fields = $this->factory->group(
+                $inputs
+            );
+        }
+
         // flatten the output of conditional inputs
-        )->withAdditionalTransformation(
+        $fields = $fields->withAdditionalTransformation(
             $this->refinery->custom()->transformation(function ($vs) {
                 foreach ($vs as $key => $v) {
                     if (is_array($v)) {
@@ -132,7 +143,7 @@ class ilMDFullEditorInputProvider
         );
 
         if ($create === '' || $needs_data) {
-            $section = $section->withAdditionalTransformation(
+            $fields = $fields->withAdditionalTransformation(
                 $this->refinery->custom()->constraint(
                     function ($vs) use ($exclude_required) {
                         foreach ($vs as $p => $v) {
@@ -150,7 +161,7 @@ class ilMDFullEditorInputProvider
             );
         }
 
-        return $section;
+        return $fields;
     }
 
     protected function getIndexOfElement(

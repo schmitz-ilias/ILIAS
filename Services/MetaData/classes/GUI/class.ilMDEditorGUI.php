@@ -351,9 +351,6 @@ class ilMDEditorGUI
         ?ilMDPathFromRoot $path_for_request = null
     ): void {
         $this->setTabsForFullEditor();
-        $this->tpl->addJavaScript(
-            'Services/MetaData/js/ilMetaModalFormButtonHandler.js'
-        );
 
         // get the MD
         $root = $this->repo->getMD();
