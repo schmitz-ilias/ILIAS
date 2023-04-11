@@ -47,6 +47,17 @@ class ilMDLOMPresenter
         $this->dict = $dict;
     }
 
+    public function shortenString(
+        string $string,
+        int $max_length
+    ): string {
+        if (function_exists('mb_substr')) {
+            return mb_substr($string, 0, $max_length, 'UTF-8');
+        } else {
+            return substr($string, 0, $max_length);
+        }
+    }
+
     /**
      * @param ilMDBaseElement[]     $elements
      * @param ilMDPathRelative|null $path_to_representation

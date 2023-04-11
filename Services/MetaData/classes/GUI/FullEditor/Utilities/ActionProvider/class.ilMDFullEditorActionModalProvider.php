@@ -31,7 +31,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
  */
 class ilMDFullEditorActionModalProvider
 {
-    public const MAX_MODAL_CHARS = 150;
+    public const MAX_LENGTH = 128;
 
     protected ilMDFullEditorActionLinkProvider $link_provider;
     protected Factory $factory;
@@ -69,17 +69,11 @@ class ilMDFullEditorActionModalProvider
         } else {
             $content = $this->prop_provider->getPropertiesByPreview($elements);
         }
-        foreach ($content as $title => $descr) {
-            if (($len = strlen($title) - self::MAX_MODAL_CHARS) > 0) {
-                $title = substr($title, 0, -$len - 1) . "\xe2\x80\xa6";
-            }
-            if (($len = strlen($descr) - self::MAX_MODAL_CHARS) > 0) {
-                $descr = substr($descr, 0, -$len - 1) . "\xe2\x80\xa6";
-            }
+        foreach ($content as $key => $value) {
             $items[] = $this->factory->modal()->interruptiveItem()->keyValue(
                 'md_delete_' . $index,
-                $title,
-                $descr
+                $this->presenter->shortenString($key, self::MAX_LENGTH),
+                $this->presenter->shortenString($value, self::MAX_LENGTH),
             );
             $index++;
         }
