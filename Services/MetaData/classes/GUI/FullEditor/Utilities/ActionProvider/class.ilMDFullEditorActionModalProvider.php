@@ -22,6 +22,7 @@ use ILIAS\UI\Factory;
 use ILIAS\UI\Component\Modal\Interruptive as InterruptiveModal;
 use ILIAS\UI\Component\Modal\RoundTrip as RoundtripModal;
 use ILIAS\UI\Component\Input\Container\Form\Standard as StandardForm;
+use ILIAS\UI\Component\Input\Field\Group as Group;
 use ILIAS\Data\URI;
 use ILIAS\UI\Component\Signal as Signal;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -147,15 +148,25 @@ class ilMDFullEditorActionModalProvider
 
         // For error handling, make the modal open on load and pass request
         if ($request) {
-            $modal = $modal
-                ->withOnLoad($modal->getShowSignal())
-                ->withRequest($request);
-            /**
-             * TODO: figure out how to show a useful error here (groups don't
-             *  automatically render their error, and I can't figure out how to
-             *  pass the error someplace else)
+            $modal = $modal->withRequest($request);
+
+            /*
+             * Show error message in a box, since KS groups don't pass along
+             * errors on their own.
              */
-            $modal->getData();
+            if (
+                ($group = $modal->getInputs()[0]) instanceof Group &&
+                $error = $group->getError()
+            ) {
+                $modal = $this->factory->modal()->roundtrip(
+                    $modal->getTitle(),
+                    [$this->factory->messageBox()->failure($error)],
+                    $modal->getInputs(),
+                    $modal->getPostURL()
+                )->withRequest($request);
+            }
+
+            $modal = $modal->withOnLoad($modal->getShowSignal());
         }
 
         return $modal;
