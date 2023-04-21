@@ -18,6 +18,14 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+use classes\Elements\Data\ilMDLOMDataFactory;
+use classes\Elements\Data\ilMDData;
+use Validation\ilMDLOMDataConstraintProvider;
+use classes\Elements\ilMDBaseElement;
+use classes\Elements\ilMDElement;
+use classes\Elements\ilMDRootElement;
+use classes\Elements\ilMDScaffoldElement;
+
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
@@ -96,7 +104,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
             //update non-scaffold elements
             if ($element instanceof ilMDElement) {
                 switch ($marker->getData()->getType()) {
-                    case ilMDLOMDataFactory::TYPE_NONE:
+                    case ilMDLOMDataFactory::TYPE_NULL:
                         break;
 
                     case $element->getData()->getType():
@@ -255,7 +263,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 0,
                 1
             ),
-            $this->data_factory->none()
+            $this->data_factory->null()
         );
         $this->validateMD(
             'read',
@@ -284,7 +292,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 1,
                 $path
             ),
-            $this->data_factory->none()
+            $this->data_factory->null()
         );
 
         $this->validateMD(
@@ -404,7 +412,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 $type = $new_structure->getTypeAtPointer();
                 if (
                     !array_key_exists(ilMDLOMDatabaseDictionary::RES_DATA, $row) &&
-                    $type !== ilMDLOMDataFactory::TYPE_NONE
+                    $type !== ilMDLOMDataFactory::TYPE_NULL
                 ) {
                     throw new ilMDDatabaseException(
                         'A read query for the elemement ' . $sub_name .
@@ -413,7 +421,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 }
                 if (
                     array_key_exists(ilMDLOMDatabaseDictionary::RES_DATA, $row) &&
-                    $type === ilMDLOMDataFactory::TYPE_NONE
+                    $type === ilMDLOMDataFactory::TYPE_NULL
                 ) {
                     throw new ilMDDatabaseException(
                         'A read query for the elemement ' . $sub_name .
@@ -422,7 +430,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 }
                 $value = (string) ($row[ilMDLOMDatabaseDictionary::RES_DATA] ?? '');
                 if (
-                    $type !== ilMDLOMDataFactory::TYPE_NONE &&
+                    $type !== ilMDLOMDataFactory::TYPE_NULL &&
                     $value === ''
                 ) {
                     continue;
@@ -507,7 +515,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     $structure->getTagAtPointer(),
                     $element->getMDID(),
                     $super_md_id,
-                    $this->data_factory->none(),
+                    $this->data_factory->null(),
                     $parent_ids
                 );
             };

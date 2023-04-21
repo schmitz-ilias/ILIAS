@@ -19,6 +19,9 @@ declare(strict_types=1);
  *********************************************************************/
 
 use Psr\Http\Message\ServerRequestInterface as Request;
+use classes\Elements\ilMDBaseElement;
+use classes\Elements\Markers\ilMDMarkerFactory;
+use classes\Elements\ilMDRootElement;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -109,12 +112,12 @@ class ilMDFullEditorMDManipulator
             if ($value !== '' && $value !== null) {
                 $el = $this->getUniqueElement($root, $path);
                 $el->leaveMarkerTrail(
-                    $this->marker_factory->markerByPath(
+                    $this->marker_factory->byPath(
                         $value,
                         $path,
                         $this->vocab_dict
                     ),
-                    $this->marker_factory->nullMarker()
+                    $this->marker_factory->null()
                 );
             }
         }
@@ -125,8 +128,8 @@ class ilMDFullEditorMDManipulator
         $element = $this->getUniqueElement($root, $create_path);
         if (!$element->getMarker()) {
             $element->leaveMarkerTrail(
-                $this->marker_factory->nullMarker(),
-                $this->marker_factory->nullMarker()
+                $this->marker_factory->null(),
+                $this->marker_factory->null()
             );
         }
         $this->repo->createAndUpdateMDElements($root);
@@ -159,19 +162,19 @@ class ilMDFullEditorMDManipulator
             if ($value !== '') {
                 $el = $this->getUniqueElement($root, $path);
                 $el->leaveMarkerTrail(
-                    $this->marker_factory->markerByPath(
+                    $this->marker_factory->byPath(
                         $value,
                         $path,
                         $this->vocab_dict
                     ),
-                    $this->marker_factory->nullMarker()
+                    $this->marker_factory->null()
                 );
                 continue;
             }
             $el = $this->getUniqueElement($delete_root, $path);
             $el->leaveMarkerTrail(
-                $this->marker_factory->nullMarker(),
-                $this->marker_factory->nullMarker()
+                $this->marker_factory->null(),
+                $this->marker_factory->null()
             );
         }
         $this->repo->createAndUpdateMDElements($root);
@@ -190,8 +193,8 @@ class ilMDFullEditorMDManipulator
     ): ilMDPathFromRoot {
         $el = $this->getUniqueElement($root, $delete_path);
         $el->leaveMarkerTrail(
-            $this->marker_factory->nullMarker(),
-            $this->marker_factory->nullMarker()
+            $this->marker_factory->null(),
+            $this->marker_factory->null()
         );
         $this->repo->deleteMDElements($root);
 

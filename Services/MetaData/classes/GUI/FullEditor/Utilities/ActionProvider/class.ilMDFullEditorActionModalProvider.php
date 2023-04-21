@@ -19,13 +19,12 @@ declare(strict_types=1);
  *********************************************************************/
 
 use ILIAS\UI\Factory;
-use ILIAS\UI\Component\Modal\Interruptive as InterruptiveModal;
 use ILIAS\UI\Component\Modal\RoundTrip as RoundtripModal;
 use ILIAS\UI\Component\Input\Container\Form\Standard as StandardForm;
 use ILIAS\UI\Component\Input\Field\Group as Group;
-use ILIAS\Data\URI;
-use ILIAS\UI\Component\Signal as Signal;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use classes\Elements\ilMDBaseElement;
+use classes\Elements\ilMDRootElement;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>

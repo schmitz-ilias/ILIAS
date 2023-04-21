@@ -21,6 +21,8 @@ declare(strict_types=1);
 use ILIAS\UI\Component\Button\Button;
 use ILIAS\UI\Renderer;
 use ILIAS\UI\Factory;
+use classes\Elements\ilMDElement;
+use classes\Elements\ilMDRootElement;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>

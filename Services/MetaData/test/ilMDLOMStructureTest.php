@@ -19,6 +19,7 @@ declare(strict_types=1);
  *********************************************************************/
 
 use PHPUnit\Framework\TestCase;
+use classes\Elements\Data\ilMDLOMDataFactory;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -164,7 +165,7 @@ class ilMDLOMStructureTest extends TestCase
             $structure->isUniqueAtPointer()
         );
         $this->assertSame(
-            ilMDLOMDataFactory::TYPE_NONE,
+            ilMDLOMDataFactory::TYPE_NULL,
             $structure->getTypeAtPointer()
         );
         $this->assertSame(
@@ -209,7 +210,7 @@ class ilMDLOMStructureTest extends TestCase
         $tag_factory = $this->createMock(ilMDTagFactory::class);
         $tag_factory
             ->expects($this->any())
-            ->method('databaseTag')
+            ->method('database')
             ->willReturn($tag);
 
         $db = $this->createMock(ilDBInterface::class);
@@ -260,7 +261,7 @@ class ilMDLOMStructureTest extends TestCase
         $tag_factory = $this->createMock(ilMDTagFactory::class);
         $tag_factory
             ->expects($this->any())
-            ->method('vocabulariesTag')
+            ->method('vocabularies')
             ->willReturn($tag_builder);
         $path = $this->createMock(ilMDPathRelative::class);
         $path

@@ -144,7 +144,7 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
         $structure
             ->movePointerToRoot()
             ->setTagAtPointer(
-                $this->factory->databaseTag(
+                $this->factory->database(
                     '',
                     "SELECT 0 as " . self::RES_MD_ID,
                     '',
@@ -416,7 +416,7 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             )
             ->movePointerToSubElement('type')
             ->setTagAtPointer(
-                $this->factory->databaseTag(
+                $this->factory->database(
                     '',
                     'SELECT %s AS ' . self::RES_MD_ID,
                     '',
@@ -427,7 +427,7 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             )
             ->movePointerToSubElement('value')
             ->setTagAtPointer(
-                $this->factory->databaseTag(
+                $this->factory->database(
                     '',
                     "SELECT '%s' AS " . self::RES_MD_ID .
                     ', CASE %s WHEN ' . self::MD_ID_OS . ' THEN ' .
@@ -446,7 +446,7 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             ->movePointerToSuperElement()
             ->movePointerToSubElement('source')
             ->setTagAtPointer(
-                $this->factory->databaseTag(
+                $this->factory->database(
                     '',
                     "SELECT '" . ilMDLOMVocabulariesDictionary::SOURCE .
                     "' AS " . self::RES_DATA . ', 0 AS ' . self::RES_MD_ID,
@@ -472,7 +472,7 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             ->movePointerToSuperElement()
             ->movePointerToSubElement('source')
             ->setTagAtPointer(
-                $this->factory->databaseTag(
+                $this->factory->database(
                     '',
                     "SELECT '" . ilMDLOMVocabulariesDictionary::SOURCE .
                     "' AS " . self::RES_DATA . ', 0 AS ' . self::RES_MD_ID,
@@ -1226,7 +1226,7 @@ class ilMDLOMDatabaseDictionary implements ilMDDictionary
             ->movePointerToSuperElement()
             ->movePointerToSubElement('source')
             ->setTagAtPointer(
-                $this->factory->databaseTag(
+                $this->factory->database(
                     '',
                     "SELECT '" . ilMDLOMVocabulariesDictionary::SOURCE .
                     "' AS " . self::RES_DATA . ', 0 AS ' . self::RES_MD_ID,

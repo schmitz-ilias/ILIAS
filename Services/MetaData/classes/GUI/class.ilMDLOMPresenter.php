@@ -20,6 +20,11 @@ declare(strict_types=1);
 
 use ILIAS\Data\DateFormat\Factory as DateFactory;
 use ILIAS\Data\DateFormat\DateFormat;
+use classes\Elements\Data\ilMDLOMDataFactory;
+use classes\Elements\Data\ilMDData;
+use classes\Vocabularies\ilMDVocabulary;
+use classes\Elements\ilMDBaseElement;
+use classes\Elements\ilMDRootElement;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -219,7 +224,7 @@ class ilMDLOMPresenter
     {
         return array_map(
             fn (string $arg) => $this->getVocabValue($arg),
-            $vocab->getValues()
+            $vocab->values()
         );
     }
 

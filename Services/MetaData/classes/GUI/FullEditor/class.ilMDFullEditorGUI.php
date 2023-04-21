@@ -18,14 +18,14 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-use ILIAS\UI\Component\Modal\Modal;
-use ILIAS\UI\Component\Signal;
 use ILIAS\UI\Component\Panel\Panel;
 use ILIAS\UI\Component\Button\Button;
 use ILIAS\UI\Component\Dropdown\Standard as StandardDropdown;
 use ILIAS\UI\Component\Input\Container\Form\Standard as StandardForm;
 use ILIAS\UI\Factory as UIFactory;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use classes\Elements\ilMDRootElement;
+use classes\Elements\ilMDScaffoldElement;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -41,7 +41,7 @@ class ilMDFullEditorGUI
     protected ilMDPathFactory $path_factory;
     protected UIFactory $factory;
     protected ilMDLOMEditorGUIDictionary $ui_dict;
-    protected ilMDLOMEditorGUIQuirkDictionary $quirk_dict;
+    protected ilMDLOMConstraintDictionary $constraint_dict;
     protected ilMDLOMPresenter $presenter;
     protected ilMDFullEditorActionProvider $action_provider;
     protected ilMDFullEditorInputProvider $input_provider;
@@ -65,7 +65,7 @@ class ilMDFullEditorGUI
         $this->ui_dict = $library->getLOMEditorGUIDictionary(
             $this->path_factory
         );
-        $this->quirk_dict = $library->getLOMEditorGUIQuirkDictionary();
+        $this->constraint_dict = $library->getLOMConstraintDictionary();
         $this->presenter = $presenter;
         $this->data_finder = $collection->dataFinder();
         $this->action_provider = $collection->actionProvider();
@@ -336,7 +336,7 @@ class ilMDFullEditorGUI
             case self::PANEL:
                 if (!$this->action_provider->isElementDeletable(
                     $root,
-                    $this->getNewUIQuirkStructure(),
+                    $this->getNewConstraintStructure(),
                     $path
                 )) {
                     return [];
@@ -348,7 +348,7 @@ class ilMDFullEditorGUI
             case self::FORM:
                 if (!$this->action_provider->isElementDeletable(
                     $root,
-                    $this->getNewUIQuirkStructure(),
+                    $this->getNewConstraintStructure(),
                     $path
                 )) {
                     return [];
@@ -373,7 +373,7 @@ class ilMDFullEditorGUI
                         ->addMDIDFilter($element->getMDID());
                     if (!$this->action_provider->isElementDeletable(
                         $root,
-                        $this->getNewUIQuirkStructure(),
+                        $this->getNewConstraintStructure(),
                         $appended_path
                     )) {
                         continue;
@@ -399,7 +399,7 @@ class ilMDFullEditorGUI
                         ->addMDIDFilter($element->getMDID());
                     if (!$this->action_provider->isElementDeletable(
                         $root,
-                        $this->getNewUIQuirkStructure(),
+                        $this->getNewConstraintStructure(),
                         $appended_path
                     )) {
                         continue;
@@ -702,8 +702,8 @@ class ilMDFullEditorGUI
         return $this->ui_dict->getStructure();
     }
 
-    protected function getNewUIQuirkStructure(): ilMDLOMEditorGUIQuirkStructure
+    protected function getNewConstraintStructure(): ilMDLOMConstraintStructure
     {
-        return $this->quirk_dict->getStructure();
+        return $this->constraint_dict->getStructure();
     }
 }

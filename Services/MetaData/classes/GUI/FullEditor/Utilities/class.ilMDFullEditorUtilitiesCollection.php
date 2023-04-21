@@ -22,6 +22,7 @@ use ILIAS\Data\URI;
 use ILIAS\UI\Renderer;
 use ILIAS\UI\Factory;
 use ILIAS\Refinery\Factory as Refinery;
+use classes\Elements\Markers\ilMDMarkerFactory;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -77,7 +78,7 @@ class ilMDFullEditorUtilitiesCollection
             $library->getLOMVocabulariesDictionary(
                 $path_factory
             ),
-            $library->getLOMEditorGUIQuirkDictionary(),
+            $library->getLOMConstraintDictionary(),
             $library->getLOMEditorGUIDictionary(
                 $path_factory
             ),

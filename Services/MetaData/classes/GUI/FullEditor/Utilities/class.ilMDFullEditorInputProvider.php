@@ -23,7 +23,10 @@ use ILIAS\UI\Component\Input\Field\Section;
 use ILIAS\UI\Component\Input\Field\Group;
 use ILIAS\UI\Component\Input\Field\Factory;
 use ILIAS\Refinery\Factory as Refinery;
-use ILIAS\Data\DateFormat\DateFormat;
+use classes\Elements\Data\ilMDLOMDataFactory;
+use classes\Elements\Data\ilMDData;
+use classes\Elements\ilMDBaseElement;
+use classes\Elements\ilMDRootElement;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -37,7 +40,7 @@ class ilMDFullEditorInputProvider
     protected Refinery $refinery;
     protected ilMDLOMPresenter $presenter;
     protected ilMDLOMVocabulariesDictionary $vocab_dict;
-    protected ilMDLOMEditorGUIQuirkDictionary $quirk_dict;
+    protected ilMDLOMConstraintDictionary $constraint_dict;
     protected ilMDLOMEditorGUIDictionary $ui_dict;
     protected ilMDFullEditorDataFinder $data_finder;
 
@@ -56,7 +59,7 @@ class ilMDFullEditorInputProvider
         Refinery $refinery,
         ilMDLOMPresenter $presenter,
         ilMDLOMVocabulariesDictionary $vocab_dict,
-        ilMDLOMEditorGUIQuirkDictionary $quirk_dict,
+        ilMDLOMConstraintDictionary $constraint_dict,
         ilMDLOMEditorGUIDictionary $ui_dict,
         ilMDFullEditorDataFinder $data_finder,
         ilMDLOMDatabaseDictionary $db_dict
@@ -65,7 +68,7 @@ class ilMDFullEditorInputProvider
         $this->refinery = $refinery;
         $this->presenter = $presenter;
         $this->vocab_dict = $vocab_dict;
-        $this->quirk_dict = $quirk_dict;
+        $this->constraint_dict = $constraint_dict;
         $this->ui_dict = $ui_dict;
         $this->data_finder = $data_finder;
         $this->db_dict = $db_dict;
@@ -243,13 +246,13 @@ class ilMDFullEditorInputProvider
         return $tag;
     }
 
-    protected function getElementQuirkTagFromStructure(
+    protected function getElementConstraintTagFromStructure(
         ilMDBaseElement $element
-    ): ?ilMDEditorGUIQuirkTag {
-        /** @var $tag ?ilMDEditorGUIQuirkTag */
+    ): ?ilMDConstraintTag {
+        /** @var $tag ?ilMDConstraintTag */
         $tag = $this->getElementTagFromStructure(
             $element,
-            $this->quirk_dict->getStructure()
+            $this->constraint_dict->getStructure()
         );
         return $tag;
     }
@@ -295,19 +298,19 @@ class ilMDFullEditorInputProvider
         $type = $this->getElementDataTypeFromStructure(
             $current_element
         );
-        $quirk_tag = $this->getElementQuirkTagFromStructure(
+        $constraint_tag = $this->getElementConstraintTagFromStructure(
             $current_element
         );
 
         $default = '';
         switch ($type) {
-            case ilMDLOMDataFactory::TYPE_NONE:
+            case ilMDLOMDataFactory::TYPE_NULL:
                 throw new ilMDGUIException(
                     'Cannot generate input field for element with no data.'
                 );
 
             case ilMDLOMDataFactory::TYPE_STRING:
-                if ($quirk_tag?->isLongInput()) {
+                if ($constraint_tag?->isLongInput()) {
                     $res = $this->factory->textarea('placeholder');
                 } else {
                     $res = $this->factory->text('placeholder');
@@ -332,15 +335,15 @@ class ilMDFullEditorInputProvider
                     $selects = [];
                     foreach ($tag->getVocabularies() as $vocab) {
                         if ($default === '') {
-                            $default = $vocab->getConditionValue();
+                            $default = $vocab->conditionValue();
                         }
                         $v = $current_element->isScaffold() ?
                             '' : $this->getDataValueForInput(
                                 $current_element->getData(),
                                 $this->presenter
                             );
-                        $v = in_array($v, $vocab->getValues()) ? $v : '';
-                        $selects[$vocab->getConditionValue()] = $this->factory
+                        $v = in_array($v, $vocab->values()) ? $v : '';
+                        $selects[$vocab->conditionValue()] = $this->factory
                             ->select(
                                 $this->presenter->getElementNameWithParents(
                                     $current_element,
@@ -348,7 +351,7 @@ class ilMDFullEditorInputProvider
                                     $element->getName()
                                 ),
                                 array_combine(
-                                    $vocab->getValues(),
+                                    $vocab->values(),
                                     $this->presenter->getVocab($vocab)
                                 )
                             )->withValue($v);
@@ -367,7 +370,7 @@ class ilMDFullEditorInputProvider
                     );
                     $vocab = $cond_tag->getVocabularies()[0];
                     $groups = [];
-                    foreach ($vocab->getValues() as $value) {
+                    foreach ($vocab->values() as $value) {
                         $groups[$value] = $this->factory->group(
                             isset($selects[$value]) ? [$selects[$value]] : [],
                             $this->presenter->getVocabValue($value)
@@ -393,7 +396,7 @@ class ilMDFullEditorInputProvider
                     $res = $this->factory->select(
                         'placeholder',
                         array_combine(
-                            $tag->getVocabularies()[0]->getValues(),
+                            $tag->getVocabularies()[0]->values(),
                             $this->presenter->getVocab($tag->getVocabularies()[0])
                         )
                     );
@@ -509,15 +512,15 @@ class ilMDFullEditorInputProvider
             $root,
             $res_path
         );
-        $presets = $quirk_tag?->getPresetValues() ?? [];
+        $presets = $constraint_tag?->getPresetValues() ?? [];
         if (key_exists($current_index, $presets)) {
             $res = $res->withValue($presets[$current_index]);
         }
-        $not_deletables = $quirk_tag?->getIndicesNotDeletable() ?? [];
+        $not_deletables = $constraint_tag?->getIndicesNotDeletable() ?? [];
         if (in_array($current_index, $not_deletables)) {
             $res = $res->withRequired(true);
         }
-        $not_editables = $quirk_tag?->getIndicesNotEditable() ?? [];
+        $not_editables = $constraint_tag?->getIndicesNotEditable() ?? [];
         if (in_array($current_index, $not_editables)) {
             $res = $res->withDisabled(true);
         }

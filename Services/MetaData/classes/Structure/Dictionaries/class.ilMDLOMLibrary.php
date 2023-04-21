@@ -76,8 +76,8 @@ class ilMDLOMLibrary
         );
     }
 
-    public function getLOMEditorGUIQuirkDictionary(): ilMDLOMEditorGUIQuirkDictionary
+    public function getLOMConstraintDictionary(): ilMDLOMConstraintDictionary
     {
-        return new ilMDLOMEditorGUIQuirkDictionary($this->factory);
+        return new ilMDLOMConstraintDictionary($this->factory);
     }
 }

@@ -18,6 +18,8 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+use classes\Elements\Data\ilMDLOMDataFactory;
+
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
@@ -29,51 +31,51 @@ class ilMDLOMStructure implements ilMDStructure
     private const STRUCTURE = [
         self::NAME_ROOT => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => [
                 'general' => [
                     'unique' => true,
-                    'type' => ilMDLOMDataFactory::TYPE_NONE,
+                    'type' => ilMDLOMDataFactory::TYPE_NULL,
                     'sub' => self::STRUCTURE_GENERAL
                 ],
                 'lifeCycle' => [
                     'unique' => true,
-                    'type' => ilMDLOMDataFactory::TYPE_NONE,
+                    'type' => ilMDLOMDataFactory::TYPE_NULL,
                     'sub' => self::STRUCTURE_LIFECYCLE
                 ],
                 'metaMetadata' => [
                     'unique' => true,
-                    'type' => ilMDLOMDataFactory::TYPE_NONE,
+                    'type' => ilMDLOMDataFactory::TYPE_NULL,
                     'sub' => self::STRUCTURE_METAMETADATA
                 ],
                 'technical' => [
                     'unique' => true,
-                    'type' => ilMDLOMDataFactory::TYPE_NONE,
+                    'type' => ilMDLOMDataFactory::TYPE_NULL,
                     'sub' => self::STRUCTURE_TECHNICAL
                 ],
                 'educational' => [
                     'unique' => false,
-                    'type' => ilMDLOMDataFactory::TYPE_NONE,
+                    'type' => ilMDLOMDataFactory::TYPE_NULL,
                     'sub' => self::STRUCTURE_EDUCATIONAL
                 ],
                 'rights' => [
                     'unique' => true,
-                    'type' => ilMDLOMDataFactory::TYPE_NONE,
+                    'type' => ilMDLOMDataFactory::TYPE_NULL,
                     'sub' => self::STRUCTURE_RIGHTS
                 ],
                 'relation' => [
                     'unique' => false,
-                    'type' => ilMDLOMDataFactory::TYPE_NONE,
+                    'type' => ilMDLOMDataFactory::TYPE_NULL,
                     'sub' => self::STRUCTURE_RELATION
                 ],
                 'annotation' => [
                     'unique' => false,
-                    'type' => ilMDLOMDataFactory::TYPE_NONE,
+                    'type' => ilMDLOMDataFactory::TYPE_NULL,
                     'sub' => self::STRUCTURE_ANNOTATION
                 ],
                 'classification' => [
                     'unique' => false,
-                    'type' => ilMDLOMDataFactory::TYPE_NONE,
+                    'type' => ilMDLOMDataFactory::TYPE_NULL,
                     'sub' => self::STRUCTURE_CLASSIFICATION
                 ]
             ]
@@ -84,7 +86,7 @@ class ilMDLOMStructure implements ilMDStructure
     private const STRUCTURE_GENERAL = [
         'identifier' => [
             'unique' => false,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => [
                 'catalog' => [
                     'unique' => true,
@@ -100,7 +102,7 @@ class ilMDLOMStructure implements ilMDStructure
         ],
         'title' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_LANGSTRING
         ],
         'language' => [
@@ -110,28 +112,28 @@ class ilMDLOMStructure implements ilMDStructure
         ],
         'description' => [
             'unique' => false,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_LANGSTRING
         ],
         'keyword' => [
             'unique' => false,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_LANGSTRING
         ],
         'coverage' => [
             //'unique' => false,
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_LANGSTRING
         ],
         'structure' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_VOCAB
         ],
         'aggregationLevel' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_VOCAB
         ]
     ];
@@ -139,21 +141,21 @@ class ilMDLOMStructure implements ilMDStructure
     private const STRUCTURE_LIFECYCLE = [
         'version' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_LANGSTRING
         ],
         'status' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_VOCAB
         ],
         'contribute' => [
             'unique' => false,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => [
                 'role' => [
                     'unique' => true,
-                    'type' => ilMDLOMDataFactory::TYPE_NONE,
+                    'type' => ilMDLOMDataFactory::TYPE_NULL,
                     'sub' => self::STRUCTURE_VOCAB
                 ],
                 'entity' => [
@@ -163,7 +165,7 @@ class ilMDLOMStructure implements ilMDStructure
                 ],
                 'date' => [
                     'unique' => true,
-                    'type' => ilMDLOMDataFactory::TYPE_NONE,
+                    'type' => ilMDLOMDataFactory::TYPE_NULL,
                     'sub' => self::STRUCTURE_DATETIME
                 ]
             ]
@@ -173,7 +175,7 @@ class ilMDLOMStructure implements ilMDStructure
     private const STRUCTURE_METAMETADATA = [
         'identifier' => [
             'unique' => false,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => [
                 'catalog' => [
                     'unique' => true,
@@ -189,11 +191,11 @@ class ilMDLOMStructure implements ilMDStructure
         ],
         'contribute' => [
             'unique' => false,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => [
                 'role' => [
                     'unique' => true,
-                    'type' => ilMDLOMDataFactory::TYPE_NONE,
+                    'type' => ilMDLOMDataFactory::TYPE_NULL,
                     'sub' => self::STRUCTURE_VOCAB
                 ],
                 'entity' => [
@@ -203,7 +205,7 @@ class ilMDLOMStructure implements ilMDStructure
                 ],
                 'date' => [
                     'unique' => true,
-                    'type' => ilMDLOMDataFactory::TYPE_NONE,
+                    'type' => ilMDLOMDataFactory::TYPE_NULL,
                     'sub' => self::STRUCTURE_DATETIME
                 ]
             ]
@@ -239,21 +241,21 @@ class ilMDLOMStructure implements ilMDStructure
         ],
         'requirement' => [
             'unique' => false,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => [
                 'orComposite' => [
                     //'unique' => false,
                     'unique' => true,
-                    'type' => ilMDLOMDataFactory::TYPE_NONE,
+                    'type' => ilMDLOMDataFactory::TYPE_NULL,
                     'sub' => [
                         'type' => [
                             'unique' => true,
-                            'type' => ilMDLOMDataFactory::TYPE_NONE,
+                            'type' => ilMDLOMDataFactory::TYPE_NULL,
                             'sub' => self::STRUCTURE_VOCAB
                         ],
                         'name' => [
                             'unique' => true,
-                            'type' => ilMDLOMDataFactory::TYPE_NONE,
+                            'type' => ilMDLOMDataFactory::TYPE_NULL,
                             'sub' => self::STRUCTURE_VOCAB
                         ],
                         'minimumVersion' => [
@@ -272,17 +274,17 @@ class ilMDLOMStructure implements ilMDStructure
         ],
         'installationRemarks' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_LANGSTRING
         ],
         'otherPlatformRequirements' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_LANGSTRING
         ],
         'duration' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_DURATION
         ]
     ];
@@ -290,55 +292,55 @@ class ilMDLOMStructure implements ilMDStructure
     private const STRUCTURE_EDUCATIONAL = [
         'interactivityType' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_VOCAB
         ],
         'learningResourceType' => [
             //'unique' => false,
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_VOCAB
         ],
         'interactivityLevel' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_VOCAB
         ],
         'semanticDensity' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_VOCAB
         ],
         'intendedEndUserRole' => [
             //'unique' => false,
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_VOCAB
         ],
         'context' => [
             //'unique' => false,
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_VOCAB
         ],
         'typicalAgeRange' => [
             'unique' => false,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_LANGSTRING
         ],
         'difficulty' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_VOCAB
         ],
         'typicalLearningTime' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_DURATION
         ],
         'description' => [
             'unique' => false,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_LANGSTRING
         ],
         'language' => [
@@ -351,17 +353,17 @@ class ilMDLOMStructure implements ilMDStructure
     private const STRUCTURE_RIGHTS = [
         'cost' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_VOCAB
         ],
         'copyrightAndOtherRestrictions' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_VOCAB
         ],
         'description' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_LANGSTRING
         ]
     ];
@@ -369,16 +371,16 @@ class ilMDLOMStructure implements ilMDStructure
     private const STRUCTURE_RELATION = [
         'kind' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_VOCAB
         ],
         'resource' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => [
                 'identifier' => [
                     'unique' => false,
-                    'type' => ilMDLOMDataFactory::TYPE_NONE,
+                    'type' => ilMDLOMDataFactory::TYPE_NULL,
                     'sub' => [
                         'catalog' => [
                             'unique' => true,
@@ -394,7 +396,7 @@ class ilMDLOMStructure implements ilMDStructure
                 ],
                 'description' => [
                     'unique' => false,
-                    'type' => ilMDLOMDataFactory::TYPE_NONE,
+                    'type' => ilMDLOMDataFactory::TYPE_NULL,
                     'sub' => self::STRUCTURE_LANGSTRING
                 ]
             ]
@@ -409,12 +411,12 @@ class ilMDLOMStructure implements ilMDStructure
         ],
         'date' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_DATETIME
         ],
         'description' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_LANGSTRING
         ]
     ];
@@ -422,21 +424,21 @@ class ilMDLOMStructure implements ilMDStructure
     private const STRUCTURE_CLASSIFICATION = [
         'purpose' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_VOCAB
         ],
         'taxonPath' => [
             'unique' => false,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => [
                 'source' => [
                     'unique' => true,
-                    'type' => ilMDLOMDataFactory::TYPE_NONE,
+                    'type' => ilMDLOMDataFactory::TYPE_NULL,
                     'sub' => self::STRUCTURE_LANGSTRING
                 ],
                 'taxon' => [
                     'unique' => false,
-                    'type' => ilMDLOMDataFactory::TYPE_NONE,
+                    'type' => ilMDLOMDataFactory::TYPE_NULL,
                     'sub' => [
                         'id' => [
                             'unique' => true,
@@ -445,7 +447,7 @@ class ilMDLOMStructure implements ilMDStructure
                         ],
                         'entry' => [
                             'unique' => true,
-                            'type' => ilMDLOMDataFactory::TYPE_NONE,
+                            'type' => ilMDLOMDataFactory::TYPE_NULL,
                             'sub' => self::STRUCTURE_LANGSTRING
                         ]
                     ]
@@ -454,12 +456,12 @@ class ilMDLOMStructure implements ilMDStructure
         ],
         'description' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_LANGSTRING
         ],
         'keyword' => [
             'unique' => false,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_LANGSTRING
         ]
     ];
@@ -499,7 +501,7 @@ class ilMDLOMStructure implements ilMDStructure
         ],
         'description' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_LANGSTRING
         ]
     ];
@@ -512,7 +514,7 @@ class ilMDLOMStructure implements ilMDStructure
         ],
         'description' => [
             'unique' => true,
-            'type' => ilMDLOMDataFactory::TYPE_NONE,
+            'type' => ilMDLOMDataFactory::TYPE_NULL,
             'sub' => self::STRUCTURE_LANGSTRING
         ]
     ];

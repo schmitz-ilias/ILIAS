@@ -161,7 +161,7 @@ class ilMDLOMVocabulariesDictionary implements ilMDDictionary
             ->movePointerToSubElement('value')
             ->setTagAtPointer(
                 $this->tag_factory
-                    ->vocabulariesTag()
+                    ->vocabularies()
                     ->addVocabulary(
                         self::SOURCE,
                         [
@@ -341,7 +341,7 @@ class ilMDLOMVocabulariesDictionary implements ilMDDictionary
     protected function getTag(array $values): ilMDVocabulariesTag
     {
         return $this->tag_factory
-            ->vocabulariesTag()
+            ->vocabularies()
             ->addVocabulary(self::SOURCE, $values)
             ->getTag();
     }

@@ -32,7 +32,7 @@ class ilMDTagFactory
      * @param string[] $expected_params
      * @return ilMDDatabaseTag
      */
-    public function databaseTag(
+    public function database(
         string $create,
         string $read,
         string $update,
@@ -50,18 +50,18 @@ class ilMDTagFactory
         );
     }
 
-    public function vocabulariesTag(): ilMDVocabulariesTagBuilder
+    public function vocabularies(): ilMDVocabulariesTagBuilder
     {
         return new ilMDVocabulariesTagBuilder();
     }
 
-    public function editorGUITag(): ilMDEditorGUITagBuilder
+    public function editor(): ilMDEditorGUITagBuilder
     {
         return new ilMDEditorGUITagBuilder();
     }
 
-    public function editorGUIQuirkTag(): ilMDEditorGUIQuirkTagBuilder
+    public function constraint(): ilMDConstraintTagBuilder
     {
-        return new ilMDEditorGUIQuirkTagBuilder();
+        return new ilMDConstraintTagBuilder();
     }
 }

@@ -68,7 +68,7 @@ class ilMDLOMDatabaseQueryProvider
             ' WHERE ' . $this->db?->quoteIdentifier(dbd::ID_NAME[$table]) . ' = %s' .
             ' AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
 
-        return $this->factory->databaseTag(
+        return $this->factory->database(
             $create,
             $read,
             '',
@@ -108,7 +108,7 @@ class ilMDLOMDatabaseQueryProvider
             ' AND parent_type = ' . $this->db?->quote($parent_type, ilDBConstants::T_TEXT) .
             ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
 
-        return $this->factory->databaseTag(
+        return $this->factory->database(
             $create,
             $read,
             '',
@@ -166,7 +166,7 @@ class ilMDLOMDatabaseQueryProvider
             'WHERE ' . $this->db?->quoteIdentifier(dbd::ID_NAME[$table]) . ' = %s' .
             ' AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
 
-        return $this->factory->databaseTag(
+        return $this->factory->database(
             '',
             $read,
             '',
@@ -224,7 +224,7 @@ class ilMDLOMDatabaseQueryProvider
             ' AND parent_type = ' . $this->db?->quote($parent_type, ilDBConstants::T_TEXT) .
             ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
 
-        return $this->factory->databaseTag(
+        return $this->factory->database(
             '',
             $read,
             '',
@@ -286,7 +286,7 @@ class ilMDLOMDatabaseQueryProvider
             $this->db?->quoteIdentifier(dbd::ID_NAME['requirement']) . ' = %s' .
             ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
 
-        return $this->factory->databaseTag(
+        return $this->factory->database(
             '',
             $read,
             '',
@@ -331,7 +331,7 @@ class ilMDLOMDatabaseQueryProvider
             $this->db?->quoteIdentifier(dbd::ID_NAME['requirement']) . ' = %s' .
             ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
 
-        return $this->factory->databaseTag(
+        return $this->factory->database(
             '',
             $read,
             '',
@@ -388,7 +388,7 @@ class ilMDLOMDatabaseQueryProvider
             $this->db?->quoteIdentifier(dbd::ID_NAME['requirement']) . ' = %s' .
             ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
 
-        return $this->factory->databaseTag(
+        return $this->factory->database(
             $create_and_update,
             $read,
             $create_and_update,
@@ -495,7 +495,7 @@ class ilMDLOMDatabaseQueryProvider
         $parent = $second_parent ?
             dbd::EXP_SECOND_PARENT_MD_ID :
             dbd::EXP_PARENT_MD_ID;
-        return $this->factory->databaseTag(
+        return $this->factory->database(
             '',
             $read,
             '',
@@ -547,7 +547,7 @@ class ilMDLOMDatabaseQueryProvider
             ' AND parent_type = ' . $this->db?->quote($parent_type, ilDBConstants::T_TEXT) .
             ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
 
-        return $this->factory->databaseTag(
+        return $this->factory->database(
             $create_and_update,
             $read,
             $create_and_update,
@@ -597,7 +597,7 @@ class ilMDLOMDatabaseQueryProvider
             ' WHERE ' . $this->db?->quoteIdentifier(dbd::ID_NAME[$table]) . ' = %s' .
             ' AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
 
-        return $this->factory->databaseTag(
+        return $this->factory->database(
             $create,
             $read,
             $update,
@@ -653,7 +653,7 @@ class ilMDLOMDatabaseQueryProvider
             ' AND parent_type = ' . $this->db?->quote($parent_type, ilDBConstants::T_TEXT) .
             ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
 
-        return $this->factory->databaseTag(
+        return $this->factory->database(
             $create,
             $read,
             $update,
@@ -700,7 +700,7 @@ class ilMDLOMDatabaseQueryProvider
             ' WHERE ' . $this->db?->quoteIdentifier(dbd::ID_NAME[$table]) . ' = %s' .
             ' AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
 
-        return $this->factory->databaseTag(
+        return $this->factory->database(
             $create_and_update,
             $read,
             $create_and_update,

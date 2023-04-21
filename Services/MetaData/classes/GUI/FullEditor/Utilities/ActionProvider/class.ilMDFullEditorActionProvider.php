@@ -18,8 +18,7 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-use ILIAS\Data\URI;
-use ILIAS\UI\Factory;
+use classes\Elements\ilMDRootElement;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -64,7 +63,7 @@ class ilMDFullEditorActionProvider
 
     public function isElementDeletable(
         ilMDRootElement $root,
-        ilMDLOMEditorGUIQuirkStructure $quirk_structure,
+        ilMDLOMConstraintStructure $constraint_structure,
         ilMDPathFromRoot $path_to_element
     ): bool {
         // remove all filters from the path
@@ -86,7 +85,7 @@ class ilMDFullEditorActionProvider
             true
         );
 
-        $indices_not_deletable = $quirk_structure
+        $indices_not_deletable = $constraint_structure
             ->movePointerToEndOfPath($path_to_element)
             ->getTagAtPointer()
             ?->getIndicesNotDeletable() ?? [];

@@ -18,6 +18,10 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+use classes\Elements\Data\ilMDLOMDataFactory;
+use classes\Elements\ilMDBaseElement;
+use classes\Elements\ilMDRootElement;
+
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
@@ -75,7 +79,7 @@ class ilMDFullEditorDataFinder
             $structure
         );
         if (
-            $type !== ilMDLOMDataFactory::TYPE_NONE &&
+            $type !== ilMDLOMDataFactory::TYPE_NULL &&
             (!$skip_vocab_source ||
                 $type !==ilMDLOMDataFactory::TYPE_VOCAB_SOURCE)
         ) {

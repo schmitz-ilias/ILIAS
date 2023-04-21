@@ -19,6 +19,11 @@ declare(strict_types=1);
  *********************************************************************/
 
 use PHPUnit\Framework\TestCase;
+use classes\Elements\Data\ilMDData;
+use classes\Elements\Markers\ilMDMarker;
+use classes\Elements\ilMDElement;
+use classes\Elements\ilMDRootElement;
+use classes\Elements\ilMDScaffoldElement;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>

@@ -18,6 +18,10 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+use classes\Elements\ilMDBaseElement;
+use classes\Elements\ilMDRootElement;
+use classes\Elements\ilMDScaffoldElement;
+
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */

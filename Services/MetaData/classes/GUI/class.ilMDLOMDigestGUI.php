@@ -25,6 +25,11 @@ use ILIAS\Refinery\Factory as Refinery;
 use ILIAS\UI\Component\Input\Field\Section;
 use ILIAS\UI\Component\Modal\Interruptive;
 use ILIAS\UI\Component\Signal;
+use classes\Elements\Data\ilMDLOMDataFactory;
+use classes\Vocabularies\ilMDVocabulary;
+use classes\Elements\ilMDBaseElement;
+use classes\Elements\Markers\ilMDMarkerFactory;
+use classes\Elements\ilMDRootElement;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -433,8 +438,8 @@ class ilMDLOMDigestGUI
         $this
             ->getTitleStringElement($root)
             ->leaveMarkerTrail(
-                $this->marker_factory->stringMarker($data_general['title']),
-                $this->marker_factory->nullMarker()
+                $this->marker_factory->string($data_general['title']),
+                $this->marker_factory->null()
             );
 
         // description(s)
@@ -442,10 +447,10 @@ class ilMDLOMDigestGUI
         foreach ($this->getDescriptionStringElements($root) as $el) {
             if ($data_general['descriptions'][$index]) {
                 $el->leaveMarkerTrail(
-                    $this->marker_factory->stringMarker(
+                    $this->marker_factory->string(
                         $data_general['descriptions'][$index]
                     ),
-                    $this->marker_factory->nullMarker()
+                    $this->marker_factory->null()
                 );
                 $index += 1;
                 continue;
@@ -453,8 +458,8 @@ class ilMDLOMDigestGUI
             $this
                 ->getDescriptionStringElements($root_for_delete)[$index]
                 ->leaveMarkerTrail(
-                    $this->marker_factory->nullMarker(),
-                    $this->marker_factory->nullMarker()
+                    $this->marker_factory->null(),
+                    $this->marker_factory->null()
                 );
             $index += 1;
         }
@@ -464,10 +469,10 @@ class ilMDLOMDigestGUI
         foreach ($this->getLanguageElements($root) as $el) {
             if ($data_general['languages'][$index]) {
                 $el->leaveMarkerTrail(
-                    $this->marker_factory->languageMarker(
+                    $this->marker_factory->language(
                         $data_general['languages'][$index]
                     ),
-                    $this->marker_factory->nullMarker()
+                    $this->marker_factory->null()
                 );
                 $index += 1;
                 continue;
@@ -475,8 +480,8 @@ class ilMDLOMDigestGUI
             $this
                 ->getLanguageElements($root_for_delete)[$index]
                 ->leaveMarkerTrail(
-                    $this->marker_factory->nullMarker(),
-                    $this->marker_factory->nullMarker()
+                    $this->marker_factory->null(),
+                    $this->marker_factory->null()
                 );
             $index += 1;
         }
@@ -496,8 +501,8 @@ class ilMDLOMDigestGUI
                 continue;
             }
             $el->getSuperElement()->leaveMarkerTrail(
-                $this->marker_factory->nullMarker(),
-                $this->marker_factory->nullMarker()
+                $this->marker_factory->null(),
+                $this->marker_factory->null()
             );
         }
         // create the remaining inputs as scaffolds
@@ -515,10 +520,10 @@ class ilMDLOMDigestGUI
             )[0];
             $new_keyword->addScaffoldToSubElements($string_scaffold);
             $new_keyword->getSubElements('string')[0]->leaveMarkerTrail(
-                $this->marker_factory->stringMarker(
+                $this->marker_factory->string(
                     $keyword_string
                 ),
-                $this->marker_factory->nullMarker()
+                $this->marker_factory->null()
             );
         }
 
@@ -529,16 +534,16 @@ class ilMDLOMDigestGUI
         foreach ([0 => 'first', 1 => 'second', 2 => 'third'] as $key => $value) {
             if ($data_authors[$value] ?? '') {
                 $els[$key]->leaveMarkerTrail(
-                    $this->marker_factory->stringMarker(
+                    $this->marker_factory->string(
                         $data_authors[$value]
                     ),
-                    $this->marker_factory->nullMarker()
+                    $this->marker_factory->null()
                 );
                 continue;
             }
             $delete_els[$key]->leaveMarkerTrail(
-                $this->marker_factory->nullMarker(),
-                $this->marker_factory->nullMarker()
+                $this->marker_factory->null(),
+                $this->marker_factory->null()
             );
         }
 
@@ -550,27 +555,27 @@ class ilMDLOMDigestGUI
         ) {
             $data_cp = $data_rights['copyright'];
             $this->getCPAndORValueElement($root)->leaveMarkerTrail(
-                $this->marker_factory->vocabValueMarker(
+                $this->marker_factory->vocabValue(
                     'yes',
                     [$this->cp_vocab]
                 ),
-                $this->marker_factory->nullMarker()
+                $this->marker_factory->null()
             );
 
             if ($data_cp[0] > 0) {
                 $this->getRightsDescriptionElement($root)->leaveMarkerTrail(
-                    $this->marker_factory->stringMarker(
+                    $this->marker_factory->string(
                         'il_copyright_entry__' . IL_INST_ID . '__' .
                         (int) $data_cp[0]
                     ),
-                    $this->marker_factory->nullMarker()
+                    $this->marker_factory->null()
                 );
             } else {
                 $this->getRightsDescriptionElement($root)->leaveMarkerTrail(
-                    $this->marker_factory->stringMarker(
+                    $this->marker_factory->string(
                         $data_cp[1]['copyright_text']
                     ),
-                    $this->marker_factory->nullMarker()
+                    $this->marker_factory->null()
                 );
             }
 
@@ -590,17 +595,17 @@ class ilMDLOMDigestGUI
         } else {
             if (!($el = $this->getCPAndORValueElement($root))->isScaffold()) {
                 $el->leaveMarkerTrail(
-                    $this->marker_factory->vocabValueMarker(
+                    $this->marker_factory->vocabValue(
                         'no',
                         [$this->cp_vocab]
                     ),
-                    $this->marker_factory->nullMarker()
+                    $this->marker_factory->null()
                 );
             }
             $this->getRightsDescriptionElement($root_for_delete)
                  ->leaveMarkerTrail(
-                     $this->marker_factory->nullMarker(),
-                     $this->marker_factory->nullMarker()
+                     $this->marker_factory->null(),
+                     $this->marker_factory->null()
                  );
         }
 
@@ -609,10 +614,10 @@ class ilMDLOMDigestGUI
         foreach ($this->getTltDurationElement($root) as $el) {
             if ($data['tlts'][$index]) {
                 $el->leaveMarkerTrail(
-                    $this->marker_factory->durationMarker(
+                    $this->marker_factory->duration(
                         $data['tlts'][$index]
                     ),
-                    $this->marker_factory->nullMarker()
+                    $this->marker_factory->null()
                 );
                 $index += 1;
                 continue;
@@ -620,8 +625,8 @@ class ilMDLOMDigestGUI
             $this
                 ->getTltDurationElement($root_for_delete)[$index]
                 ->leaveMarkerTrail(
-                    $this->marker_factory->nullMarker(),
-                    $this->marker_factory->nullMarker()
+                    $this->marker_factory->null(),
+                    $this->marker_factory->null()
                 );
             $index += 1;
         }
@@ -797,9 +802,9 @@ class ilMDLOMDigestGUI
                     'value'
                 )[0];
                 $role->addScaffoldToSubElements($value);
-                $role->setMarker($this->marker_factory->nullMarker());
+                $role->setMarker($this->marker_factory->null());
                 $value->setMarker(
-                    $this->marker_factory->vocabValueMarker(
+                    $this->marker_factory->vocabValue(
                         'author',
                         [$this->role_vocab]
                     )

@@ -21,6 +21,9 @@ declare(strict_types=1);
 use PHPUnit\Framework\TestCase;
 use ILIAS\Refinery\Constraint;
 use ILIAS\Refinery\Factory;
+use classes\Elements\Data\ilMDLOMDataFactory;
+use Validation\ilMDLOMDataConstraintProvider;
+use classes\Vocabularies\ilMDVocabulary;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -114,10 +117,10 @@ class ilMDLOMDataFactoryTest extends TestCase
         $this->assertIsString($data->getError());
     }
 
-    public function testNoneConstraint(): void
+    public function testNullConstraint(): void
     {
         $factory = $this->getFactoryMock();
-        $data = $factory->none();
+        $data = $factory->null();
         $this->assertNull($data->getError());
     }
 
@@ -137,14 +140,14 @@ class ilMDLOMDataFactoryTest extends TestCase
         $vocab1 = $this->getMockBuilder(ilMDVocabulary::class)
                       ->disableOriginalConstructor()
                       ->getMock();
-        $vocab1->method('getValues')->willReturn(['value1', 'value2']);
-        $vocab1->method('getSource')->willReturn('source');
+        $vocab1->method('values')->willReturn(['value1', 'value2']);
+        $vocab1->method('source')->willReturn('source');
         $vocab2 = $this->getMockBuilder(ilMDVocabulary::class)
                        ->disableOriginalConstructor()
                        ->getMock();
-        $vocab2->method('getValues')->willReturn(['sheep', 'cow']);
-        $vocab2->method('getSource')->willReturn('different source');
-        $vocab2->method('getConditionValue')->willReturn('condition');
+        $vocab2->method('values')->willReturn(['sheep', 'cow']);
+        $vocab2->method('source')->willReturn('different source');
+        $vocab2->method('conditionValue')->willReturn('condition');
 
         $data = $factory->vocabSource(
             'source',
@@ -184,9 +187,9 @@ class ilMDLOMDataFactoryTest extends TestCase
         $vocab = $this->getMockBuilder(ilMDVocabulary::class)
                        ->disableOriginalConstructor()
                        ->getMock();
-        $vocab->method('getValues')->willReturn(['sheep', 'cow']);
-        $vocab->method('getSource')->willReturn('different source');
-        $vocab->method('getConditionValue')->willReturn('condition');
+        $vocab->method('values')->willReturn(['sheep', 'cow']);
+        $vocab->method('source')->willReturn('different source');
+        $vocab->method('conditionValue')->willReturn('condition');
         $data = $factory->conditionalVocabValue(
             'sheep',
             [$vocab],

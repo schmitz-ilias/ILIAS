@@ -22,6 +22,8 @@ use ILIAS\UI\Component\Tree\TreeRecursion;
 use ILIAS\UI\Component\Tree\Node\Factory;
 use ILIAS\UI\Component\Tree\Node\Node as Node;
 use ILIAS\Data\URI;
+use classes\Elements\ilMDElement;
+use classes\Elements\ilMDRootElement;
 
 /**
  *  Tree Recursion, putting Entries into a Tree

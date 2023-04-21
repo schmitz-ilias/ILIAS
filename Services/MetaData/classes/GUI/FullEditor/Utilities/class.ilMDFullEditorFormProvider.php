@@ -21,6 +21,7 @@ declare(strict_types=1);
 use ILIAS\UI\Factory;
 use ILIAS\UI\Component\Input\Container\Form\Standard as StandardForm;
 use ILIAS\Data\URI;
+use classes\Elements\ilMDRootElement;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>

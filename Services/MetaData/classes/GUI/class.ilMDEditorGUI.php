@@ -18,18 +18,17 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-
 use ILIAS\UI\Renderer;
 use ILIAS\UI\Factory;
-use ILIAS\UI\Component\Modal\Interruptive;
-use ILIAS\UI\Component\Signal;
 use ILIAS\Refinery\Factory as Refinery;
 use ILIAS\HTTP\GlobalHttpState;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use ILIAS\GlobalScreen\Services as GlobalScreen;
-use ILIAS\Data\URI;
 use ILIAS\Data\Factory as Data;
 use ILIAS\UI\Component\Input\Container\Form\Standard as StandardForm;
+use classes\Elements\Data\ilMDLOMDataFactory;
+use Validation\ilMDLOMDataConstraintProvider;
+use classes\Elements\Markers\ilMDMarkerFactory;
 
 /**
  * Meta Data editor

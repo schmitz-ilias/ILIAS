@@ -28,6 +28,7 @@ use ILIAS\GlobalScreen\ScreenContext\Stack\CalledContexts;
 use ILIAS\Data\URI;
 use ILIAS\Data\Factory as Data;
 use ILIAS\GlobalScreen\Scope\MainMenu\Collector\Renderer\Hasher;
+use classes\Elements\ilMDRootElement;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>

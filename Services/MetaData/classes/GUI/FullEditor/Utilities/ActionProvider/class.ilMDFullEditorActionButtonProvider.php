@@ -22,7 +22,7 @@ use ILIAS\UI\Factory;
 use ILIAS\UI\Component\Button\Button;
 use ILIAS\UI\Component\Button\Standard as StandardButton;
 use ILIAS\UI\Component\Button\Shy as ShyButton;
-use ILIAS\UI\Component\Signal as Signal;
+use classes\Elements\ilMDScaffoldElement;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>

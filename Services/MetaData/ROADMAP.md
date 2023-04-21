@@ -22,7 +22,7 @@ good to include validation for input strings.
 
 ### Refactor conditional inputs
 
-Currently, conditional inputs do not work well with quirks.
+Currently, conditional inputs do not work well with constraints.
 In order to remedy this, their construction in the input provider
 should be reworked.
 
