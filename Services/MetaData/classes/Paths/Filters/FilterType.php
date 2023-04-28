@@ -18,14 +18,15 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements;
+namespace ILIAS\MetaData\Paths\Filters;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-enum NoID: string
+enum FilterType: string
 {
-    case SCAFFOLD = 'scaffold';
-    case ROOT = 'root';
-    case STRUCTURE = 'structure';
+    case NULL = 'none';
+    case MDID = 'ID';
+    case INDEX = 'INDEX';
+    case DATA = 'DATA';
 }

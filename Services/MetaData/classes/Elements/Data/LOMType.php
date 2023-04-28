@@ -25,12 +25,12 @@ namespace ILIAS\MetaData\Elements\Data;
  */
 enum LOMType: string
 {
-    case TYPE_NULL = 'none';
-    case TYPE_STRING = 'string';
-    case TYPE_LANG = 'lang';
-    case TYPE_VOCAB_SOURCE = 'vocab_source';
-    case TYPE_VOCAB_VALUE = 'vocab_value';
-    case TYPE_DATETIME = 'datetime';
-    case TYPE_NON_NEG_INT = 'non_neg_int';
-    case TYPE_DURATION = 'duration';
+    case NULL = 'none';
+    case STRING = 'string';
+    case LANG = 'lang';
+    case VOCAB_SOURCE = 'vocab_source';
+    case VOCAB_VALUE = 'vocab_value';
+    case DATETIME = 'datetime';
+    case NON_NEG_INT = 'non_neg_int';
+    case DURATION = 'duration';
 }

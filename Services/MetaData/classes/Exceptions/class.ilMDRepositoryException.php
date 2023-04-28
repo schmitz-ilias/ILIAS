@@ -21,10 +21,6 @@ declare(strict_types=1);
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDPathFromRoot extends ilMDPath
+class ilMDRepositoryException extends ilException
 {
-    public function __construct()
-    {
-        $this->path = self::ROOT;
-    }
 }

@@ -18,17 +18,9 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements\Scaffoldable;
-
-use ILIAS\MetaData\Elements\ScaffoldElementInterface;
-
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface ScaffoldableInterface
+class ilMDElementsException extends ilException
 {
-    /**
-     * Scaffolds are used to mark where elements could potentially be created.
-     */
-    public function addToSubElements(ScaffoldElementInterface $scaffold): void;
 }

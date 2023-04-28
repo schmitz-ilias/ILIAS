@@ -18,9 +18,30 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+namespace ILIAS\MetaData\Elements\Base;
+
+use ILIAS\MetaData\Elements\Definition\DefinitionInterface;
+use ILIAS\MetaData\Elements\NoID;
+use ILIAS\MetaData\Elements\Data\DataInterface;
+
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDDatabaseException extends ilException
+interface BaseElementInterface
 {
+    public function getMDID(): int|NoID;
+
+    /**
+     * Defining properties of the metadata element.
+     */
+    public function getDefinition(): DefinitionInterface;
+
+    /**
+     * @return BaseElementInterface[]
+     */
+    public function getSubElements(): \Generator;
+
+    public function getSuperElement(): ?BaseElementInterface;
+
+    public function isRoot(): bool;
 }

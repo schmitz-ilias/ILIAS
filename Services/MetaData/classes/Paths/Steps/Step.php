@@ -18,26 +18,41 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements\Markers;
+namespace ILIAS\MetaData\Paths\Steps;
 
-use ILIAS\MetaData\Elements\Data\Data;
-use ILIAS\MetaData\Elements\Data\DataFactory as DataFactory;
-use ILIAS\MetaData\Elements\Data\LOMType;
+use ILIAS\MetaData\Paths\Filters\Filter;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class MarkerFactory implements MarkerFactoryInterface
+class Step implements StepInterface
 {
-    protected DataFactory $data_factory;
+    protected string|StepToken $name;
+    /**
+     * @var Filter[]
+     */
+    protected array $filters;
 
-    public function __construct($data_factory)
-    {
-        $this->data_factory = $data_factory;
+    public function __construct(
+        string|StepToken $name,
+        Filter ...$filters
+    ) {
+        $this->name = $name;
+        $this->filters = $filters;
     }
 
-    public function marker(LOMType $data_type, string $data_value): Marker
+    public function name(): string|StepToken
     {
-        return new Marker($this->data_factory->data($data_type, $data_value));
+        return $this->name;
+    }
+
+    /**
+     * @return Filter[]
+     */
+    public function filters(): \Generator
+    {
+        foreach ($this->filters as $filter) {
+            yield $filter;
+        }
     }
 }

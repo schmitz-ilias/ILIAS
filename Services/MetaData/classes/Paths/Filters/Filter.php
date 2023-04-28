@@ -18,14 +18,37 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements;
+namespace ILIAS\MetaData\Paths\Filters;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-enum NoID: string
+class Filter implements FilterInterface
 {
-    case SCAFFOLD = 'scaffold';
-    case ROOT = 'root';
-    case STRUCTURE = 'structure';
+    protected FilterType $type;
+    /**
+     * @var string[]
+     */
+    protected array $values;
+
+    public function __construct(FilterType $type, string ...$values)
+    {
+        $this->type = $type;
+        $this->values = $values;
+    }
+
+    public function type(): FilterType
+    {
+        return $this->type;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function values(): \Generator
+    {
+        foreach ($this->values as $value) {
+            yield $value;
+        }
+    }
 }

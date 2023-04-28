@@ -18,18 +18,15 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements;
-
-use ILIAS\MetaData\Elements\RessourceID\RessourceIDInterface;
+namespace ILIAS\MetaData\Elements\Base;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface RootElementInterface extends ElementInterface
+interface BaseSetInterface
 {
     /**
-     * Contains the information needed to identify the ILIAS object
-     * this metadata set belongs to.
+     * Returns the root element of the metadata set.
      */
-    public function getRessourceID(): RessourceIDInterface;
+    public function getRoot(): BaseElementInterface;
 }

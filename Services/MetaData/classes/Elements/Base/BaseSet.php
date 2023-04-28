@@ -18,14 +18,27 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements;
+namespace ILIAS\MetaData\Elements\Base;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-enum NoID: string
+abstract class BaseSet implements BaseSetInterface
 {
-    case SCAFFOLD = 'scaffold';
-    case ROOT = 'root';
-    case STRUCTURE = 'structure';
+    private BaseElement $root;
+
+    public function __construct(BaseElement $root)
+    {
+        if (!$root->isRoot()) {
+            throw new \ilMDElementsException(
+                'Metadata sets must be created from a root element.'
+            );
+        }
+        $this->root = $root;
+    }
+
+    public function getRoot(): BaseElement
+    {
+        return $this->root;
+    }
 }

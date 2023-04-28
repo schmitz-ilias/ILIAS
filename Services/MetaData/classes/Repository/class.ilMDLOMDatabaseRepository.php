@@ -119,7 +119,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                         break;
 
                     default:
-                        throw new ilMDDatabaseException(
+                        throw new ilMDRepositoryException(
                             'Can not update element ' .
                             $element->getName() .
                             ' with non-matching data type.'
@@ -152,7 +152,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     break;
 
                 default:
-                    throw new ilMDDatabaseException(
+                    throw new ilMDRepositoryException(
                         'Can not create element ' .
                         $element->getName() .
                         ' with non-matching data type ' .
@@ -340,7 +340,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
     ): array {
         //stop the recursion after a while, just to be safe.
         if ($depth >= 20) {
-            throw new ilMDDatabaseException(
+            throw new ilMDRepositoryException(
                 'Recursion reached its maximum depth'
             );
         }
@@ -378,7 +378,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
 
                 //get the id of the element
                 if (!isset($row[ilMDLOMDatabaseDictionary::RES_MD_ID])) {
-                    throw new ilMDDatabaseException(
+                    throw new ilMDRepositoryException(
                         'Query for element ' . $sub_name .
                         ' did not return an ID.'
                     );
@@ -414,7 +414,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     !array_key_exists(ilMDLOMDatabaseDictionary::RES_DATA, $row) &&
                     $type !== ilMDLOMDataFactory::TYPE_NULL
                 ) {
-                    throw new ilMDDatabaseException(
+                    throw new ilMDRepositoryException(
                         'A read query for the elemement ' . $sub_name .
                         ' with data should return data.'
                     );
@@ -423,7 +423,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     array_key_exists(ilMDLOMDatabaseDictionary::RES_DATA, $row) &&
                     $type === ilMDLOMDataFactory::TYPE_NULL
                 ) {
-                    throw new ilMDDatabaseException(
+                    throw new ilMDRepositoryException(
                         'A read query for the elemement ' . $sub_name .
                         ' with no data should not return any data.'
                     );
@@ -597,7 +597,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
     ): void {
         //stop the recursion after a while, just to be safe.
         if ($depth >= 20) {
-            throw new ilMDDatabaseException(
+            throw new ilMDRepositoryException(
                 'Recursion reached its maximum depth'
             );
         }
@@ -699,7 +699,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 $error = $error_intro . 'Data type is ' . $data->getType() .
                     ', should be ' . $structure->getTypeAtPointer();
                 if ($throw_exception) {
-                    throw new ilMDDatabaseException($error);
+                    throw new ilMDRepositoryException($error);
                 }
                 $this->logger->warning($error);
                 $element->getSuperElement()->deleteFromSubElements($element);
@@ -723,7 +723,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     $struct->movePointerToSubElement($step);
                     $els = $el->getSubElements($step);
                     if (count($els) > 1) {
-                        throw new ilMDDatabaseException(
+                        throw new ilMDRepositoryException(
                             $error_intro . 'Path to condition element ' .
                             'is not unique.'
                         );
@@ -746,7 +746,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
             }
             if ($error = $data->getError($condition_value ?? null)) {
                 if ($throw_exception) {
-                    throw new ilMDDatabaseException($error_intro . $error);
+                    throw new ilMDRepositoryException($error_intro . $error);
                 }
                 $this->logger->warning($error_intro . $error);
                 $element->getSuperElement()->deleteFromSubElements($element);
@@ -797,7 +797,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
 
                 case ilMDLOMDatabaseDictionary::EXP_PARENT_MD_ID:
                     if (empty($parent_ids)) {
-                        throw new ilMDDatabaseException(
+                        throw new ilMDRepositoryException(
                             'Parent ID is needed, but not set.'
                         );
                     }
@@ -807,7 +807,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
 
                 case ilMDLOMDatabaseDictionary::EXP_SECOND_PARENT_MD_ID:
                     if (count($parent_ids) < 2) {
-                        throw new ilMDDatabaseException(
+                        throw new ilMDRepositoryException(
                             'Second parent ID is needed, but not set.'
                         );
                     }
@@ -846,7 +846,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     break;
 
                 default:
-                    throw new ilMDDatabaseException(
+                    throw new ilMDRepositoryException(
                         'Invalid expected parameter'
                     );
             }
@@ -896,7 +896,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                 break;
 
             default:
-                throw new ilMDDatabaseException(
+                throw new ilMDRepositoryException(
                     'Invalid manipulate action'
                 );
         }
@@ -919,7 +919,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
             switch ($expected_param) {
                 case ilMDLOMDatabaseDictionary::EXP_PARENT_MD_ID:
                     if (empty($parent_ids)) {
-                        throw new ilMDDatabaseException(
+                        throw new ilMDRepositoryException(
                             'Parent ID is needed, but not set.'
                         );
                     }
@@ -929,7 +929,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
 
                 case ilMDLOMDatabaseDictionary::EXP_SECOND_PARENT_MD_ID:
                     if (count($parent_ids) < 2) {
-                        throw new ilMDDatabaseException(
+                        throw new ilMDRepositoryException(
                             'Second parent ID is needed, but not set.'
                         );
                     }
@@ -962,7 +962,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     break;
 
                 default:
-                    throw new ilMDDatabaseException(
+                    throw new ilMDRepositoryException(
                         'Invalid expected parameter'
                     );
             }

@@ -18,26 +18,21 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements;
+namespace ILIAS\MetaData\Elements\Scaffolds;
 
+use ILIAS\MetaData\Elements\ElementInterface;
 use ILIAS\MetaData\Elements\Definition\DefinitionInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface BaseElementInterface
+interface ScaffoldableInterface
 {
     /**
-     * Defining properties of the metadata element.
+     * Scaffolds are used to mark where elements could potentially be created.
      */
-    public function getDefinition(): DefinitionInterface;
-
-    /**
-     * @return \Generator|BaseElementInterface[]
-     */
-    public function getSubElements(): \Generator;
-
-    public function getSuperElement(): ?BaseElementInterface;
-
-    public function isRoot(): bool;
+    public function addScaffoldToSubElements(
+        ScaffoldFactoryInterface $scaffold_factory,
+        DefinitionInterface $definition
+    ): void;
 }

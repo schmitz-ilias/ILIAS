@@ -49,7 +49,7 @@ class Vocabulary implements VocabularyInterface
     }
 
     /**
-     * @return \Generator|string[]
+     * @return string[]
      */
     public function values(): \Generator
     {

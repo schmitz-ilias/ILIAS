@@ -581,13 +581,13 @@ class ilMDFullEditorInputProvider
             }
             $els = $start_element->getSubElements($step);
             if (count($els) > 1) {
-                throw new ilMDDatabaseException(
+                throw new ilMDRepositoryException(
                     'Path to condition element of ' .
                     $start_element->getName() . ' is not unique.'
                 );
             }
             if (count($els) === 0) {
-                throw new ilMDDatabaseException(
+                throw new ilMDRepositoryException(
                     'Path to condition element of ' .
                     $start_element->getName() . ' does not lead to an element.'
                 );

@@ -18,12 +18,14 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements;
+namespace ILIAS\MetaData\Elements\Structure;
+
+use ILIAS\MetaData\Elements\Base\BaseSetInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface ScaffoldElementInterface extends ElementInterface
+interface StructureSetInterface extends BaseSetInterface
 {
-    public function getMDID(): NoID;
+    public function getRoot(): StructureElementInterface;
 }

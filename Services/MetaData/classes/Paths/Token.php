@@ -18,9 +18,20 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+namespace ILIAS\MetaData\Paths;
+
 /**
+ * The string representation of these tokens must not occur in the
+ * names of metadata elements.
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDBuildingBlocksException extends ilException
+enum Token: string
 {
+    case START_AT_ROOT = '@';
+    case START_AT_CURRENT = '+';
+    case LEADS_TO_EXACTLY_ONE = '#';
+    case SEPARATOR = ';';
+    case FILTER_OPEN = '{';
+    case FILTER_CLOSE = '}';
+    case FILTER_VALUE_SEPARATOR = ':';
 }

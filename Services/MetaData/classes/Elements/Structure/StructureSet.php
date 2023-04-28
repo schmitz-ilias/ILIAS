@@ -18,16 +18,28 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace classes\Elements;
+namespace ILIAS\MetaData\Elements\Structure;
+
+use ILIAS\MetaData\Elements\Base\BaseSet;
 
 /**
- * Used to extend MD by placing create markers on it.
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDScaffoldElement extends ilMDBaseElement
+class StructureSet extends BaseSet implements StructureSetInterface
 {
-    public function isScaffold(): bool
+    public function __construct(StructureElement $root)
     {
-        return true;
+        parent::__construct($root);
+    }
+
+    public function getRoot(): StructureElement
+    {
+        $root = parent::getRoot();
+        if ($root instanceof StructureElement) {
+            return $root;
+        }
+        throw new \ilMDElementsException(
+            'Metadata set has invalid root element.'
+        );
     }
 }

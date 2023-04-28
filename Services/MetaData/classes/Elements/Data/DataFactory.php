@@ -29,4 +29,9 @@ class DataFactory
     {
         return new Data($type, $value);
     }
+
+    public function null(): Data
+    {
+        return new Data(LOMType::NULL, '');
+    }
 }

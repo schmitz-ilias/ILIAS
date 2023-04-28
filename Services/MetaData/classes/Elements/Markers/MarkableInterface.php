@@ -27,8 +27,15 @@ use ILIAS\MetaData\Elements\Data\DataInterface;
  */
 interface MarkableInterface
 {
+    /**
+     * Elements can be marked to be created, updated or deleted.
+     */
     public function isMarked(): bool;
 
+    /**
+     * When a marked element is created or updated, the marker's
+     * data is transferred to the new or modified element.
+     */
     public function getMarkerData(): ?DataInterface;
 
     /**

@@ -18,26 +18,32 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements\Markers;
+namespace ILIAS\MetaData\Elements\Scaffolds;
 
-use ILIAS\MetaData\Elements\Data\Data;
-use ILIAS\MetaData\Elements\Data\DataFactory as DataFactory;
+use ILIAS\MetaData\Elements\Definition\Definition;
+use ILIAS\MetaData\Elements\Element;
+use ILIAS\MetaData\Elements\Data\DataFactory;
+use ILIAS\MetaData\Elements\NoID;
 use ILIAS\MetaData\Elements\Data\LOMType;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class MarkerFactory implements MarkerFactoryInterface
+class ScaffoldFactory implements ScaffoldFactoryInterface
 {
     protected DataFactory $data_factory;
 
-    public function __construct($data_factory)
+    public function __construct(DataFactory $data_factory)
     {
         $this->data_factory = $data_factory;
     }
 
-    public function marker(LOMType $data_type, string $data_value): Marker
+    public function scaffold(Definition $definition): Element
     {
-        return new Marker($this->data_factory->data($data_type, $data_value));
+        return new Element(
+            NoID::SCAFFOLD,
+            $definition,
+            $this->data_factory->null()
+        );
     }
 }

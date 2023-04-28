@@ -23,7 +23,7 @@ namespace Validation;
 use ILIAS\Refinery\Constraint;
 use ILIAS\Refinery\Factory;
 use classes\Vocabularies\ilMDVocabulary;
-use ilMDBuildingBlocksException;
+use ilMDElementsException;
 use classes\Elements\Data\ilMDLOMDataFactory;
 
 /**
@@ -51,7 +51,7 @@ class ilMDLOMDataConstraintProvider
     ): Constraint {
         if ($conditional) {
             if ($type !== ilMDLOMDataFactory::TYPE_VOCAB_VALUE) {
-                throw new ilMDBuildingBlocksException(
+                throw new ilMDElementsException(
                     "Only vocabulary values can have a conditional constraint."
                 );
             }
@@ -84,7 +84,7 @@ class ilMDLOMDataConstraintProvider
                 return $this->duration();
 
             default:
-                throw new ilMDBuildingBlocksException("Invalid MD data type.");
+                throw new ilMDElementsException("Invalid MD data type.");
         }
     }
 

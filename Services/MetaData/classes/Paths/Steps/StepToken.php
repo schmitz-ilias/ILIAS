@@ -18,14 +18,14 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements;
+namespace ILIAS\MetaData\Paths\Steps;
 
 /**
+ * The string representation of these tokens must not occur as
+ * names of metadata elements.
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-enum NoID: string
+enum StepToken: string
 {
-    case SCAFFOLD = 'scaffold';
-    case ROOT = 'root';
-    case STRUCTURE = 'structure';
+    case SUPER = '^';
 }

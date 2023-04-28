@@ -74,7 +74,7 @@ class ilMDLOMDataFactoryTest extends TestCase
         $factory = new ilMDLOMDataFactory(
             new ilMDLOMDataConstraintProvider($ref_factory)
         );
-        $this->expectException(ilMDBuildingBlocksException::class);
+        $this->expectException(ilMDElementsException::class);
 
         $factory->vocabSource('value', []);
     }
@@ -88,7 +88,7 @@ class ilMDLOMDataFactoryTest extends TestCase
         $factory = new ilMDLOMDataFactory(
             new ilMDLOMDataConstraintProvider($ref_factory)
         );
-        $this->expectException(ilMDBuildingBlocksException::class);
+        $this->expectException(ilMDElementsException::class);
 
         $factory->vocabValue('value', []);
     }
@@ -104,7 +104,7 @@ class ilMDLOMDataFactoryTest extends TestCase
         );
         $path = $this->createMock(ilMDPathRelative::class);
 
-        $this->expectException(ilMDBuildingBlocksException::class);
+        $this->expectException(ilMDElementsException::class);
         $factory->conditionalVocabValue('value', [], $path);
     }
 
@@ -195,7 +195,7 @@ class ilMDLOMDataFactoryTest extends TestCase
             [$vocab],
             $path
         );
-        $this->expectException(ilMDBuildingBlocksException::class);
+        $this->expectException(ilMDElementsException::class);
         $this->assertNull($data->getError());
     }
 

@@ -18,23 +18,15 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+namespace ILIAS\MetaData\Elements\Scaffolds;
+
+use ILIAS\MetaData\Elements\ElementInterface;
+use ILIAS\MetaData\Elements\Definition\Definition;
+
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDPathRelative extends ilMDPath
+interface ScaffoldFactoryInterface
 {
-    protected string $start;
-
-    public function __construct(string $start)
-    {
-        $this->validateInput($start);
-        $this->start = $start;
-        $this->path = $start;
-    }
-
-    public function addStepToSuperElement(): ilMDPathRelative
-    {
-        $this->path .= self::SEPARATOR . self::SUPER_ELEMENT;
-        return $this;
-    }
+    public function scaffold(Definition $definition): ElementInterface;
 }

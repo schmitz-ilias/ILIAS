@@ -137,7 +137,7 @@ class ilMDLOMDatabaseQueryProvider
     ): ilMDDatabaseTag {
         $this->checkTable($table);
         if (empty($fields)) {
-            throw new ilMDDatabaseException(
+            throw new ilMDRepositoryException(
                 'A container element can not be empty.'
             );
         }
@@ -193,7 +193,7 @@ class ilMDLOMDatabaseQueryProvider
     ): ilMDDatabaseTag {
         $this->checkTable($table);
         if (empty($fields)) {
-            throw new ilMDDatabaseException(
+            throw new ilMDRepositoryException(
                 'A container element can not be empty.'
             );
         }
@@ -429,7 +429,7 @@ class ilMDLOMDatabaseQueryProvider
         $this->checkTable($first_table);
         $this->checkTable($second_table);
         if (empty($first_fields) || empty($second_fields)) {
-            throw new ilMDDatabaseException(
+            throw new ilMDRepositoryException(
                 'A container element can not be empty.'
             );
         }
@@ -711,7 +711,7 @@ class ilMDLOMDatabaseQueryProvider
     }
 
     /**
-     * @throws ilMDDatabaseException
+     * @throws ilMDRepositoryException
      */
     protected function checkTable(string $table): void
     {
@@ -719,7 +719,7 @@ class ilMDLOMDatabaseQueryProvider
             !array_key_exists($table, dbd::TABLES) ||
             !array_key_exists($table, dbd::ID_NAME)
         ) {
-            throw new ilMDDatabaseException('Invalid MD table.');
+            throw new ilMDRepositoryException('Invalid MD table.');
         }
     }
 }

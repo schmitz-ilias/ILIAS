@@ -30,7 +30,7 @@ interface VocabularyInterface
     /**
      * @return string[]
      */
-    public function values(): array;
+    public function values(): \Generator;
 
     public function isConditional(): bool;
 

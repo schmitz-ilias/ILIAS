@@ -18,14 +18,19 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements;
+namespace ILIAS\MetaData\Paths\Steps;
+
+use ILIAS\MetaData\Paths\Filters\FilterInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-enum NoID: string
+interface StepInterface
 {
-    case SCAFFOLD = 'scaffold';
-    case ROOT = 'root';
-    case STRUCTURE = 'structure';
+    public function name(): string|StepToken;
+
+    /**
+     * @return FilterInterface[]
+     */
+    public function filters(): \Generator;
 }

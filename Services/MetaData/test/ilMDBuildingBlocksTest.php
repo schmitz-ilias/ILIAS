@@ -49,7 +49,7 @@ class ilMDBuildingBlocksTest extends TestCase
         $data = $this->createMock(ilMDData::class);
         $root1 = new ilMDRootElement(1, 2, 'type', 'root1', [], $data);
 
-        $this->expectException(ilMDBuildingBlocksException::class);
+        $this->expectException(ilMDElementsException::class);
         $root2 = new ilMDRootElement(1, 3, 'type', 'root2', [$root1], $data);
     }
 
@@ -134,7 +134,7 @@ class ilMDBuildingBlocksTest extends TestCase
         $scaffold = new ilMDScaffoldElement('scaffold', false, []);
         $root->addScaffoldToSubElements($scaffold);
 
-        $this->expectException(ilMDBuildingBlocksException::class);
+        $this->expectException(ilMDElementsException::class);
         $root->addScaffoldToSubElements($scaffold);
     }
 

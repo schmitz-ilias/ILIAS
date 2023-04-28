@@ -18,14 +18,17 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements;
+namespace ILIAS\MetaData\Paths\Filters;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface BaseRootElementInterface extends BaseElementInterface
+interface FilterInterface
 {
+    public function type(): FilterType;
+
     /**
-     * With standalone null and false in php8.2, this interface will be a bit more useful.
+     * @return string[]
      */
+    public function values(): \Generator;
 }

@@ -21,18 +21,21 @@ declare(strict_types=1);
 namespace ILIAS\MetaData\Elements;
 
 use ILIAS\MetaData\Elements\Data\DataInterface;
+use ILIAS\MetaData\Elements\Base\BaseElementInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 interface ElementInterface extends BaseElementInterface
 {
-    public function getMDID(): int|NoID;
-
     public function getData(): DataInterface;
 
     /**
-     * Find root element of this metadata set.
+     * @return ElementInterface[]
      */
-    public function getRootElement(): RootElementInterface;
+    public function getSubElements(): \Generator;
+
+    public function getSuperElement(): ?ElementInterface;
+
+    public function isScaffold(): bool;
 }

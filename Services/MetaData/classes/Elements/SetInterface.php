@@ -20,12 +20,19 @@ declare(strict_types=1);
 
 namespace ILIAS\MetaData\Elements;
 
+use ILIAS\MetaData\Elements\Base\BaseSetInterface;
+use ILIAS\MetaData\Elements\RessourceID\RessourceIDInterface;
+
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-enum NoID: string
+interface SetInterface extends BaseSetInterface
 {
-    case SCAFFOLD = 'scaffold';
-    case ROOT = 'root';
-    case STRUCTURE = 'structure';
+    /**
+     * Contains the information needed to identify the ILIAS object
+     * this metadata set belongs to.
+     */
+    public function getRessourceID(): RessourceIDInterface;
+
+    public function getRoot(): ElementInterface;
 }

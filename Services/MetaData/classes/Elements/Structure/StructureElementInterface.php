@@ -18,14 +18,22 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements;
+namespace ILIAS\MetaData\Elements\Structure;
+
+use ILIAS\MetaData\Elements\Base\BaseElementInterface;
+use ILIAS\MetaData\Elements\NoID;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-enum NoID: string
+interface StructureElementInterface extends BaseElementInterface
 {
-    case SCAFFOLD = 'scaffold';
-    case ROOT = 'root';
-    case STRUCTURE = 'structure';
+    public function getMDID(): NoID;
+
+    /**
+     * @return StructureElementInterface[]
+     */
+    public function getSubElements(): \Generator;
+
+    public function getSuperElement(): ?StructureElementInterface;
 }

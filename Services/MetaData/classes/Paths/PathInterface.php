@@ -18,14 +18,27 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements;
+namespace ILIAS\MetaData\Paths;
+
+use ILIAS\MetaData\Paths\Steps\StepInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-enum NoID: string
+interface PathInterface
 {
-    case SCAFFOLD = 'scaffold';
-    case ROOT = 'root';
-    case STRUCTURE = 'structure';
+    /**
+     * @return StepInterface[]
+     */
+    public function steps(): \Generator;
+
+    /**
+     * Relative paths start at some otherwise determined element,
+     * absolute paths start at root.
+     */
+    public function isRelative(): bool;
+
+    public function leadsToExactlyOneElement(): bool;
+
+    public function toString(): string;
 }
