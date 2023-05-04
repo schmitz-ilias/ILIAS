@@ -58,7 +58,7 @@ class ilMDEditorGUI
     protected ilMDMarkerFactory $marker_factory;
     protected ilMDLOMLibrary $library;
     protected ilMDLOMPresenter $presenter;
-    protected ilRbacSystem $rbac_system;
+    protected ilAccessHandler $access;
     protected Data $data;
 
     protected array $observers = [];
@@ -105,7 +105,7 @@ class ilMDEditorGUI
             $this->data->dateFormat(),
             $this->library->getLOMDictionary()
         );
-        $this->rbac_system = $DIC->rbac()->system();
+        $this->access = $DIC->access();
 
         $this->lng->loadLanguageModule('meta');
     }
@@ -553,7 +553,13 @@ class ilMDEditorGUI
     {
         $ref_ids = ilObject::_getAllReferences($this->rbac_id);
         foreach ($ref_ids as $ref_id) {
-            if ($this->rbac_system->checkAccess('write', $ref_id)) {
+            if ($this->access->checkAccess(
+                'write',
+                '',
+                $ref_id,
+                '',
+                $this->rbac_id
+            )) {
                 return;
             }
         }

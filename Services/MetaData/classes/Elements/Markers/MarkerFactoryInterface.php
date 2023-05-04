@@ -20,12 +20,12 @@ declare(strict_types=1);
 
 namespace ILIAS\MetaData\Elements\Markers;
 
-use ILIAS\MetaData\Elements\Data\LOMType;
+use ILIAS\MetaData\Elements\Data\Type;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 interface MarkerFactoryInterface
 {
-    public function marker(LOMType $data_type, string $data_value): Marker;
+    public function marker(Type $data_type, string $data_value): MarkerInterface;
 }

@@ -18,19 +18,29 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements\Data;
+namespace ILIAS\MetaData\Paths\Navigator;
+
+use ILIAS\MetaData\Elements\Base\BaseElementInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-enum LOMType: string
+interface BaseNavigatorInterface
 {
-    case NULL = 'none';
-    case STRING = 'string';
-    case LANG = 'lang';
-    case VOCAB_SOURCE = 'vocab_source';
-    case VOCAB_VALUE = 'vocab_value';
-    case DATETIME = 'datetime';
-    case NON_NEG_INT = 'non_neg_int';
-    case DURATION = 'duration';
+    /**
+     * Returns null if there is no next step.
+     */
+    public function nextStep(): ?BaseNavigatorInterface;
+
+    /**
+     * @return BaseElementInterface[]
+     * @throws \ilMDPathException
+     */
+    public function lastElements(): \Generator;
+
+    /**
+     * @return BaseElementInterface[]
+     * @throws \ilMDPathException
+     */
+    public function elements(): \Generator;
 }

@@ -27,15 +27,15 @@ use ILIAS\MetaData\Elements\Base\BaseSet;
  */
 class StructureSet extends BaseSet implements StructureSetInterface
 {
-    public function __construct(StructureElement $root)
+    public function __construct(StructureElementInterface $root)
     {
         parent::__construct($root);
     }
 
-    public function getRoot(): StructureElement
+    public function getRoot(): StructureElementInterface
     {
         $root = parent::getRoot();
-        if ($root instanceof StructureElement) {
+        if ($root instanceof StructureElementInterface) {
             return $root;
         }
         throw new \ilMDElementsException(

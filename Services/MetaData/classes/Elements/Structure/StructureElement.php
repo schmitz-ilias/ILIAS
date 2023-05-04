@@ -22,7 +22,7 @@ namespace ILIAS\MetaData\Elements\Structure;
 
 use ILIAS\MetaData\Elements\Base\BaseElement;
 use ILIAS\MetaData\Elements\NoID;
-use ILIAS\MetaData\Elements\Definition\Definition;
+use ILIAS\MetaData\Structure\Definitions\DefinitionInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -31,7 +31,7 @@ class StructureElement extends BaseElement implements StructureElementInterface
 {
     public function __construct(
         bool $is_root,
-        Definition $definition,
+        DefinitionInterface $definition,
         StructureElement ...$sub_elements
     ) {
         parent::__construct(

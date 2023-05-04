@@ -25,11 +25,11 @@ namespace ILIAS\MetaData\Elements\Base;
  */
 abstract class BaseSet implements BaseSetInterface
 {
-    private BaseElement $root;
+    private BaseElementInterface $root;
 
-    public function __construct(BaseElement $root)
+    public function __construct(BaseElementInterface $root)
     {
-        if (!$root->isRoot()) {
+        if (!$root->isRoot() || $root->getSuperElement()) {
             throw new \ilMDElementsException(
                 'Metadata sets must be created from a root element.'
             );
@@ -37,7 +37,7 @@ abstract class BaseSet implements BaseSetInterface
         $this->root = $root;
     }
 
-    public function getRoot(): BaseElement
+    public function getRoot(): BaseElementInterface
     {
         return $this->root;
     }

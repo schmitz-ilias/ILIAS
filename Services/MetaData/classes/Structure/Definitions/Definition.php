@@ -18,9 +18,9 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements\Definition;
+namespace ILIAS\MetaData\Structure\Definitions;
 
-use ILIAS\MetaData\Elements\Data\LOMType;
+use ILIAS\MetaData\Elements\Data\Type;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -29,12 +29,12 @@ class Definition implements DefinitionInterface
 {
     protected string $name;
     protected bool $unique;
-    protected LOMType $data_type;
+    protected Type $data_type;
 
     public function __construct(
         string $name,
         bool $unique,
-        LOMType $data_type
+        Type $data_type
     ) {
         $this->name = $name;
         $this->unique = $unique;
@@ -51,7 +51,7 @@ class Definition implements DefinitionInterface
         return $this->unique;
     }
 
-    public function dataType(): LOMType
+    public function dataType(): Type
     {
         return $this->data_type;
     }

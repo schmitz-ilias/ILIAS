@@ -25,7 +25,7 @@ namespace ILIAS\MetaData\Elements\Data;
  */
 interface DataInterface
 {
-    public function type(): LOMType;
+    public function type(): Type;
 
     public function value(): string;
 }

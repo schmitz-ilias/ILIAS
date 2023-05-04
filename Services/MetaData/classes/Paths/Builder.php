@@ -21,7 +21,7 @@ declare(strict_types=1);
 namespace ILIAS\MetaData\Paths;
 
 use ILIAS\MetaData\Paths\Filters\FilterType;
-use ILIAS\MetaData\Elements\Definition\DefinitionInterface;
+use ILIAS\MetaData\Structure\Definitions\DefinitionInterface;
 use ILIAS\MetaData\Paths\Steps\Step;
 use ILIAS\MetaData\Paths\Filters\Filter;
 use ILIAS\MetaData\Paths\Steps\StepToken;
@@ -47,7 +47,7 @@ class Builder implements BuilderInterface
     protected bool $is_relative = false;
     protected bool $leads_to_one = false;
 
-    public function withRelative(bool $is_relative): Builder
+    public function withRelative(bool $is_relative): BuilderInterface
     {
         $clone = clone $this;
         $clone->is_relative = $is_relative;
@@ -56,7 +56,7 @@ class Builder implements BuilderInterface
 
     public function withLeadsToExactlyOneElement(
         bool $leads_to_one
-    ): Builder {
+    ): BuilderInterface {
         $clone = clone $this;
         $clone->leads_to_one = $leads_to_one;
         return $clone;
@@ -65,14 +65,14 @@ class Builder implements BuilderInterface
     public function withNextStep(
         DefinitionInterface $definition,
         bool $add_as_first = false
-    ): Builder {
+    ): BuilderInterface {
         return $this->withNextStepFromName(
             $definition->name(),
             $add_as_first
         );
     }
 
-    public function withNextStepToSuperElement(bool $add_as_first = false): Builder
+    public function withNextStepToSuperElement(bool $add_as_first = false): BuilderInterface
     {
         return $this->withNextStepFromName(
             StepToken::SUPER,
@@ -80,10 +80,10 @@ class Builder implements BuilderInterface
         );
     }
 
-    protected function withNextStepFromName(
+    public function withNextStepFromName(
         string|StepToken $name,
         bool $add_as_first
-    ): Builder {
+    ): BuilderInterface {
         $clone = $this->withCurrentStepSaved();
         $clone->current_step_name = $name;
         $clone->current_add_as_first = $add_as_first;
@@ -93,7 +93,7 @@ class Builder implements BuilderInterface
     public function withAdditionalFilterAtCurrentStep(
         FilterType $type,
         string ...$values
-    ): Builder {
+    ): BuilderInterface {
         if (!isset($this->current_step_name)) {
             throw new \ilMDPathException(
                 'Cannot add filter because there is no current step.'
@@ -107,7 +107,7 @@ class Builder implements BuilderInterface
         return $clone;
     }
 
-    public function get(): Path
+    public function get(): PathInterface
     {
         $clone = $this->withCurrentStepSaved();
         return new Path(

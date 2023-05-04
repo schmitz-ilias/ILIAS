@@ -20,36 +20,34 @@ declare(strict_types=1);
 
 namespace ILIAS\MetaData\Elements;
 
-use ILIAS\MetaData\Elements\Markers\Marker;
 use ILIAS\MetaData\Elements\Markers\MarkableInterface;
-use ILIAS\MetaData\Elements\Data\Data;
 use ILIAS\MetaData\Elements\Markers\MarkerFactoryInterface;
-use ILIAS\MetaData\Elements\Data\LOMType;
+use ILIAS\MetaData\Elements\Data\Type;
 use ILIAS\MetaData\Elements\Scaffolds\ScaffoldableInterface;
-use ILIAS\MetaData\Elements\Definition\Definition;
 use ILIAS\MetaData\Elements\Base\BaseElement;
-use ILIAS\MetaData\Elements\Scaffolds\ScaffoldFactoryInterface;
-use ILIAS\MetaData\Elements\Definition\DefinitionInterface;
+use ILIAS\MetaData\Structure\Definitions\DefinitionInterface;
+use ILIAS\MetaData\Elements\Markers\MarkerInterface;
+use ILIAS\MetaData\Elements\Data\DataInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class Element extends BaseElement implements ElementInterface, MarkableInterface, ScaffoldableInterface
+class Element extends BaseElement implements ElementInterface
 {
-    private ?Marker $marker = null;
-    private Data $data;
+    private ?MarkerInterface $marker = null;
+    private DataInterface $data;
 
     public function __construct(
         NoID|int $md_id,
-        Definition $definition,
-        Data $data,
-        BaseElement ...$sub_elements
+        DefinitionInterface $definition,
+        DataInterface $data,
+        Element ...$sub_elements
     ) {
         $this->data = $data;
         parent::__construct($md_id, $definition, ...$sub_elements);
     }
 
-    public function getData(): Data
+    public function getData(): DataInterface
     {
         return $this->data;
     }
@@ -90,7 +88,7 @@ class Element extends BaseElement implements ElementInterface, MarkableInterface
         return isset($this->marker);
     }
 
-    public function getMarkerData(): ?Data
+    public function getMarkerData(): ?DataInterface
     {
         return $this?->marker->data();
     }
@@ -108,21 +106,22 @@ class Element extends BaseElement implements ElementInterface, MarkableInterface
             if ($curr_element->isMarked()) {
                 return;
             }
-            $curr_element->setMarker($factory->marker(LOMType::NULL, ''));
+            $curr_element->setMarker($factory->marker(Type::NULL, ''));
             $curr_element = $curr_element->getSuperElement();
         }
     }
 
-    protected function setMarker(?Marker $marker): void
+    protected function setMarker(?MarkerInterface $marker): void
     {
         $this->marker = $marker;
     }
 
     public function addScaffoldToSubElements(
-        ScaffoldFactoryInterface $scaffold_factory,
-        DefinitionInterface $definition
+        ElementInterface $scaffold
     ): void {
-        $scaffold = $scaffold_factory->scaffold($definition);
+        if (!$scaffold->isScaffold() || !($scaffold instanceof BaseElement)) {
+            throw new \ilMDElementsException('Invalid scaffold');
+        }
         $this->addSubElement($scaffold);
     }
 }

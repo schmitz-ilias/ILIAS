@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 namespace ILIAS\MetaData\Paths;
 
-use ILIAS\MetaData\Paths\Steps\Step;
+use ILIAS\MetaData\Paths\Steps\StepInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -28,7 +28,7 @@ use ILIAS\MetaData\Paths\Steps\Step;
 class Path implements PathInterface, \Stringable
 {
     /**
-     * @var Step[]
+     * @var StepInterface[]
      */
     protected array $steps;
     protected bool $is_relative;
@@ -37,7 +37,7 @@ class Path implements PathInterface, \Stringable
     public function __construct(
         bool $is_relative,
         bool $leads_to_one,
-        Step ...$steps
+        StepInterface ...$steps
     ) {
         $this->is_relative = $is_relative;
         $this->leads_to_one = $leads_to_one;
@@ -45,7 +45,7 @@ class Path implements PathInterface, \Stringable
     }
 
     /**
-     * @return Step[]
+     * @return StepInterface[]
      */
     public function steps(): \Generator
     {
@@ -84,16 +84,18 @@ class Path implements PathInterface, \Stringable
         return $string;
     }
 
-    protected function stepToString(Step $step): string
+    protected function stepToString(StepInterface $step): string
     {
         $string = $step->name();
         foreach ($step->filters() as $filter) {
-            $string .= Token::FILTER_OPEN->value;
+            $string .= Token::FILTER_SEPARATOR->value .
+                $filter->type()->value .
+                Token::FILTER_VALUE_SEPARATOR->value;
+
             $string .= implode(
                 Token::FILTER_VALUE_SEPARATOR->value,
                 $filter->values()
             );
-            $string .= Token::FILTER_CLOSE->value;
         }
         return $string;
     }

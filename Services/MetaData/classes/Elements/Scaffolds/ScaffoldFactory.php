@@ -20,16 +20,17 @@ declare(strict_types=1);
 
 namespace ILIAS\MetaData\Elements\Scaffolds;
 
-use ILIAS\MetaData\Elements\Definition\Definition;
+use ILIAS\MetaData\Structure\Definitions\DefinitionInterface;
 use ILIAS\MetaData\Elements\Element;
 use ILIAS\MetaData\Elements\Data\DataFactory;
 use ILIAS\MetaData\Elements\NoID;
-use ILIAS\MetaData\Elements\Data\LOMType;
+use ILIAS\MetaData\Elements\Data\Type;
+use ILIAS\MetaData\Elements\ElementInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ScaffoldFactory implements ScaffoldFactoryInterface
+class ScaffoldFactory
 {
     protected DataFactory $data_factory;
 
@@ -38,7 +39,7 @@ class ScaffoldFactory implements ScaffoldFactoryInterface
         $this->data_factory = $data_factory;
     }
 
-    public function scaffold(Definition $definition): Element
+    public function scaffold(DefinitionInterface $definition): ElementInterface
     {
         return new Element(
             NoID::SCAFFOLD,

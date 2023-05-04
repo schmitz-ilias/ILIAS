@@ -25,13 +25,13 @@ namespace ILIAS\MetaData\Elements\Data;
  */
 class DataFactory
 {
-    public function data(LOMType $type, string $value): Data
+    public function data(Type $type, string $value): DataInterface
     {
         return new Data($type, $value);
     }
 
-    public function null(): Data
+    public function null(): DataInterface
     {
-        return new Data(LOMType::NULL, '');
+        return new Data(Type::NULL, '');
     }
 }

@@ -20,8 +20,9 @@ declare(strict_types=1);
 
 namespace ILIAS\MetaData\Elements\Base;
 
-use ILIAS\MetaData\Elements\Definition\Definition;
+use ILIAS\MetaData\Structure\Definitions\Definition;
 use ILIAS\MetaData\Elements\NoID;
+use ILIAS\MetaData\Structure\Definitions\DefinitionInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -33,12 +34,12 @@ abstract class BaseElement implements BaseElementInterface
      */
     private array $sub_elements;
     private ?BaseElement $super_element = null;
-    private Definition $definition;
+    private DefinitionInterface $definition;
     private int|NoID $md_id;
 
     public function __construct(
         int|NoID $md_id,
-        Definition $definition,
+        DefinitionInterface $definition,
         BaseElement ...$sub_elements
     ) {
         foreach ($sub_elements as $sub_element) {
@@ -77,7 +78,7 @@ abstract class BaseElement implements BaseElementInterface
         }
     }
 
-    protected function addSubElement(BaseElementInterface $sub_element): void
+    protected function addSubElement(BaseElement $sub_element): void
     {
         $sub_element->setSuperElement($this);
         $this->sub_elements[] = $sub_element;
@@ -103,7 +104,7 @@ abstract class BaseElement implements BaseElementInterface
         return $this->getMDID() === NoID::ROOT;
     }
 
-    public function getDefinition(): Definition
+    public function getDefinition(): DefinitionInterface
     {
         return $this->definition;
     }

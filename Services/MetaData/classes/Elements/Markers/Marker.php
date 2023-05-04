@@ -20,21 +20,21 @@ declare(strict_types=1);
 
 namespace ILIAS\MetaData\Elements\Markers;
 
-use ILIAS\MetaData\Elements\Data\Data;
+use ILIAS\MetaData\Elements\Data\DataInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 class Marker implements MarkerInterface
 {
-    protected Data $data;
+    protected DataInterface $data;
 
-    public function __construct(Data $data)
+    public function __construct(DataInterface $data)
     {
         $this->data = $data;
     }
 
-    public function data(): Data
+    public function data(): DataInterface
     {
         return $this->data;
     }

@@ -18,26 +18,12 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements\Markers;
-
-use ILIAS\MetaData\Elements\Data\Data;
-use ILIAS\MetaData\Elements\Data\DataFactory as DataFactory;
-use ILIAS\MetaData\Elements\Data\Type;
+namespace ILIAS\MetaData\Elements\Data;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class MarkerFactory implements MarkerFactoryInterface
+interface DataCarrierInterface
 {
-    protected DataFactory $data_factory;
-
-    public function __construct($data_factory)
-    {
-        $this->data_factory = $data_factory;
-    }
-
-    public function marker(Type $data_type, string $data_value): MarkerInterface
-    {
-        return new Marker($this->data_factory->data($data_type, $data_value));
-    }
+    public function getData(): DataInterface;
 }

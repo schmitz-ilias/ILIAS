@@ -25,15 +25,15 @@ namespace ILIAS\MetaData\Elements\Data;
  */
 class Data implements DataInterface
 {
-    protected LOMType $type;
+    protected Type $type;
     protected string $value;
 
-    public function __construct(LOMType $type, string $value)
+    public function __construct(Type $type, string $value)
     {
         $this->value = $value;
     }
 
-    public function type(): LOMType
+    public function type(): Type
     {
         return $this->type;
     }

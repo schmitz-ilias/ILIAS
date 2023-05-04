@@ -28,14 +28,72 @@ use ILIAS\MetaData\Paths\Filters\FilterType;
  */
 class Factory implements FactoryInterface
 {
-    public function fromString(string $string): Path
+    public function fromString(string $string): PathInterface
     {
+        $exploded = explode(Token::SEPARATOR->value, strtolower($string));
+        $builder = $this->setModesFromString($this->custom(), $exploded[0]);
+        $exploded = array_slice($exploded, 1);
+        foreach ($exploded as $step_string) {
+            $builder = $this->addStepFromString($builder, $step_string);
+        }
+        return $builder->get();
+    }
+
+    protected function setModesFromString(
+        BuilderInterface $builder,
+        string $string
+    ): BuilderInterface {
+        $pattern = '/^(' . strtolower(Token::LEADS_TO_EXACTLY_ONE->value) .
+            ')?(' . strtolower(Token::START_AT_ROOT->value) . '|' .
+            strtolower(Token::START_AT_CURRENT->value) . ')$/g';
+        if (!preg_match($pattern, $string, $matches)) {
+            throw new \ilMDPathException(
+                'Cannot create path, invalid modes in input string: ' . $string
+            );
+        }
+        if (!empty($matches[1])) {
+            $builder = $builder->withLeadsToExactlyOneElement(true);
+        }
+        if ($matches[2] === Token::START_AT_ROOT->value) {
+            $builder = $builder->withRelative(false);
+        } else {
+            $builder = $builder->withRelative(true);
+        }
+        return $builder;
+    }
+
+    protected function addStepFromString(
+        BuilderInterface $builder,
+        string $string
+    ): BuilderInterface {
+        $exploded = explode(Token::FILTER_SEPARATOR->value, strtolower($string));
+        $builder->withNextStepFromName($exploded[0], false);
+        $exploded = array_slice($exploded, 1);
+        foreach ($exploded as $filter_string) {
+            $exploded_filter = explode(
+                Token::FILTER_VALUE_SEPARATOR->value,
+                strtolower($string)
+            );
+            $type = FilterType::tryFrom($exploded_filter[0]);
+            $exploded_filter = array_slice($exploded_filter, 1);
+            if (!is_null($type)) {
+                $builder = $builder->withAdditionalFilterAtCurrentStep(
+                    $type,
+                    ...$exploded_filter
+                );
+                continue;
+            }
+            throw new \ilMDPathException(
+                'Cannot create path, invalid filter type.'
+            );
+        }
+        return $builder;
     }
 
     public function toElement(
         BaseElementInterface $to,
         bool $leads_to_exactly_one = false
-    ): Path {
+    ): PathInterface {
         $builder = $this
             ->custom()
             ->withRelative(false)
@@ -62,7 +120,7 @@ class Factory implements FactoryInterface
         BaseElementInterface $from,
         BaseElementInterface $to,
         bool $leads_to_exactly_one = false
-    ): Path {
+    ): PathInterface {
         $to_and_supers = [];
         while ($to) {
             array_unshift($to_and_supers, $to);
@@ -100,10 +158,10 @@ class Factory implements FactoryInterface
     }
 
     protected function addElementAsStep(
-        Builder $builder,
+        BuilderInterface $builder,
         BaseElementInterface $element,
         bool $leads_to_exactly_one
-    ): Builder {
+    ): BuilderInterface {
         $builder = $builder->withNextStep(
             $element->getDefinition(),
             true
@@ -122,7 +180,7 @@ class Factory implements FactoryInterface
         return $builder;
     }
 
-    public function custom(): Builder
+    public function custom(): BuilderInterface
     {
         return new Builder();
     }

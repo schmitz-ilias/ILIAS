@@ -21,7 +21,6 @@ declare(strict_types=1);
 namespace ILIAS\MetaData\Elements\Scaffolds;
 
 use ILIAS\MetaData\Elements\ElementInterface;
-use ILIAS\MetaData\Elements\Definition\DefinitionInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -32,7 +31,6 @@ interface ScaffoldableInterface
      * Scaffolds are used to mark where elements could potentially be created.
      */
     public function addScaffoldToSubElements(
-        ScaffoldFactoryInterface $scaffold_factory,
-        DefinitionInterface $definition
+        ElementInterface $scaffold
     ): void;
 }

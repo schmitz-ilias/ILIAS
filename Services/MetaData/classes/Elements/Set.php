@@ -21,32 +21,32 @@ declare(strict_types=1);
 namespace ILIAS\MetaData\Elements;
 
 use ILIAS\MetaData\Elements\Base\BaseSet;
-use ILIAS\MetaData\Elements\RessourceID\RessourceID;
+use ILIAS\MetaData\Elements\RessourceID\RessourceIDInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 class Set extends BaseSet implements SetInterface
 {
-    private RessourceID $ressource_id;
+    private RessourceIDInterface $ressource_id;
 
     public function __construct(
-        RessourceID $ressource_id,
-        Element $root
+        RessourceIDInterface $ressource_id,
+        ElementInterface $root
     ) {
         parent::__construct($root);
         $this->ressource_id = $ressource_id;
     }
 
-    public function getRessourceID(): RessourceID
+    public function getRessourceID(): RessourceIDInterface
     {
         return $this->ressource_id;
     }
 
-    public function getRoot(): Element
+    public function getRoot(): ElementInterface
     {
         $root = parent::getRoot();
-        if ($root instanceof Element) {
+        if ($root instanceof ElementInterface) {
             return $root;
         }
         throw new \ilMDElementsException(

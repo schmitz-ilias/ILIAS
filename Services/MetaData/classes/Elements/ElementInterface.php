@@ -22,14 +22,15 @@ namespace ILIAS\MetaData\Elements;
 
 use ILIAS\MetaData\Elements\Data\DataInterface;
 use ILIAS\MetaData\Elements\Base\BaseElementInterface;
+use ILIAS\MetaData\Elements\Scaffolds\ScaffoldableInterface;
+use ILIAS\MetaData\Elements\Markers\MarkableInterface;
+use ILIAS\MetaData\Elements\Data\DataCarrierInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface ElementInterface extends BaseElementInterface
+interface ElementInterface extends BaseElementInterface, ScaffoldableInterface, MarkableInterface, DataCarrierInterface
 {
-    public function getData(): DataInterface;
-
     /**
      * @return ElementInterface[]
      */

@@ -25,7 +25,7 @@ namespace ILIAS\MetaData\Paths\Filters;
  */
 enum FilterType: string
 {
-    case NULL = 'none';
+    case NULL = 'NULL';
     case MDID = 'ID';
     case INDEX = 'INDEX';
     case DATA = 'DATA';

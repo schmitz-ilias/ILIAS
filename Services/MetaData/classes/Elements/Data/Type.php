@@ -18,15 +18,19 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements\Scaffolds;
-
-use ILIAS\MetaData\Elements\ElementInterface;
-use ILIAS\MetaData\Elements\Definition\Definition;
+namespace ILIAS\MetaData\Elements\Data;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface ScaffoldFactoryInterface
+enum Type: string
 {
-    public function scaffold(Definition $definition): ElementInterface;
+    case NULL = 'none';
+    case STRING = 'string';
+    case LANG = 'lang';
+    case VOCAB_SOURCE = 'vocab_source';
+    case VOCAB_VALUE = 'vocab_value';
+    case DATETIME = 'datetime';
+    case NON_NEG_INT = 'non_neg_int';
+    case DURATION = 'duration';
 }

@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 namespace ILIAS\MetaData\Elements\Base;
 
-use ILIAS\MetaData\Elements\Definition\DefinitionInterface;
+use ILIAS\MetaData\Structure\Definitions\DefinitionInterface;
 use ILIAS\MetaData\Elements\NoID;
 use ILIAS\MetaData\Elements\Data\DataInterface;
 

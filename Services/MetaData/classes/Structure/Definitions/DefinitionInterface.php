@@ -18,9 +18,9 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements\Definition;
+namespace ILIAS\MetaData\Structure\Definitions;
 
-use ILIAS\MetaData\Elements\Data\LOMType;
+use ILIAS\MetaData\Elements\Data\Type;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -44,5 +44,5 @@ interface DefinitionInterface
     /**
      * Type of data this element can carry.
      */
-    public function dataType(): LOMType;
+    public function dataType(): Type;
 }

@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 namespace ILIAS\MetaData\Paths\Steps;
 
-use ILIAS\MetaData\Paths\Filters\Filter;
+use ILIAS\MetaData\Paths\Filters\FilterInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -29,13 +29,13 @@ class Step implements StepInterface
 {
     protected string|StepToken $name;
     /**
-     * @var Filter[]
+     * @var FilterInterface[]
      */
     protected array $filters;
 
     public function __construct(
         string|StepToken $name,
-        Filter ...$filters
+        FilterInterface ...$filters
     ) {
         $this->name = $name;
         $this->filters = $filters;
@@ -47,7 +47,7 @@ class Step implements StepInterface
     }
 
     /**
-     * @return Filter[]
+     * @return FilterInterface[]
      */
     public function filters(): \Generator
     {

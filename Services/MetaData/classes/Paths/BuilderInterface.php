@@ -21,7 +21,7 @@ declare(strict_types=1);
 namespace ILIAS\MetaData\Paths;
 
 use ILIAS\MetaData\Paths\Filters\FilterType;
-use ILIAS\MetaData\Elements\Definition\DefinitionInterface;
+use ILIAS\MetaData\Structure\Definitions\DefinitionInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
