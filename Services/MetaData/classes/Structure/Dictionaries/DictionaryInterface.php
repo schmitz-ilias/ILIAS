@@ -18,39 +18,22 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Paths\Steps;
+namespace ILIAS\MetaData\Structure\Dictionaries;
 
-use ILIAS\MetaData\Paths\Filters\FilterInterface;
+use ILIAS\MetaData\Elements\Base\BaseElementInterface;
+use ILIAS\MetaData\Structure\Dictionaries\Tags\TagInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class Step implements StepInterface
+interface DictionaryInterface
 {
-    protected string|StepToken $name;
     /**
-     * @var FilterInterface[]
+     * If possible, takes into account the index of
+     * elements when finding tags (beginning with 0).
+     * @return TagInterface[]
      */
-    protected array $filters;
-
-    public function __construct(
-        string|StepToken $name,
-        FilterInterface ...$filters
-    ) {
-        $this->name = $name;
-        $this->filters = $filters;
-    }
-
-    public function name(): string|StepToken
-    {
-        return $this->name;
-    }
-
-    /**
-     * @return FilterInterface[]
-     */
-    public function filters(): \Generator
-    {
-        yield from $this->filters;
-    }
+    public function tagsForElement(
+        BaseElementInterface $element
+    ): \Generator;
 }

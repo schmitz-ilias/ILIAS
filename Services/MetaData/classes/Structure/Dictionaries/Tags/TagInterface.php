@@ -18,39 +18,19 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Paths\Steps;
-
-use ILIAS\MetaData\Paths\Filters\FilterInterface;
+namespace ILIAS\MetaData\Structure\Dictionaries\Tags;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class Step implements StepInterface
+interface TagInterface
 {
-    protected string|StepToken $name;
-    /**
-     * @var FilterInterface[]
-     */
-    protected array $filters;
-
-    public function __construct(
-        string|StepToken $name,
-        FilterInterface ...$filters
-    ) {
-        $this->name = $name;
-        $this->filters = $filters;
-    }
-
-    public function name(): string|StepToken
-    {
-        return $this->name;
-    }
+    public function isRestrictedToIndices(): bool;
 
     /**
-     * @return FilterInterface[]
+     * If this tag only applies to elements with specific
+     * indices, these indices are returned.
+     * @return int[]
      */
-    public function filters(): \Generator
-    {
-        yield from $this->filters;
-    }
+    public function indices(): \Generator;
 }

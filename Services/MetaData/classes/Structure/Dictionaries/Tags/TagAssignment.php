@@ -18,39 +18,34 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Paths\Steps;
+namespace ILIAS\MetaData\Structure\Dictionaries\Tags;
 
-use ILIAS\MetaData\Paths\Filters\FilterInterface;
+use ILIAS\MetaData\Paths\PathInterface;
+use ILIAS\MetaData\Structure\Dictionaries\Tags\TagInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class Step implements StepInterface
+class TagAssignment implements TagAssignmentInterface
 {
-    protected string|StepToken $name;
-    /**
-     * @var FilterInterface[]
-     */
-    protected array $filters;
+    protected PathInterface $path;
+    protected TagInterface $tag;
 
     public function __construct(
-        string|StepToken $name,
-        FilterInterface ...$filters
+        PathInterface $path,
+        TagInterface $tag
     ) {
-        $this->name = $name;
-        $this->filters = $filters;
+        $this->path = $path;
+        $this->tag = $tag;
     }
 
-    public function name(): string|StepToken
+    public function matchesPath(PathInterface $path): bool
     {
-        return $this->name;
+        return $path->toString() === $this->path->toString();
     }
 
-    /**
-     * @return FilterInterface[]
-     */
-    public function filters(): \Generator
+    public function tag(): TagInterface
     {
-        yield from $this->filters;
+        return $this->tag;
     }
 }

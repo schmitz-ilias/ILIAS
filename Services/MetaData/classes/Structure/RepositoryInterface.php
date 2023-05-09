@@ -27,7 +27,7 @@ use ILIAS\MetaData\Elements\ElementInterface;
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface Repository
+interface RepositoryInterface
 {
     /**
      * Returns a metadata set where every possible element is

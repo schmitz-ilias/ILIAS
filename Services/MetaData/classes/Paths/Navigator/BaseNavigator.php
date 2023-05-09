@@ -81,13 +81,13 @@ abstract class BaseNavigator implements BaseNavigatorInterface
 
         $new_elements = [];
         foreach ($clone->elements as $element) {
-            $filtered_sub_elements = $clone->bridge->getSubElementsFromStep(
+            $filtered_sub_elements = $clone->bridge->getNextElementsByStep(
                 $element,
                 $clone->remaining_steps[0]
             );
             $new_elements = array_merge(
                 $new_elements,
-                $filtered_sub_elements
+                iterator_to_array($filtered_sub_elements)
             );
         }
 
@@ -106,10 +106,7 @@ abstract class BaseNavigator implements BaseNavigatorInterface
         while ($clone) {
             $clone = $clone->nextStep();
         }
-        $clone->checkLeadsToOne();
-        foreach ($clone->elements() as $element) {
-            yield $element;
-        }
+        yield from $clone->elements();
     }
 
     /**
@@ -119,9 +116,7 @@ abstract class BaseNavigator implements BaseNavigatorInterface
     public function elements(): \Generator
     {
         $this->checkLeadsToOne();
-        foreach ($this->elements as $element) {
-            yield $element;
-        }
+        yield from $this->elements;
     }
 
     /**

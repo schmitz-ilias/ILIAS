@@ -34,31 +34,82 @@ class NavigatorBridge
     /**
      * @return BaseElementInterface[]
      */
-    public function getSubElementsFromStep(
+    public function getNextElementsByStep(
         BaseElementInterface $element,
         StepInterface $step
     ): \Generator {
-        $index_filters = [];
-        $single_element_filters = [];
+        $next_elements = $this->getNextElementsByName(
+            $element,
+            $step->name()
+        );
 
         foreach ($step->filters() as $filter) {
-            if ($filter->type() === FilterType::INDEX) {
-                $index_filters[] = $filter;
-                continue;
+            switch ($filter->type()) {
+                case FilterType::NULL:
+                    break;
+
+                case FilterType::MDID:
+                    $next_elements = $this->filterByMDID(
+                        $filter,
+                        ...$next_elements
+                    );
+                    break;
+
+                case FilterType::INDEX:
+                    $next_elements = $this->filterByIndex(
+                        $filter,
+                        ...$next_elements
+                    );
+                    break;
+
+                case FilterType::DATA:
+                    $next_elements = $this->filterByData(
+                        $filter,
+                        ...$next_elements
+                    );
+                    break;
             }
-            $single_element_filters = [];
         }
 
-        $filtered_by_index = $this->filterSubElementsByNameAndIndex(
-            $element,
-            $step->name(),
-            ...$index_filters
-        );
-        foreach ($filtered_by_index as $element) {
-            if ($this->matchesSingleElementFilters(
-                $element,
-                ...$single_element_filters
-            )) {
+        yield from $next_elements;
+    }
+
+    /**
+     * @return BaseElementInterface[]
+     */
+    protected function getNextElementsByName(
+        BaseElementInterface $element,
+        string|StepToken $name
+    ): \Generator {
+        if ($name === StepToken::SUPER) {
+            if ($super = $element->getSuperElement()) {
+                yield $super;
+            }
+            return;
+        }
+
+        foreach ($element->getSubElements() as $sub) {
+            if ($sub->getDefinition()->name() === $name) {
+                yield $sub;
+            }
+        }
+    }
+
+    /**
+     * @return BaseElementInterface[]
+     */
+    protected function filterByMDID(
+        FilterInterface $filter,
+        BaseElementInterface ...$elements
+    ): \Generator {
+        foreach ($elements as $element) {
+            $id = $element->getMDID();
+            if (is_int($id)) {
+                $id = (string) $id;
+            } elseif ($id instanceof NoID) {
+                $id = $id->value;
+            }
+            if (in_array($id, iterator_to_array($filter->values()), true)) {
                 yield $element;
             }
         }
@@ -67,95 +118,34 @@ class NavigatorBridge
     /**
      * @return BaseElementInterface[]
      */
-    protected function filterSubElementsByNameAndIndex(
-        BaseElementInterface $element,
-        string $name,
-        FilterInterface ...$filters
+    protected function filterByIndex(
+        FilterInterface $filter,
+        BaseElementInterface ...$elements
     ): \Generator {
         $index = 0;
-        foreach ($element->getSubElements() as $sub_element) {
-            $element_name = $sub_element->getDefinition()->name();
-            if ($element_name !== $name) {
-                continue;
+        foreach ($elements as $element) {
+            if (in_array($index, iterator_to_array($filter->values()), true)) {
+                yield $element;
             }
             $index++;
-            if ($this->indexMatchesFilters($index, ...$filters)) {
-                yield $sub_element;
-            }
         }
     }
 
-    protected function indexMatchesFilters(
-        int $index,
-        FilterInterface ...$filters
-    ): bool {
-        foreach ($filters as $filter) {
-            if (!in_array($index, $filter->values())) {
-                return false;
+    /**
+     * @return BaseElementInterface[]
+     */
+    protected function filterByData(
+        FilterInterface $filter,
+        BaseElementInterface ...$elements
+    ): \Generator {
+        foreach ($elements as $element) {
+            if (!($element instanceof DataCarrierInterface)) {
+                continue;
+            }
+            $data = $element->getData()->value();
+            if (in_array($data, iterator_to_array($filter->values()), true)) {
+                yield $element;
             }
         }
-        return true;
-    }
-
-    protected function matchesSingleElementFilters(
-        BaseElementInterface $element,
-        FilterInterface ...$filters
-    ): bool {
-        foreach ($filters as $filter) {
-            $match = true;
-
-            switch ($filter->type()) {
-                case FilterType::NULL:
-                    break;
-
-                case FilterType::MDID:
-                    $match = $this->MDIDMatchesFilter($element, $filter);
-                    break;
-
-                case FilterType::INDEX:
-                    throw new \ilMDPathException(
-                        'Index filters can not be performed on a single element.'
-                    );
-
-                case FilterType::DATA:
-                    $match = $this->DataMatchesFilter($element, $filter);
-                    break;
-            }
-
-            if (!$match) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    protected function MDIDMatchesFilter(
-        BaseElementInterface $element,
-        FilterInterface $filter
-    ): bool {
-        $id = $element->getMDID();
-        if (is_int($id)) {
-            $id = (string) $id;
-        } elseif ($id instanceof NoID) {
-            $id = $id->value;
-        }
-        if (in_array($id, $filter->values())) {
-            return true;
-        }
-        return false;
-    }
-
-    protected function dataMatchesFilter(
-        BaseElementInterface $element,
-        FilterInterface $filter
-    ): bool {
-        if (!($element instanceof DataCarrierInterface)) {
-            return false;
-        }
-        if (in_array($element->getData()->value(), $filter->values())) {
-            return true;
-        }
-        return false;
     }
 }

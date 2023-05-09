@@ -41,14 +41,14 @@ class StructureFactory
 
     public function structure(
         DefinitionInterface $definition,
-        StructureElementInterface ...$sub_elements
-    ): StructureElementInterface {
+        StructureElement ...$sub_elements
+    ): StructureElement {
         return $this->element(false, $definition, ...$sub_elements);
     }
 
     public function root(
         DefinitionInterface $definition,
-        StructureElementInterface ...$sub_elements
+        StructureElement ...$sub_elements
     ): StructureElementInterface {
         return $this->element(true, $definition, ...$sub_elements);
     }
@@ -56,8 +56,8 @@ class StructureFactory
     protected function element(
         bool $is_root,
         DefinitionInterface $definition,
-        StructureElementInterface ...$sub_elements
-    ): StructureElementInterface {
+        StructureElement ...$sub_elements
+    ): StructureElement {
         return new StructureElement(
             $is_root,
             $definition,

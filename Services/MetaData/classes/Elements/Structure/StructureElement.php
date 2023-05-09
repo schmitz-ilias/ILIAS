@@ -23,6 +23,7 @@ namespace ILIAS\MetaData\Elements\Structure;
 use ILIAS\MetaData\Elements\Base\BaseElement;
 use ILIAS\MetaData\Elements\NoID;
 use ILIAS\MetaData\Structure\Definitions\DefinitionInterface;
+use ILIAS\MetaData\Elements\Base\BaseElementInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -69,12 +70,32 @@ class StructureElement extends BaseElement implements StructureElementInterface
     public function getSubElements(): \Generator
     {
         foreach (parent::getSubElements() as $sub_element) {
-            if (!($sub_element instanceof StructureElement)) {
-                throw new \ilMDElementsException(
-                    'Metadata element has invalid sub-element.'
-                );
-            }
+            $this->checkSubElement($sub_element);
             yield $sub_element;
+        }
+    }
+
+    public function getSubElement(string $name): ?StructureElementInterface
+    {
+        foreach ($this->getSubElements() as $sub_element) {
+            $sub_name = $sub_element->getDefinition()->name();
+            if ($sub_name === $name) {
+                $this->checkSubElement($sub_element);
+                return $sub_element;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * @throws \ilMDElementsException
+     */
+    protected function checkSubElement(BaseElement $element): void
+    {
+        if (!($element instanceof StructureElement)) {
+            throw new \ilMDElementsException(
+                'Metadata element has invalid sub-element.'
+            );
         }
     }
 }

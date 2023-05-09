@@ -18,13 +18,31 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+namespace ILIAS\MetaData\Vocabularies\Conditions;
+
+use ILIAS\MetaData\Paths\PathInterface;
+
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface ilMDDictionary
+class Condition implements ConditionInterface
 {
-    /**
-     * Returns a structure in read mode, decorated with tags.
-     */
-    public function getStructure(): ilMDStructure;
+    protected string $value;
+    protected PathInterface $path;
+
+    public function __construct(string $value, PathInterface $path)
+    {
+        $this->value = $value;
+        $this->path = $path;
+    }
+
+    public function value(): string
+    {
+        return $this->value();
+    }
+
+    public function path(): PathInterface
+    {
+        return $this->path();
+    }
 }

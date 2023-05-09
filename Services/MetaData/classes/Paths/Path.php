@@ -49,9 +49,7 @@ class Path implements PathInterface, \Stringable
      */
     public function steps(): \Generator
     {
-        foreach ($this->steps as $step) {
-            yield $step;
-        }
+        yield from $this->steps;
     }
 
     public function isRelative(): bool

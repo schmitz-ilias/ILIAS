@@ -32,7 +32,7 @@ use ILIAS\MetaData\Elements\Structure\StructureSetInterface;
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class LOMRepository implements Repository
+class LOMRepository implements RepositoryInterface
 {
     protected StructureFactory $structure_factory;
     protected ScaffoldFactory $scaffold_factory;
@@ -68,7 +68,7 @@ class LOMRepository implements Repository
     }
 
     /**
-     * @return LOMDefinitionReader[]
+     * @return StructureElement[]
      */
     protected function getSubElements(LOMDefinitionReader ...$readers): \Generator
     {
@@ -90,7 +90,7 @@ class LOMRepository implements Repository
             $this->path_factory->toElement($element),
             $this->getStructure()->getRoot()
         );
-        $structure_element = $navigator->lastElements()[0];
+        $structure_element = $navigator->lastElements()->current();
 
         $sub_names = [];
         foreach ($element->getSubElements() as $sub) {

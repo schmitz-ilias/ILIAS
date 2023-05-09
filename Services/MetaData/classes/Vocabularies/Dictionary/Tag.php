@@ -18,39 +18,28 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Paths\Steps;
+namespace ILIAS\MetaData\Vocabularies\Dictionary;
 
-use ILIAS\MetaData\Paths\Filters\FilterInterface;
+use ILIAS\MetaData\Vocabularies\VocabularyInterface;
+use ILIAS\MetaData\Structure\Dictionaries\Tags\Tag as BaseTag;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class Step implements StepInterface
+class Tag extends BaseTag implements TagInterface
 {
-    protected string|StepToken $name;
-    /**
-     * @var FilterInterface[]
-     */
-    protected array $filters;
+    protected VocabularyInterface $vocabulary;
 
     public function __construct(
-        string|StepToken $name,
-        FilterInterface ...$filters
+        VocabularyInterface $vocabulary,
+        int ...$indices
     ) {
-        $this->name = $name;
-        $this->filters = $filters;
+        $this->vocabulary = $vocabulary;
+        parent::__construct(...$indices);
     }
 
-    public function name(): string|StepToken
+    public function vocabulary(): VocabularyInterface
     {
-        return $this->name;
-    }
-
-    /**
-     * @return FilterInterface[]
-     */
-    public function filters(): \Generator
-    {
-        yield from $this->filters;
+        return $this->vocabulary;
     }
 }

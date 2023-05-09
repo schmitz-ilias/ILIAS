@@ -20,12 +20,13 @@ declare(strict_types=1);
 
 namespace ILIAS\MetaData\Vocabularies;
 
-use ILIAS\MetaData\Vocabularies\Conditions\ConditionInterface;
+use ILIAS\MetaData\Paths\PathInterface;
+use ILIAS\MetaData\Vocabularies\Conditions\Condition;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class Vocabulary implements VocabularyInterface
+class Builder implements BuilderInterface
 {
     protected string $source;
 
@@ -33,40 +34,31 @@ class Vocabulary implements VocabularyInterface
      * @var string[]
      */
     protected array $values;
-    protected ?ConditionInterface $condition;
+    protected ?Condition $condition = null;
 
     public function __construct(
         string $source,
-        ?ConditionInterface $condition = null,
         string ...$values
     ) {
         $this->source = $source;
         $this->values = $values;
-        $this->condition = $condition;
     }
 
-    public function source(): string
-    {
-        return $this->source;
+    public function withCondition(
+        string $value,
+        PathInterface $path
+    ): BuilderInterface {
+        $clone = clone $this;
+        $clone->condition = new Condition($value, $path);
+        return $clone;
     }
 
-    /**
-     * @return string[]
-     */
-    public function values(): \Generator
+    public function get(): VocabularyInterface
     {
-        foreach ($this->values as $value) {
-            yield $value;
-        }
-    }
-
-    public function isConditional(): bool
-    {
-        return isset($this->condition);
-    }
-
-    public function condition(): ?ConditionInterface
-    {
-        return $this->condition;
+        return new Vocabulary(
+            $this->source,
+            $this->condition,
+            ...$this->values
+        );
     }
 }

@@ -18,15 +18,17 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+namespace ILIAS\MetaData\Structure\Dictionaries\Tags;
+
+use ILIAS\MetaData\Paths\PathInterface;
+use ILIAS\MetaData\Structure\Dictionaries\Tags\TagInterface;
+
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDLOMVocabulariesStructure extends ilMDLOMStructure
+interface TagAssignmentInterface
 {
-    public function getTagAtPointer(): ?ilMDVocabulariesTag
-    {
-        /* @var $tag ilMDVocabulariesTag|null */
-        $tag = parent::getTagAtPointer();
-        return $tag;
-    }
+    public function matchesPath(PathInterface $path): bool;
+
+    public function tag(): TagInterface;
 }

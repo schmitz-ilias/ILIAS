@@ -35,5 +35,11 @@ interface StructureElementInterface extends BaseElementInterface
      */
     public function getSubElements(): \Generator;
 
+    /**
+     * Return the first sub-element with the given name,
+     * if one exists.
+     */
+    public function getSubElement(string $name): ?StructureElementInterface;
+
     public function getSuperElement(): ?StructureElementInterface;
 }

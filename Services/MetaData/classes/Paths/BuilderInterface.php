@@ -64,9 +64,18 @@ interface BuilderInterface
     ): BuilderInterface;
 
     /**
-     * Adds a filter to the current step. Multiple values in the
-     * same filter are treated as OR, multiple filters at the same
-     * step are treated as AND.
+     * Adds a filter to the current step, restricting what
+     * elements are included in it:
+     *
+     * * mdid: Only elements with the corresponding ID.
+     * * data: Only elements that carry data which matches the filter's value.
+     * * index: The n-th element, beginning with 0. Non-numeric values are
+     *   interpreted as referring to the last index.
+     *   (Note that filters are applied in the order they are added,
+     *   so the index applies to already filtered elements.)
+     *
+     * Multiple values in the same filter are treated as OR,
+     * multiple filters at the same step are treated as AND.
      */
     public function withAdditionalFilterAtCurrentStep(
         FilterType $type,

@@ -18,35 +18,15 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Paths\Filters;
+namespace ILIAS\MetaData\Vocabularies\Dictionary;
+
+use ILIAS\MetaData\Vocabularies\VocabularyInterface;
+use ILIAS\MetaData\Structure\Dictionaries\Tags\TagInterface as BaseTagInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class Filter implements FilterInterface
+interface TagInterface extends BaseTagInterface
 {
-    protected FilterType $type;
-    /**
-     * @var string[]
-     */
-    protected array $values;
-
-    public function __construct(FilterType $type, string ...$values)
-    {
-        $this->type = $type;
-        $this->values = $values;
-    }
-
-    public function type(): FilterType
-    {
-        return $this->type;
-    }
-
-    /**
-     * @return string[]
-     */
-    public function values(): \Generator
-    {
-        yield from $this->values;
-    }
+    public function vocabulary(): VocabularyInterface;
 }

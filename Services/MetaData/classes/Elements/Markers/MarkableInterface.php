@@ -40,7 +40,7 @@ interface MarkableInterface
 
     /**
      * Leaves a trail of markers from this element up to the root element.
-     * Places a marker with the given data value on this element, and null markers
+     * Places a marker with the given data value on this element, and neutral markers
      * on the others, leaving already marked elements alone.
      */
     public function mark(

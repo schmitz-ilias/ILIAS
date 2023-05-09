@@ -20,6 +20,8 @@ declare(strict_types=1);
 
 namespace ILIAS\MetaData\Vocabularies;
 
+use ILIAS\MetaData\Vocabularies\Conditions\ConditionInterface;
+
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
@@ -32,12 +34,16 @@ interface VocabularyInterface
      */
     public function values(): \Generator;
 
+    /**
+     * Some vocabularies are only available if a different
+     * MD element has a certain value.
+     */
     public function isConditional(): bool;
 
     /**
-     * Some vocabularies are only available if a different
-     * MD element has a certain value. This value, if there
-     * is such a condition, is returned here.
+     * Contains the path to the element this vocabulary
+     * is conditional on, and the value the element needs
+     * to have.
      */
-    public function conditionValue(): ?string;
+    public function condition(): ?ConditionInterface;
 }

@@ -18,30 +18,17 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+namespace ILIAS\MetaData\Vocabularies;
+
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDLOMDictionary implements ilMDDictionary
+class Factory implements FactoryInterface
 {
-    protected ilMDLOMStructure $structure;
-
-    public function __construct()
-    {
-        $this->structure = $this->initStructureWithTags();
-    }
-
-    /**
-     * Returns a LOM structure in read mode, without any tags.
-     */
-    public function getStructure(): ilMDLOMStructure
-    {
-        return clone $this->structure;
-    }
-
-    protected function initStructureWithTags(): ilMDLOMStructure
-    {
-        $structure = new ilMDLOMVocabulariesStructure();
-        return $structure->switchToReadMode()
-                         ->movePointerToRoot();
+    public function vocabulary(
+        string $source,
+        string ...$values
+    ): BuilderInterface {
+        return new Builder($source, ...$values);
     }
 }

@@ -18,39 +18,19 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Paths\Steps;
+namespace ILIAS\MetaData\Vocabularies;
 
-use ILIAS\MetaData\Paths\Filters\FilterInterface;
+use ILIAS\MetaData\Elements\Base\BaseElementInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class Step implements StepInterface
+interface VocabulariesInterface
 {
-    protected string|StepToken $name;
     /**
-     * @var FilterInterface[]
+     * @return VocabularyInterface[]
      */
-    protected array $filters;
-
-    public function __construct(
-        string|StepToken $name,
-        FilterInterface ...$filters
-    ) {
-        $this->name = $name;
-        $this->filters = $filters;
-    }
-
-    public function name(): string|StepToken
-    {
-        return $this->name;
-    }
-
-    /**
-     * @return FilterInterface[]
-     */
-    public function filters(): \Generator
-    {
-        yield from $this->filters;
-    }
+    public function vocabulariesForElement(
+        BaseElementInterface $element
+    ): \Generator;
 }

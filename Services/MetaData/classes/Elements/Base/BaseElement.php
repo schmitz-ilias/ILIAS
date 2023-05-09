@@ -73,9 +73,7 @@ abstract class BaseElement implements BaseElementInterface
      */
     public function getSubElements(): \Generator
     {
-        foreach ($this->sub_elements as $sub_element) {
-            yield $sub_element;
-        }
+        yield from $this->sub_elements;
     }
 
     protected function addSubElement(BaseElement $sub_element): void
