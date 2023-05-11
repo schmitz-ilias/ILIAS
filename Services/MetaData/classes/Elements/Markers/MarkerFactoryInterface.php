@@ -27,5 +27,5 @@ use ILIAS\MetaData\Elements\Data\Type;
  */
 interface MarkerFactoryInterface
 {
-    public function marker(Type $data_type, string $data_value): MarkerInterface;
+    public function marker(Action $action, string $data_value = ''): MarkerInterface;
 }

@@ -50,9 +50,9 @@ class Navigator extends BaseNavigator implements NavigatorInterface
      * @return ElementInterface[]
      * @throws \ilMDPathException
      */
-    public function lastElements(): \Generator
+    public function elementsAtLastStep(): \Generator
     {
-        foreach (parent::lastElements() as $element) {
+        foreach (parent::elementsAtLastStep() as $element) {
             if (!($element instanceof ElementInterface)) {
                 throw new \ilMDElementsException(
                     'Invalid Navigator.'
@@ -63,12 +63,20 @@ class Navigator extends BaseNavigator implements NavigatorInterface
     }
 
     /**
+     * @throws \ilMDPathException
+     */
+    public function firstElementAtLastStep(): ?ElementInterface
+    {
+        return $this->elementsAtLastStep()->current();
+    }
+
+    /**
      * @return ElementInterface[]
      * @throws \ilMDPathException
      */
     public function elements(): \Generator
     {
-        foreach (parent::lastElements() as $element) {
+        foreach (parent::elements() as $element) {
             if (!($element instanceof ElementInterface)) {
                 throw new \ilMDElementsException(
                     'Invalid Navigator.'
@@ -76,5 +84,14 @@ class Navigator extends BaseNavigator implements NavigatorInterface
             }
             yield $element;
         }
+    }
+
+
+    /**
+     * @throws \ilMDPathException
+     */
+    public function firstElement(): ?ElementInterface
+    {
+        return $this->elementsAtLastStep()->current();
     }
 }

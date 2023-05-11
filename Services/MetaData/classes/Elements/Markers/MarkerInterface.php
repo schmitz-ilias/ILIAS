@@ -27,5 +27,7 @@ use ILIAS\MetaData\Elements\Data\DataInterface;
  */
 interface MarkerInterface
 {
-    public function data(): DataInterface;
+    public function action(): Action;
+
+    public function dataValue(): string;
 }

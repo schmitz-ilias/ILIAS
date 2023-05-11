@@ -22,15 +22,15 @@ namespace ILIAS\MetaData\Vocabularies\Dictionary;
 
 use ILIAS\MetaData\Structure\Dictionaries\DictionaryInitiator as BaseDictionaryInitiator;
 use ILIAS\MetaData\Paths\FactoryInterface as PathFactoryInterface;
-use ILIAS\MetaData\Structure\RepositoryInterface as StructureRepositoryInterface;
 use ILIAS\MetaData\Vocabularies\FactoryInterface as VocabularyFactoryInterface;
 use ILIAS\MetaData\Elements\Structure\StructureSetInterface;
 use ILIAS\MetaData\Elements\Structure\StructureElementInterface;
+use ILIAS\MetaData\Paths\PathInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class LOMDictionaryInitiator extends BaseDictionaryInitiator
+class LOMDictionaryInitiator extends BaseDictionaryInitiator implements DictionaryInitiatorInterface
 {
     public const SOURCE = 'LOMv1.0';
 
@@ -41,16 +41,41 @@ class LOMDictionaryInitiator extends BaseDictionaryInitiator
         VocabularyFactoryInterface $vocab_factory,
         TagFactory $tag_factory,
         PathFactoryInterface $path_factory,
-        StructureRepositoryInterface $repository
+        StructureSetInterface $structure
     ) {
         $this->vocab_factory = $vocab_factory;
         $this->tag_factory = $tag_factory;
-        parent::__construct($path_factory, $repository);
+        parent::__construct($path_factory, $structure);
+    }
+
+    public function pathFromValueToSource(): PathInterface
+    {
+        $source_definition = $this
+            ->getStructure()
+            ->getRoot()
+            ->getSubElement('general')
+            ->getSubElement('structure')
+            ->getSubElement('source')
+            ->getDefinition();
+
+        return $this->path_factory
+            ->custom()
+            ->withRelative(true)
+            ->withLeadsToExactlyOneElement(true)
+            ->withNextStepToSuperElement()
+            ->withNextStep($source_definition)
+            ->get();
+    }
+
+    public function get(): DictionaryInterface
+    {
+        $this->initDictionary();
+        return new LOMDictionary($this->path_factory, ...$this->getTagAssignments());
     }
 
     protected function initDictionary(): void
     {
-        $structure = $this->getStructureSet();
+        $structure = $this->getStructure();
 
         $this->setTagsForGeneral($structure);
         $this->setTagsForLifecycle($structure);
@@ -140,7 +165,7 @@ class LOMDictionaryInitiator extends BaseDictionaryInitiator
         $this->addTagWithCondition(
             $or->getSubElement('name'),
             'operating system',
-            $or->getSubElement('type'),
+            $or->getSubElement('type')->getSubElement('value'),
             'pc-dos',
             'ms-windows',
             'macos',
@@ -151,7 +176,7 @@ class LOMDictionaryInitiator extends BaseDictionaryInitiator
         $this->addTagWithCondition(
             $or->getSubElement('name'),
             'browser',
-            $or->getSubElement('type'),
+            $or->getSubElement('type')->getSubElement('value'),
             'any',
             'netscape communicator',
             'ms-internet explorer',

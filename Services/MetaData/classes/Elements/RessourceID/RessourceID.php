@@ -29,6 +29,16 @@ class RessourceID implements RessourceIDInterface
     protected int $obj_id;
     protected string $obj_type;
 
+    public function __construct(
+        int $rbac_id,
+        int $obj_id,
+        string $obj_type
+    ) {
+        $this->rbac_id = $rbac_id;
+        $this->obj_id =$obj_id;
+        $this->obj_type = $obj_type;
+    }
+
     public function type(): string
     {
         return $this->obj_type;

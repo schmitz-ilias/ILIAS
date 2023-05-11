@@ -20,11 +20,6 @@ declare(strict_types=1);
 
 namespace ILIAS\MetaData\Elements\Structure;
 
-use ILIAS\MetaData\Structure\Definitions\Definition;
-use ILIAS\MetaData\Elements\Element;
-use ILIAS\MetaData\Elements\Data\DataFactory;
-use ILIAS\MetaData\Elements\NoID;
-use ILIAS\MetaData\Elements\Data\Type;
 use ILIAS\MetaData\Structure\Definitions\DefinitionInterface;
 
 /**
@@ -32,13 +27,6 @@ use ILIAS\MetaData\Structure\Definitions\DefinitionInterface;
  */
 class StructureFactory
 {
-    protected DataFactory $data_factory;
-
-    public function __construct(DataFactory $data_factory)
-    {
-        $this->data_factory = $data_factory;
-    }
-
     public function structure(
         DefinitionInterface $definition,
         StructureElement ...$sub_elements

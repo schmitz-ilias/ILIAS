@@ -37,10 +37,6 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
 
     protected ilDBInterface $db;
     protected ilMDLOMDatabaseDictionary $db_dictionary;
-    protected ilMDLOMVocabulariesDictionary $vocab_dictionary;
-    protected ilMDLOMDataFactory $data_factory;
-    protected ilMDPathFactory $path_factory;
-    protected ilLogger $logger;
 
     /**
      * object id (NOT ref_id!) of rbac object (e.g for page objects the obj_id
@@ -135,7 +131,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     if (
                         in_array(
                             ilMDLOMDatabaseDictionary::EXP_MD_ID,
-                            $tag->getExpectedParams()
+                            $tag->getExpectedParameters()
                         ) &&
                         $tag->getCreate()
                     ) {
@@ -647,129 +643,6 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
     }
 
     /**
-     * Checks whether the MD set and its data are correct. If not in
-     * 'throw exception' mode, will delete MD elements that have invalid
-     * data.
-     */
-    protected function validateMD(
-        string $action_description,
-        ilMDRootElement $root,
-        bool $throw_exception
-    ): void {
-        /**
-         * @param ilMDBaseElement          $element
-         * @param ilMDLOMDatabaseStructure $structure
-         * @param int                      $super_md_id
-         * @param int[]                    $parent_ids
-         * @return void
-         */
-        $action = function (
-            ilMDBaseElement $element,
-            ilMDLOMDatabaseStructure $structure,
-            int $super_md_id,
-            array $parent_ids
-        ) use ($throw_exception, $action_description): int {
-            $name_path = $element->getName();
-            $el = $element;
-            while (!$el->isRoot()) {
-                $el = $el->getSuperElement();
-                $name_path = $el->getName() . '>' . $name_path;
-            }
-            $id_string = ($element instanceof ilMDElement) ?
-                ' (ID=' . $element->getMDID() . ')' :
-                ' (scaffold)';
-            $error_intro = 'Error during MD action ' . $action_description .
-                ' for element ' . $name_path . $id_string .
-                ' of the object with' .
-                ' rbac_id=' . $this->rbac_id .
-                ', obj_id=' . $this->obj_id .
-                ', obj_type=' . $this->obj_type . ': ';
-
-            if ($element instanceof ilMDElement) {
-                $data = $element->getData();
-            }
-            if ($marker = $element->getMarker()) {
-                $data = $marker->getData();
-            }
-            if (!isset($data)) {
-                return 0;
-            }
-
-            if ($data->getType() !== $structure->getTypeAtPointer()) {
-                $error = $error_intro . 'Data type is ' . $data->getType() .
-                    ', should be ' . $structure->getTypeAtPointer();
-                if ($throw_exception) {
-                    throw new ilMDRepositoryException($error);
-                }
-                $this->logger->warning($error);
-                $element->getSuperElement()->deleteFromSubElements($element);
-                return 0;
-            }
-
-            /*
-             * if appropriate, grab the value of the element this element
-             * is conditional on.
-             */
-            if ($path = $data->getPathToConditionElement()) {
-                $struct = clone $structure;
-                $el = $element;
-                for ($i = 1; $i < $path->getPathLength(); $i++) {
-                    $step = $path->getStep($i);
-                    if ($step === ilMDPath::SUPER_ELEMENT) {
-                        $struct->movePointerToSuperElement();
-                        $el = $el->getSuperElement();
-                        continue;
-                    }
-                    $struct->movePointerToSubElement($step);
-                    $els = $el->getSubElements($step);
-                    if (count($els) > 1) {
-                        throw new ilMDRepositoryException(
-                            $error_intro . 'Path to condition element ' .
-                            'is not unique.'
-                        );
-                    }
-                    if (count($els) === 0) {
-                        $condition_value = '';
-                        break;
-                    }
-                    $el = $els[0];
-                }
-                if (!isset($condition_value)) {
-                    $condition_value =
-                        $el->getMarker()?->getData()->getValue();
-                }
-                if (!isset($condition_value)) {
-                    $condition_value = ($el instanceof ilMDElement) ?
-                        $el->getData()->getValue() :
-                        '';
-                }
-            }
-            if ($error = $data->getError($condition_value ?? null)) {
-                if ($throw_exception) {
-                    throw new ilMDRepositoryException($error_intro . $error);
-                }
-                $this->logger->warning($error_intro . $error);
-                $element->getSuperElement()->deleteFromSubElements($element);
-            }
-            return 0;
-        };
-
-        $null_action = function (): void {
-        };
-
-        $this->iterateThroughMD(
-            false,
-            $root,
-            $this->getNewDBStructure(),
-            $action,
-            $null_action,
-            0,
-            [],
-            0
-        );
-    }
-
-    /**
      * @param string          $action
      * @param ilMDDatabaseTag $tag
      * @param int             $md_id
@@ -788,7 +661,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
     ): void {
         $params = [];
         $param_types = [];
-        foreach ($tag->getExpectedParams() as $expected_param) {
+        foreach ($tag->getExpectedParameters() as $expected_param) {
             switch ($expected_param) {
                 case ilMDLOMDatabaseDictionary::EXP_MD_ID:
                     $params[] = $md_id;
@@ -830,7 +703,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     $param_types[] = ilDBConstants::T_INTEGER;
                     break;
 
-                case ilMDLOMDatabaseDictionary::EXP_OBJ_IDS:
+                case ilMDLOMDatabaseDictionary::EXP_RESSOURCE_IDS:
                     $params = array_merge(
                         $params,
                         [$this->rbac_id, $this->obj_id, $this->obj_type]
@@ -915,7 +788,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
     ): ilDBStatement {
         $params = [];
         $param_types = [];
-        foreach ($tag->getExpectedParams() as $expected_param) {
+        foreach ($tag->getExpectedParameters() as $expected_param) {
             switch ($expected_param) {
                 case ilMDLOMDatabaseDictionary::EXP_PARENT_MD_ID:
                     if (empty($parent_ids)) {
@@ -942,7 +815,7 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
                     $param_types[] = ilDBConstants::T_INTEGER;
                     break;
 
-                case ilMDLOMDatabaseDictionary::EXP_OBJ_IDS:
+                case ilMDLOMDatabaseDictionary::EXP_RESSOURCE_IDS:
                     $params = array_merge(
                         $params,
                         [$this->rbac_id, $this->obj_id, $this->obj_type]
@@ -973,15 +846,5 @@ class ilMDLOMDatabaseRepository implements ilMDRepository
             $param_types,
             $params
         );
-    }
-
-    protected function getNewDBStructure(): ilMDLOMDatabaseStructure
-    {
-        return $this->db_dictionary->getStructure();
-    }
-
-    protected function getNewVocabStructure(): ilMDLOMVocabulariesStructure
-    {
-        return $this->vocab_dictionary->getStructure();
     }
 }

@@ -34,7 +34,7 @@ use ILIAS\MetaData\Structure\RepositoryInterface;
 abstract class DictionaryInitiator implements DictionaryInitiatorInterface
 {
     protected PathFactoryInterface $path_factory;
-    private StructureSetInterface $structure_set;
+    private StructureSetInterface $structure;
 
     /**
      * @var TagAssignmentInterface[]
@@ -43,10 +43,10 @@ abstract class DictionaryInitiator implements DictionaryInitiatorInterface
 
     public function __construct(
         PathFactoryInterface $path_factory,
-        RepositoryInterface $repository
+        StructureSetInterface $structure
     ) {
         $this->path_factory = $path_factory;
-        $this->structure_set = $repository->getStructure();
+        $this->structure = $structure;
     }
 
     /**
@@ -56,8 +56,7 @@ abstract class DictionaryInitiator implements DictionaryInitiatorInterface
      */
     final protected function addTagToElement(
         TagInterface $tag,
-        StructureElementInterface $element,
-        int ...$indices
+        StructureElementInterface $element
     ): void {
         $this->tag_assignments[] = new TagAssignment(
             $this->path_factory->toElement($element),
@@ -65,19 +64,22 @@ abstract class DictionaryInitiator implements DictionaryInitiatorInterface
         );
     }
 
-    final protected function getStructureSet(): StructureSetInterface
+    /**
+     * @return TagAssignmentInterface[]
+     */
+    final protected function getTagAssignments(): \Generator
     {
-        return $this->structure_set;
+        yield from $this->tag_assignments;
+    }
+
+    final protected function getStructure(): StructureSetInterface
+    {
+        return $this->structure;
     }
 
     /**
-     * Use this method to set up the tags for the dictionary.
+     * Use addTagToElement and then at the end getTagAssignments
+     * to generate a dictionary.
      */
-    abstract protected function initDictionary(): void;
-
-    final public function get(): DictionaryInterface
-    {
-        $this->initDictionary();
-        return new Dictionary($this->path_factory, ...$this->tag_assignments);
-    }
+    abstract public function get(): DictionaryInterface;
 }

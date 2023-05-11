@@ -26,7 +26,7 @@ use ILIAS\MetaData\Elements\ElementInterface;
 use ILIAS\MetaData\Elements\Scaffolds\ScaffoldFactory;
 use ILIAS\MetaData\Elements\Structure\StructureElement;
 use ILIAS\MetaData\Paths\FactoryInterface as PathFactoryInterface;
-use ILIAS\MetaData\Paths\Navigator\NavigatorFactory;
+use ILIAS\MetaData\Paths\Navigator\NavigatorFactoryInterface;
 use ILIAS\MetaData\Elements\Structure\StructureSetInterface;
 
 /**
@@ -37,13 +37,13 @@ class LOMRepository implements RepositoryInterface
     protected StructureFactory $structure_factory;
     protected ScaffoldFactory $scaffold_factory;
     protected PathFactoryInterface $path_factory;
-    protected NavigatorFactory $navigator_factory;
+    protected NavigatorFactoryInterface $navigator_factory;
 
     public function __construct(
         StructureFactory $structure_factory,
         ScaffoldFactory $scaffold_factory,
         PathFactoryInterface $path_factory,
-        NavigatorFactory $navigator_factory
+        NavigatorFactoryInterface $navigator_factory
     ) {
         $this->structure_factory = $structure_factory;
         $this->scaffold_factory = $scaffold_factory;
@@ -77,32 +77,6 @@ class LOMRepository implements RepositoryInterface
                 $reader->definition(),
                 ...$this->getSubElements(...$reader->subDefinitions())
             );
-        }
-    }
-
-    /**
-     * @return ElementInterface[]
-     */
-    public function getScaffoldsForElement(
-        ElementInterface $element
-    ): \Generator {
-        $navigator = $this->navigator_factory->structureNavigator(
-            $this->path_factory->toElement($element),
-            $this->getStructure()->getRoot()
-        );
-        $structure_element = $navigator->lastElements()->current();
-
-        $sub_names = [];
-        foreach ($element->getSubElements() as $sub) {
-            $sub_names[] = $sub->getDefinition()->name();
-        }
-
-        foreach ($structure_element->getSubElements() as $sub) {
-            $unique = $sub->getDefinition()->unqiue();
-            $name = $sub->getDefinition()->name();
-            if (!$unique || !in_array($name, $sub_names)) {
-                yield $this->scaffold_factory->scaffold($sub->getDefinition());
-            }
         }
     }
 }

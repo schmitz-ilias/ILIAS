@@ -100,13 +100,21 @@ abstract class BaseNavigator implements BaseNavigatorInterface
      * @return BaseElementInterface[]
      * @throws \ilMDPathException
      */
-    public function lastElements(): \Generator
+    public function elementsAtLastStep(): \Generator
     {
         $clone = clone $this;
         while ($clone) {
             $clone = $clone->nextStep();
         }
         yield from $clone->elements();
+    }
+
+    /**
+     * @throws \ilMDPathException
+     */
+    public function firstElementAtLastStep(): ?BaseElementInterface
+    {
+        return $this->elementsAtLastStep()->current();
     }
 
     /**
@@ -117,6 +125,14 @@ abstract class BaseNavigator implements BaseNavigatorInterface
     {
         $this->checkLeadsToOne();
         yield from $this->elements;
+    }
+
+    /**
+     * @throws \ilMDPathException
+     */
+    public function firstElement(): ?BaseElementInterface
+    {
+        return $this->elementsAtLastStep()->current();
     }
 
     /**

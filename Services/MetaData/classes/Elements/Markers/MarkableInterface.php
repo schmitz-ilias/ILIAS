@@ -32,19 +32,17 @@ interface MarkableInterface
      */
     public function isMarked(): bool;
 
-    /**
-     * When a marked element is created or updated, the marker's
-     * data is transferred to the new or modified element.
-     */
-    public function getMarkerData(): ?DataInterface;
+    public function getMarker(): ?MarkerInterface;
 
     /**
-     * Leaves a trail of markers from this element up to the root element.
-     * Places a marker with the given data value on this element, and neutral markers
-     * on the others, leaving already marked elements alone.
+     * Leaves a trail of markers from this element up to the root element,
+     * or up to the first already marked element.
+     * Places a marker with the given action and data value on this element,
+     * and neutral markers on the others.
      */
     public function mark(
         MarkerFactoryInterface $factory,
+        Action $action,
         string $data_value = ''
     );
 }

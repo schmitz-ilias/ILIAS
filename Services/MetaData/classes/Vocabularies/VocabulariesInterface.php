@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace ILIAS\MetaData\Vocabularies;
 
 use ILIAS\MetaData\Elements\Base\BaseElementInterface;
+use ILIAS\MetaData\Elements\ElementInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -32,5 +33,18 @@ interface VocabulariesInterface
      */
     public function vocabulariesForElement(
         BaseElementInterface $element
+    ): \Generator;
+
+    /**
+     * This only returns vocabularies which are not conditional or whose
+     * condition is fulfilled. For vocabulary value elements, the corresponding
+     * source element is also checked, and vocabularies filtered accordingly.
+     * When available, data from markers is preferred, unless ignore_marker
+     * is set true.
+     * @return VocabularyInterface[]
+     */
+    public function filteredVocabulariesForElement(
+        ElementInterface $element,
+        bool $ignore_marker
     ): \Generator;
 }

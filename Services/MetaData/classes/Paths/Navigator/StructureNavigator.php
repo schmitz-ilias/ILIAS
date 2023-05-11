@@ -38,44 +38,34 @@ class StructureNavigator extends BaseNavigator implements StructureNavigatorInte
         $this->leadsToOne(true);
     }
 
-    public function nextStep(): ?NavigatorInterface
+    public function nextStep(): ?StructureNavigatorInterface
     {
         $return = parent::nextStep();
-        if (($return instanceof NavigatorInterface) || is_null($return)) {
+        if (($return instanceof StructureNavigatorInterface) || is_null($return)) {
             return $return;
         }
         throw new \ilMDPathException('Invalid Navigator');
     }
 
-    /**
-     * @return StructureElementInterface[]
-     * @throws \ilMDPathException
-     */
-    public function lastElements(): \Generator
+    public function elementAtLastStep(): StructureElementInterface
     {
-        foreach (parent::lastElements() as $element) {
-            if (!($element instanceof StructureElementInterface)) {
-                throw new \ilMDElementsException(
-                    'Invalid Navigator.'
-                );
-            }
-            yield $element;
+        $element = parent::elementsAtLastStep()->current();
+        if (!($element instanceof StructureElementInterface)) {
+            throw new \ilMDElementsException(
+                'Invalid Navigator.'
+            );
         }
+        return $element;
     }
 
-    /**
-     * @return StructureElementInterface[]
-     * @throws \ilMDPathException
-     */
-    public function elements(): \Generator
+    public function element(): StructureElementInterface
     {
-        foreach (parent::lastElements() as $element) {
-            if (!($element instanceof StructureElementInterface)) {
-                throw new \ilMDElementsException(
-                    'Invalid Navigator.'
-                );
-            }
-            yield $element;
+        $element = parent::elements()->current();
+        if (!($element instanceof StructureElementInterface)) {
+            throw new \ilMDElementsException(
+                'Invalid Navigator.'
+            );
         }
+        return $element;
     }
 }

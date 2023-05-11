@@ -20,24 +20,14 @@ declare(strict_types=1);
 
 namespace ILIAS\MetaData\Elements\Markers;
 
-use ILIAS\MetaData\Elements\Data\Data;
-use ILIAS\MetaData\Elements\Data\DataFactory as DataFactory;
-use ILIAS\MetaData\Elements\Data\Type;
-
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 class MarkerFactory implements MarkerFactoryInterface
 {
-    protected DataFactory $data_factory;
-
-    public function __construct($data_factory)
+    public function marker(Action $action, string $data_value = ''): MarkerInterface
     {
-        $this->data_factory = $data_factory;
-    }
-
-    public function marker(Type $data_type, string $data_value): MarkerInterface
-    {
-        return new Marker($this->data_factory->data($data_type, $data_value));
+        $data_value = ($action === Action::CREATE_OR_UPDATE) ? $data_value : '';
+        return new Marker($action, $data_value);
     }
 }

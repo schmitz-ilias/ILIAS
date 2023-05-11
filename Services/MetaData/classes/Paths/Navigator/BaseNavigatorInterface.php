@@ -31,16 +31,4 @@ interface BaseNavigatorInterface
      * Returns null if there is no next step.
      */
     public function nextStep(): ?BaseNavigatorInterface;
-
-    /**
-     * @return BaseElementInterface[]
-     * @throws \ilMDPathException
-     */
-    public function lastElements(): \Generator;
-
-    /**
-     * @return BaseElementInterface[]
-     * @throws \ilMDPathException
-     */
-    public function elements(): \Generator;
 }

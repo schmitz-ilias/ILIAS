@@ -20,9 +20,6 @@ declare(strict_types=1);
 
 namespace ILIAS\MetaData\Structure\Dictionaries;
 
-use ILIAS\MetaData\Structure\Dictionaries\Tags\TagInterface;
-use ILIAS\MetaData\Elements\Structure\StructureElementInterface;
-
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */

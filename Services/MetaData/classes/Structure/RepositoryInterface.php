@@ -35,14 +35,4 @@ interface RepositoryInterface
      * data type).
      */
     public function getStructure(): StructureSetInterface;
-
-    /**
-     * Returns all elements that could be added as sub-elements
-     * to the given element as scaffolds. Scaffolds are used to
-     * mark where elements could potentially be created.
-     * @return ElementInterface[]
-     */
-    public function getScaffoldsForElement(
-        ElementInterface $element
-    ): \Generator;
 }

@@ -29,7 +29,7 @@ use ILIAS\MetaData\Structure\Dictionaries\Tags\TagAssignmentInterface;
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class Dictionary implements DictionaryInterface
+abstract class Dictionary implements DictionaryInterface
 {
     protected PathFactoryInterface $path_factory;
 
@@ -54,11 +54,7 @@ class Dictionary implements DictionaryInterface
     ): \Generator {
         foreach ($this->getAssignmentsForElement($element) as $assignment) {
             $tag = $assignment->tag();
-            if ($tag->isRestrictedToIndices() && !in_array(
-                $this->findIndexOfElement($element),
-                iterator_to_array($tag->indices()),
-                true
-            )) {
+            if (!$this->doesIndexMatch($element, $tag)) {
                 continue;
             }
             yield $tag;

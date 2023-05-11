@@ -24,7 +24,6 @@ use ILIAS\MetaData\Structure\Definitions\DefinitionInterface;
 use ILIAS\MetaData\Elements\Element;
 use ILIAS\MetaData\Elements\Data\DataFactory;
 use ILIAS\MetaData\Elements\NoID;
-use ILIAS\MetaData\Elements\Data\Type;
 use ILIAS\MetaData\Elements\ElementInterface;
 
 /**

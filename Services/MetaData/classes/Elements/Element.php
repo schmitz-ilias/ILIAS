@@ -28,6 +28,7 @@ use ILIAS\MetaData\Elements\Base\BaseElement;
 use ILIAS\MetaData\Structure\Definitions\DefinitionInterface;
 use ILIAS\MetaData\Elements\Markers\MarkerInterface;
 use ILIAS\MetaData\Elements\Data\DataInterface;
+use ILIAS\MetaData\Elements\Markers\Action;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -88,25 +89,23 @@ class Element extends BaseElement implements ElementInterface
         return isset($this->marker);
     }
 
-    public function getMarkerData(): ?DataInterface
+    public function getMarker(): ?MarkerInterface
     {
-        return $this?->marker->data();
+        return $this->marker;
     }
 
     public function mark(
         MarkerFactoryInterface $factory,
+        Action $action,
         string $data_value = ''
     ): void {
-        $this->setMarker($factory->marker(
-            $this->getDefinition()->dataType(),
-            $data_value
-        ));
+        $this->setMarker($factory->marker($action, $data_value));
         $curr_element = $this->getSuperElement();
         while ($curr_element) {
             if ($curr_element->isMarked()) {
                 return;
             }
-            $curr_element->setMarker($factory->marker(Type::NULL, ''));
+            $curr_element->setMarker($factory->marker(Action::NO_ACTION));
             $curr_element = $curr_element->getSuperElement();
         }
     }

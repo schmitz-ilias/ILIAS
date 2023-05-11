@@ -23,7 +23,7 @@ namespace ILIAS\MetaData\Paths\Steps;
 use ILIAS\MetaData\Paths\Filters\FilterInterface;
 use ILIAS\MetaData\Paths\Filters\FilterType;
 use ILIAS\MetaData\Elements\NoID;
-use ILIAS\MetaData\Elements\Data\DataCarrierInterface;
+use ILIAS\MetaData\Elements\ElementInterface;
 use ILIAS\MetaData\Elements\Base\BaseElementInterface;
 
 /**
@@ -139,7 +139,7 @@ class NavigatorBridge
         BaseElementInterface ...$elements
     ): \Generator {
         foreach ($elements as $element) {
-            if (!($element instanceof DataCarrierInterface)) {
+            if (!($element instanceof ElementInterface)) {
                 continue;
             }
             $data = $element->getData()->value();

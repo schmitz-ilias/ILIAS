@@ -28,7 +28,7 @@ use ILIAS\MetaData\Structure\Dictionaries\Tags\Tag as BaseTag;
  */
 class TagFactory
 {
-    public function tag(VocabularyInterface $vocabulary): Tag
+    public function tag(VocabularyInterface $vocabulary): TagInterface
     {
         return new Tag($vocabulary);
     }

@@ -27,23 +27,15 @@ use ILIAS\MetaData\Elements\Structure\StructureElementInterface;
  */
 interface StructureNavigatorInterface extends BaseNavigatorInterface
 {
-    public function nextStep(): ?NavigatorInterface;
+    public function nextStep(): ?StructureNavigatorInterface;
 
     /**
-     * Returns the elements at the end of the path.
-     * This always returns exactly one element or
-     * throws an error.
-     * @return StructureElementInterface[]
-     * @throws \ilMDPathException
+     * Returns the element at the end of the path.
      */
-    public function lastElements(): \Generator;
+    public function elementAtLastStep(): StructureElementInterface;
 
     /**
-     * Returns the elements at the current step in the path.
-     * This always returns exactly one element or
-     * throws an error.
-     * @return StructureElementInterface[]
-     * @throws \ilMDPathException
+     * Returns the element at the current step in the path.
      */
-    public function elements(): \Generator;
+    public function element(): StructureElementInterface;
 }
