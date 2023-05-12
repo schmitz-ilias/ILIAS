@@ -32,6 +32,8 @@ use ILIAS\MetaData\Elements\Markers\MarkableInterface;
 use ILIAS\MetaData\Repository\Validation\Dictionary\Restriction;
 use ILIAS\MetaData\Elements\Markers\Action;
 use ILIAS\MetaData\Elements\NoID;
+use ILIAS\MetaData\Elements\Markers\MarkerInterface;
+use ILIAS\MetaData\Repository\Validation\Dictionary\TagInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -61,9 +63,7 @@ class Cleaner implements CleanerInterface
     public function clean(SetInterface $set): SetInterface
     {
         return $this->element_factory->set(
-            $set->getRessourceID()->objID(),
-            $set->getRessourceID()->subID(),
-            $set->getRessourceID()->type(),
+            $set->getRessourceID(),
             $this->getCleanRoot($set)
         );
     }
@@ -90,6 +90,9 @@ class Cleaner implements CleanerInterface
         $sub_names = [];
         foreach ($element->getSubElements() as $sub) {
             $name = $sub->getDefinition()->name();
+            if ($sub->isScaffold()) {
+                continue;
+            }
             if ($sub->getDefinition()->unqiue() && in_array($name, $sub_names)) {
                 $this->throwErrorOrLog($sub, 'duplicate of unique element.');
                 continue;
@@ -128,40 +131,57 @@ class Cleaner implements CleanerInterface
             $this->throwErrorOrLog($element, $message, true);
         }
         foreach ($this->dictionary->tagsForElement($element) as $tag) {
-            switch ($tag->restriction()) {
-                case Restriction::PRESET_VALUE:
-                    if (
-                        $marker->action() === Action::CREATE_OR_UPDATE &&
-                        $element->getMDID() === NoID::SCAFFOLD &&
-                        $marker->dataValue() !== $tag->value()
-                    ) {
-                        $this->throwErrorOrLog(
-                            $element,
-                            'can only be created with preset value ' . $tag->value(),
-                            true
-                        );
-                    }
-                    break;
-
-                case Restriction::NOT_DELETABLE:
-                    if ($marker->action() === Action::DELETE) {
-                        $this->throwErrorOrLog($element, 'cannot be deleted.', true);
-                    }
-                    break;
-
-                case Restriction::NOT_EDITABLE:
-                    if (
-                        $marker->action() === Action::CREATE_OR_UPDATE &&
-                        $element->getMDID() !== NoID::SCAFFOLD
-                    ) {
-                        $this->throwErrorOrLog($element, 'cannot be edited.', true);
-                    }
-                    break;
-            }
+            $this->checkMarkerAgainstTag($tag, $element, $marker);
         }
         foreach ($element->getSubElements() as $sub) {
             $this->checkMarkerOnElement($sub);
         }
+    }
+
+    protected function checkMarkerAgainstTag(
+        TagInterface $tag,
+        ElementInterface $element,
+        MarkerInterface $marker
+    ): void {
+        switch ($tag->restriction()) {
+            case Restriction::PRESET_VALUE:
+                if (
+                    $this->willBeCreated($element, $marker) &&
+                    $marker->dataValue() !== $tag->value()
+                ) {
+                    $this->throwErrorOrLog(
+                        $element,
+                        'can only be created with preset value ' . $tag->value(),
+                        true
+                    );
+                }
+                break;
+
+            case Restriction::NOT_DELETABLE:
+                if ($marker->action() === Action::DELETE) {
+                    $this->throwErrorOrLog($element, 'cannot be deleted.', true);
+                }
+                break;
+
+            case Restriction::NOT_EDITABLE:
+                if (
+                    $marker->action() === Action::CREATE_OR_UPDATE &&
+                    $element->getMDID() !== NoID::SCAFFOLD
+                ) {
+                    $this->throwErrorOrLog($element, 'cannot be edited.', true);
+                }
+                break;
+        }
+    }
+
+    protected function willBeCreated(
+        ElementInterface $element,
+        MarkerInterface $marker
+    ): bool {
+        return $element->getMDID() === NoID::SCAFFOLD && (
+            $marker->action() === Action::CREATE_OR_UPDATE ||
+            $marker->action() === Action::NEUTRAL
+        );
     }
 
     protected function throwErrorOrLog(

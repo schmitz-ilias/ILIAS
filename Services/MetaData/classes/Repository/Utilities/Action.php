@@ -18,14 +18,15 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements\Markers;
+namespace ILIAS\MetaData\Repository\Utilities;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 enum Action: string
 {
-    case NEUTRAL = 'neutral';
-    case CREATE_OR_UPDATE = 'create or update';
+    case READ = 'read';
+    case CREATE = 'create';
+    case UPDATE = 'update';
     case DELETE = 'delete';
 }

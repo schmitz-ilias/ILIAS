@@ -18,14 +18,14 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements\Markers;
+namespace ILIAS\MetaData\Elements\Data;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-enum Action: string
+interface DataFactoryInterface
 {
-    case NEUTRAL = 'neutral';
-    case CREATE_OR_UPDATE = 'create or update';
-    case DELETE = 'delete';
+    public function data(Type $type, string $value): DataInterface;
+
+    public function null(): DataInterface;
 }

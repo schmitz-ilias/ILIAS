@@ -21,20 +21,21 @@ declare(strict_types=1);
 namespace ILIAS\MetaData\Elements;
 
 use ILIAS\MetaData\Elements\Element;
-use ILIAS\MetaData\Elements\Data\DataFactory;
+use ILIAS\MetaData\Elements\Data\DataFactoryInterface;
 use ILIAS\MetaData\Elements\NoID;
 use ILIAS\MetaData\Structure\Definitions\DefinitionInterface;
-use ILIAS\MetaData\Elements\RessourceID\RessourceID;
+use ILIAS\MetaData\Elements\RessourceID\RessourceIDInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 class Factory
 {
-    protected DataFactory $data_factory;
+    protected DataFactoryInterface $data_factory;
 
-    public function __construct(DataFactory $data_factory)
-    {
+    public function __construct(
+        DataFactoryInterface $data_factory
+    ) {
         $this->data_factory = $data_factory;
     }
 
@@ -65,13 +66,11 @@ class Factory
     }
 
     public function set(
-        int $obj_id,
-        int $sub_id,
-        string $type,
+        RessourceIDInterface $ressource_id,
         ElementInterface $root
     ): SetInterface {
         return new Set(
-            new RessourceID($obj_id, $sub_id, $type),
+            $ressource_id,
             $root
         );
     }

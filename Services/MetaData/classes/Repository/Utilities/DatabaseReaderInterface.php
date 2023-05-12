@@ -18,11 +18,21 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Repository;
+namespace ILIAS\MetaData\Repository\Utilities;
+
+use ILIAS\MetaData\Elements\SetInterface;
+use ILIAS\MetaData\Paths\PathInterface;
+use ILIAS\MetaData\Elements\RessourceID\RessourceIDInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface ManipulatorInterface
+interface DatabaseReaderInterface
 {
+    public function getMD(RessourceIDInterface $ressource_id): SetInterface;
+
+    public function getMDOnPath(
+        PathInterface $path,
+        RessourceIDInterface $ressource_id
+    ): SetInterface;
 }

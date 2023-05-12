@@ -25,32 +25,32 @@ namespace ILIAS\MetaData\Elements\RessourceID;
  */
 class RessourceID implements RessourceIDInterface
 {
-    protected int $rbac_id;
     protected int $obj_id;
-    protected string $obj_type;
+    protected int $sub_id;
+    protected string $type;
 
     public function __construct(
-        int $rbac_id,
         int $obj_id,
-        string $obj_type
+        int $sub_id,
+        string $type
     ) {
-        $this->rbac_id = $rbac_id;
-        $this->obj_id =$obj_id;
-        $this->obj_type = $obj_type;
+        $this->obj_id = $obj_id;
+        $this->sub_id =$sub_id;
+        $this->type = $type;
     }
 
     public function type(): string
     {
-        return $this->obj_type;
+        return $this->type;
     }
 
     public function objID(): int
     {
-        return $this->rbac_id;
+        return $this->obj_id;
     }
 
     public function subID(): int
     {
-        return $this->obj_id;
+        return $this->sub_id;
     }
 }

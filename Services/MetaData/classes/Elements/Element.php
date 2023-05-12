@@ -105,7 +105,7 @@ class Element extends BaseElement implements ElementInterface
             if ($curr_element->isMarked()) {
                 return;
             }
-            $curr_element->setMarker($factory->marker(Action::NO_ACTION));
+            $curr_element->setMarker($factory->marker(Action::NEUTRAL));
             $curr_element = $curr_element->getSuperElement();
         }
     }

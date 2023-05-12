@@ -30,7 +30,7 @@ interface CleanerInterface
     /**
      * Returns a new metadata set, identical to the one given but
      * with all invalid elements (invalid data, multiples of unique
-     * elements, ...) removed. Ignores markers.
+     * elements, ...) removed. Removes markers and scaffolds.
      */
     public function clean(SetInterface $set): SetInterface;
 

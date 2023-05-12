@@ -21,66 +21,56 @@ declare(strict_types=1);
 namespace ILIAS\MetaData\Repository;
 
 use ILIAS\MetaData\Elements\ElementInterface;
-use ILIAS\MetaData\Elements\Structure\StructureFactory;
-use ILIAS\MetaData\Elements\Scaffolds\ScaffoldFactory;
-use ILIAS\MetaData\Paths\FactoryInterface as PathFactoryInterface;
-use ILIAS\MetaData\Paths\Navigator\NavigatorFactoryInterface;
-use ILIAS\MetaData\Structure\RepositoryInterface as StructureRepositoryInterface;
-use ILIAS\MetaData\Elements\Structure\StructureSetInterface;
-use ILIAS\MetaData\Repository\Dictionary\DictionaryInterface;
-use ILIAS\MetaData\Repository\Dictionary\DictionaryInitiatorInterface;
 use ILIAS\MetaData\Repository\Validation\CleanerInterface;
 use ILIAS\MetaData\Elements\RessourceID\RessourceIDInterface;
-use ILIAS\MetaData\Elements\Factory as ElementFactory;
-use ILIAS\MetaData\Repository\Dictionary\LOMDictionaryInitiator;
+use ILIAS\MetaData\Repository\Utilities\DatabaseManipulatorInterface;
+use ILIAS\MetaData\Repository\Utilities\ScaffoldProviderInterface;
+use ILIAS\MetaData\Elements\SetInterface;
+use ILIAS\MetaData\Paths\PathInterface;
+use ILIAS\MetaData\Repository\Utilities\DatabaseReaderInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 class LOMDatabaseRepository implements RepositoryInterface
 {
-    protected ElementFactory $element_factory;
-    protected ScaffoldFactory $scaffold_factory;
-    protected PathFactoryInterface $path_factory;
-    protected NavigatorFactoryInterface $navigator_factory;
-    protected StructureSetInterface $structure;
-    protected DictionaryInterface $dictionary;
-    protected CleanerInterface $cleaner;
-
-    protected \ilDBInterface $db;
-    protected \ilLogger $logger;
-
     protected RessourceIDInterface $ressource_id;
+    protected ScaffoldProviderInterface $scaffold_provider;
+    protected DatabaseManipulatorInterface $manipulator;
+    protected DatabaseReaderInterface $reader;
+    protected CleanerInterface $cleaner;
 
     public function __construct(
         RessourceIDInterface $ressource_id,
-        ElementFactory $element_factory,
-        ScaffoldFactory $scaffold_factory,
-        PathFactoryInterface $path_factory,
-        NavigatorFactoryInterface $navigator_factory,
-        StructureRepositoryInterface $structure_repository,
-        DictionaryInitiatorInterface $dictionary_initiator,
-        CleanerInterface $cleaner,
-        \ilDBInterface $db,
-        \ilLogger $logger
+        ScaffoldProviderInterface $scaffold_provider,
+        DatabaseManipulatorInterface $manipulator,
+        DatabaseReaderInterface $reader,
+        CleanerInterface $cleaner
     ) {
         $this->ressource_id = $ressource_id;
-
-        $this->element_factory = $element_factory;
-        $this->scaffold_factory = $scaffold_factory;
-        $this->path_factory = $path_factory;
-        $this->navigator_factory = $navigator_factory;
-        $this->structure = $structure_repository->getStructure();
-        $this->dictionary = $dictionary_initiator->get();
+        $this->scaffold_provider = $scaffold_provider;
+        $this->manipulator = $manipulator;
+        $this->reader = $reader;
         $this->cleaner = $cleaner;
-
-        $this->db = $db;
-        $this->logger = $logger;
     }
 
     public function getRessourceID(): RessourceIDInterface
     {
         return $this->ressource_id;
+    }
+
+    public function getMD(): SetInterface
+    {
+        return $this->cleaner->clean(
+            $this->reader->getMD($this->ressource_id)
+        );
+    }
+
+    public function getMDOnPath(PathInterface $path): SetInterface
+    {
+        return $this->cleaner->clean(
+            $this->reader->getMDOnPath($path, $this->ressource_id)
+        );
     }
 
     /**
@@ -89,38 +79,17 @@ class LOMDatabaseRepository implements RepositoryInterface
     public function getScaffoldsForElement(
         ElementInterface $element
     ): \Generator {
-        $navigator = $this->navigator_factory->structureNavigator(
-            $this->path_factory->toElement($element),
-            $this->structure->getRoot()
-        );
-        $structure_element = $navigator->elementAtLastStep();
-
-        $sub_names = [];
-        foreach ($element->getSubElements() as $sub) {
-            $sub_names[] = $sub->getDefinition()->name();
-        }
-
-        foreach ($structure_element->getSubElements() as $sub) {
-            $unique = $sub->getDefinition()->unqiue();
-            $name = $sub->getDefinition()->name();
-            if (!$unique || !in_array($name, $sub_names)) {
-                yield $this->scaffold_factory->scaffold($sub->getDefinition());
-            }
-        }
+        yield from $this->scaffold_provider->getScaffoldsForElement($element);
     }
 
-    public function deleteAllMDElements(): void
+    public function manipulateMD(SetInterface $set): void
     {
-        $rbac_id = $this->getRessourceID()->objID();
-        $obj_id = $this->getRessourceID()->subID();
-        $obj_type = $this->getRessourceID()->type();
-        foreach (LOMDictionaryInitiator::TABLES as $table) {
-            $query = "DELETE FROM " . $table . " " .
-                "WHERE rbac_id = " . $this->db->quote($rbac_id, \ilDBConstants::T_INTEGER) . " " .
-                "AND obj_id = " . $this->db->quote($obj_id, \ilDBConstants::T_INTEGER) . " " .
-                "AND obj_type = " . $this->db->quote($obj_type, \ilDBConstants::T_TEXT);
+        $this->cleaner->checkMarkers($set);
+        $this->manipulator->manipulateMD($set);
+    }
 
-            $this->db->query($query);
-        }
+    public function deleteAllMD(): void
+    {
+        $this->manipulator->deleteAllMD($this->ressource_id);
     }
 }

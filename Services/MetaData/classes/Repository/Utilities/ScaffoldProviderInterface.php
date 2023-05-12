@@ -18,11 +18,19 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Repository;
+namespace ILIAS\MetaData\Repository\Utilities;
+
+use ILIAS\MetaData\Elements\ElementInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 interface ScaffoldProviderInterface
 {
+    /**
+     * @return ElementInterface[]
+     */
+    public function getScaffoldsForElement(
+        ElementInterface $element
+    ): \Generator;
 }

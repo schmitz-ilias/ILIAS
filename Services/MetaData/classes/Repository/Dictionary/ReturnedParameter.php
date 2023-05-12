@@ -25,6 +25,6 @@ namespace ILIAS\MetaData\Repository\Dictionary;
  */
 enum ReturnedParameter: string
 {
-    public const MD_ID = 'md_id';
-    public const DATA = 'md_data';
+    case MD_ID = 'md_id';
+    case DATA = 'md_data';
 }

@@ -23,7 +23,7 @@ namespace ILIAS\MetaData\Elements\Data;
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class DataFactory
+class DataFactory implements DataFactoryInterface
 {
     public function data(Type $type, string $value): DataInterface
     {

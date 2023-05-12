@@ -74,7 +74,7 @@ class QueryProvider
             ', rbac_id, obj_id, obj_type) VALUES (%s, %s, %s, %s)';
         $read =
             'SELECT ' . $this->db->quoteIdentifier($this->IDName($table)) .
-            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID) .
+            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
             ' FROM ' . $this->db->quoteIdentifier($this->table($table)) .
             ' WHERE rbac_id = %s AND obj_id = %s AND obj_type = %s' .
             ' ORDER BY ' . $this->db->quoteIdentifier($this->IDName($table));
@@ -91,7 +91,7 @@ class QueryProvider
             $is_parent,
             $this->table($table),
             ExpectedParameter::MD_ID,
-            ExpectedParameter::RESSOURCE_IDS
+            ExpectedParameter::RESSOURCE_IDS,
         );
     }
 
@@ -115,7 +115,7 @@ class QueryProvider
             '%s, %s, %s, %s)';
         $read =
             'SELECT ' . $this->db->quoteIdentifier($this->IDName($table)) .
-            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID) .
+            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
             ' FROM ' . $this->db->quoteIdentifier($this->table($table)) .
             ' WHERE parent_type = ' . $this->db->quote($parent_type, \ilDBConstants::T_TEXT) .
             ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s' .
@@ -165,7 +165,7 @@ class QueryProvider
         $read_fields = substr($read_fields, 0, -3) . ') AND ';
         $read =
             'SELECT ' . $this->db->quoteIdentifier($this->IDName($table)) .
-            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID) .
+            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
             ' FROM ' . $this->db->quoteIdentifier($this->table($table)) .
             ' WHERE ' . $read_fields .
             $this->db->quoteIdentifier($this->IDName($table)) . ' = %s AND' .
@@ -220,7 +220,7 @@ class QueryProvider
         $read_fields = substr($read_fields, 0, -3) . ') AND ';
         $read =
             'SELECT ' . $this->db->quoteIdentifier($this->IDName($table)) .
-            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID) .
+            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
             ' FROM ' . $this->db->quoteIdentifier($this->table($table)) .
             ' WHERE ' . $read_fields . ' parent_type = ' .
             $this->db->quote($parent_type, \ilDBConstants::T_TEXT) . ' AND ' .
@@ -263,9 +263,9 @@ class QueryProvider
     public function orComposite(): Tag
     {
         $read =
-            'SELECT ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID) .
+            'SELECT ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
             " FROM ((SELECT '" . LOMDictionaryInitiator::MD_ID_OS . "'" .
-            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID) .
+            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
             ', parent_type, parent_id, rbac_id, obj_id, obj_type, ' .
             $this->db->quoteIdentifier($this->IDName('requirement')) .
             ' FROM ' . $this->db->quoteIdentifier($this->table('requirement')) .
@@ -273,7 +273,7 @@ class QueryProvider
             ' CHAR_LENGTH(os_min_version) > 0 OR CHAR_LENGTH(os_max_version) > 0)' .
             ') UNION (' .
             "SELECT '" . LOMDictionaryInitiator::MD_ID_BROWSER . "'" .
-            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID) .
+            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
             ', parent_type, parent_id, rbac_id, obj_id, obj_type, ' .
             $this->db->quoteIdentifier($this->IDName('requirement')) .
             ' FROM ' . $this->db->quoteIdentifier($this->table('requirement')) .
@@ -328,7 +328,7 @@ class QueryProvider
     {
         return $this->factory->tag(
             '',
-            'SELECT %s AS ' . ReturnedParameter::MD_ID,
+            'SELECT %s AS ' . ReturnedParameter::MD_ID->value,
             '',
             '',
             false,
@@ -345,11 +345,11 @@ class QueryProvider
     {
         return $this->factory->tag(
             '',
-            "SELECT '%s' AS " . ReturnedParameter::MD_ID .
+            "SELECT '%s' AS " . ReturnedParameter::MD_ID->value .
             ', CASE %s WHEN ' . LOMDictionaryInitiator::MD_ID_OS . ' THEN ' .
             "'operating system'" .
             ' WHEN ' . LOMDictionaryInitiator::MD_ID_BROWSER . ' THEN ' .
-            "'browser' END AS " . ReturnedParameter::DATA,
+            "'browser' END AS " . ReturnedParameter::DATA->value,
             '',
             '',
             false,
@@ -366,7 +366,7 @@ class QueryProvider
     public function orCompositeName(): Tag
     {
         $read =
-            "SELECT '%s' AS " . $this->db->quoteIdentifier(ReturnedParameter::MD_ID) .
+            "SELECT '%s' AS " . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
             ' FROM ' . $this->db->quoteIdentifier($this->table('requirement')) .
             ' WHERE CASE %s WHEN ' . LOMDictionaryInitiator::MD_ID_OS . ' THEN CHAR_LENGTH(operating_system_name)' .
             ' WHEN ' . LOMDictionaryInitiator::MD_ID_BROWSER . ' THEN CHAR_LENGTH(browser_name) END > 0 ' .
@@ -408,10 +408,10 @@ class QueryProvider
         string $field_browser
     ): Tag {
         $read =
-            "SELECT '%s' AS " . $this->db->quoteIdentifier(ReturnedParameter::MD_ID) .
+            "SELECT '%s' AS " . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
             ', CASE %s WHEN ' . LOMDictionaryInitiator::MD_ID_OS . ' THEN ' . $this->db->quoteIdentifier($field_os) .
             ' WHEN ' . LOMDictionaryInitiator::MD_ID_BROWSER . ' THEN  ' . $this->db->quoteIdentifier($field_browser) .
-            ' END AS ' . $this->db->quoteIdentifier(ReturnedParameter::DATA) .
+            ' END AS ' . $this->db->quoteIdentifier(ReturnedParameter::DATA->value) .
             ' FROM ' . $this->db->quoteIdentifier($this->table('requirement')) .
             " WHERE parent_type = 'meta_technical' AND " .
             $this->db->quoteIdentifier($this->IDName('requirement')) . ' = %s' .
@@ -519,7 +519,7 @@ class QueryProvider
         $read_fields_2 = substr($read_fields_2, 0, -3) . ') AND ';
         $read =
             'SELECT %s' .
-            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID) .
+            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
             ' FROM ((SELECT ' . $join_select .
             ' FROM ' . $this->db->quoteIdentifier($this->table($first_table)) .
             ' AS t1 LEFT OUTER JOIN ' . $this->db->quoteIdentifier($this->table($second_table)) .
@@ -576,9 +576,9 @@ class QueryProvider
             ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
         $read =
             'SELECT ' . $this->db->quoteIdentifier($field) .
-            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::DATA) . ', ' .
+            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::DATA->value) . ', ' .
             $this->db->quoteIdentifier($this->IDName($table)) .
-            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID) .
+            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
             ' FROM ' . $this->db->quoteIdentifier($this->table($table)) .
             ' WHERE ' . $this->db->quoteIdentifier($this->IDName($table)) .
             ' = %s AND parent_type = ' .
@@ -626,9 +626,9 @@ class QueryProvider
             ', rbac_id, obj_id, obj_type) VALUES (%s, %s, %s, %s, %s)';
         $read =
             'SELECT ' . $this->db->quoteIdentifier($field) .
-            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::DATA) . ', ' .
+            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::DATA->value) . ', ' .
             $this->db->quoteIdentifier($this->IDName($table)) .
-            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID) .
+            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
             ' FROM ' . $this->db->quoteIdentifier($this->table($table)) .
             ' WHERE rbac_id = %s AND obj_id = %s AND obj_type = %s' .
             ' ORDER BY ' . $this->db->quoteIdentifier($this->IDName($table));
@@ -677,9 +677,9 @@ class QueryProvider
             '%s, %s, %s, %s)';
         $read =
             'SELECT ' . $this->db->quoteIdentifier($field) .
-            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::DATA) . ', ' .
+            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::DATA->value) . ', ' .
             $this->db->quoteIdentifier($this->IDName($table)) .
-            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID) .
+            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
             ' FROM ' . $this->db->quoteIdentifier($this->table($table)) .
             ' WHERE parent_type = ' .
             $this->db->quote($parent_type, \ilDBConstants::T_TEXT) .
@@ -730,9 +730,9 @@ class QueryProvider
             ' AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
         $read =
             'SELECT ' . $this->db->quoteIdentifier($field) .
-            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::DATA) . ', ' .
+            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::DATA->value) . ', ' .
             $this->db->quoteIdentifier($this->IDName($table)) .
-            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID) .
+            ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
             ' FROM ' . $this->db->quoteIdentifier($this->table($table)) .
             ' WHERE ' . $this->db->quoteIdentifier($this->IDName($table)) .
             ' = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s' .
@@ -761,7 +761,7 @@ class QueryProvider
         return $this->factory->tag(
             '',
             "SELECT '" . LOMVocabInitiator::SOURCE .
-            "' AS " . ReturnedParameter::DATA . ', 0 AS ' . ReturnedParameter::MD_ID,
+            "' AS " . ReturnedParameter::DATA->value . ', 0 AS ' . ReturnedParameter::MD_ID->value,
             '',
             '',
             false,

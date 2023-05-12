@@ -18,11 +18,18 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Repository;
+namespace ILIAS\MetaData\Elements\RessourceID;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface ReaderInterface
+class RessourceIDFactory implements RessourceIDFactoryInterface
 {
+    public function ressourceID(
+        int $obj_id,
+        int $sub_id,
+        string $type
+    ): RessourceIDInterface {
+        return new RessourceID($obj_id, $sub_id, $type);
+    }
 }

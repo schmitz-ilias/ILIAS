@@ -18,14 +18,17 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Elements\Markers;
+namespace ILIAS\MetaData\Repository\Utilities;
+
+use ILIAS\MetaData\Elements\RessourceID\RessourceIDInterface;
+use ILIAS\MetaData\Elements\SetInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-enum Action: string
+interface DatabaseManipulatorInterface
 {
-    case NEUTRAL = 'neutral';
-    case CREATE_OR_UPDATE = 'create or update';
-    case DELETE = 'delete';
+    public function manipulateMD(SetInterface $set): void;
+
+    public function deleteAllMD(RessourceIDInterface $ressource_id): void;
 }

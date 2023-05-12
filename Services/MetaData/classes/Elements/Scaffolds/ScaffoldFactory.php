@@ -22,7 +22,7 @@ namespace ILIAS\MetaData\Elements\Scaffolds;
 
 use ILIAS\MetaData\Structure\Definitions\DefinitionInterface;
 use ILIAS\MetaData\Elements\Element;
-use ILIAS\MetaData\Elements\Data\DataFactory;
+use ILIAS\MetaData\Elements\Data\DataFactoryInterface;
 use ILIAS\MetaData\Elements\NoID;
 use ILIAS\MetaData\Elements\ElementInterface;
 
@@ -31,9 +31,9 @@ use ILIAS\MetaData\Elements\ElementInterface;
  */
 class ScaffoldFactory
 {
-    protected DataFactory $data_factory;
+    protected DataFactoryInterface $data_factory;
 
-    public function __construct(DataFactory $data_factory)
+    public function __construct(DataFactoryInterface $data_factory)
     {
         $this->data_factory = $data_factory;
     }

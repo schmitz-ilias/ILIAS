@@ -36,9 +36,8 @@ interface RepositoryInterface
 
     /**
      * Returns an MD set with only the elements specified on a path, and all nested
-     * subelements of the last elements on the path. Elements on the path
-     * that don't exist in the MD set are added as scaffolds. The path must start
-     * from the root element, and filters are ignored.
+     * subelements of the last elements on the path.
+     * The path must start from the root element.
      * Note that resulting partial MD sets might not be completely valid, due to
      * conditions between elements. Be careful when dealing with vocabularies, or
      * Technical > Requirement > OrComposite.
@@ -58,9 +57,10 @@ interface RepositoryInterface
     /**
      * Follows a trail of markers from the root element,
      * and creates, updates or deletes marked MD elements along the trail.
-     * Non-scaffold elements with non-null matching data markers are
-     * updated according to the marker, scaffold elements with matching
-     * data markers are created with the data on the marker.
+     * Non-scaffold elements with 'create or update' markers are
+     * updated, and scaffold elements with 'create or update' markers
+     * are created with the data value on the marker. Scaffold elements
+     * with neutral markers are created with empty data.
      */
     public function manipulateMD(SetInterface $set): void;
 
