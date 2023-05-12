@@ -84,6 +84,7 @@ class DatabaseManipulator implements DatabaseManipulatorInterface
                     break;
                 }
 
+                // no break
             case MarkerAction::CREATE_OR_UPDATE:
                 $id = $this->createOrUpdateElement(
                     $element,
