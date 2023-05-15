@@ -18,7 +18,7 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Repository\Validation\Dictionary;
+namespace ILIAS\MetaData\Editor\Dictionary;
 
 use ILIAS\MetaData\Elements\Base\BaseElementInterface;
 
@@ -27,10 +27,7 @@ use ILIAS\MetaData\Elements\Base\BaseElementInterface;
  */
 interface DictionaryInterface
 {
-    /**
-     * @return TagInterface[]
-     */
-    public function tagsForElement(
+    public function tagForElement(
         BaseElementInterface $element
-    ): \Generator;
+    ): TagInterface;
 }

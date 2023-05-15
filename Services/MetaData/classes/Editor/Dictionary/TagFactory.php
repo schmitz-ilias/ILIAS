@@ -18,19 +18,27 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Repository\Validation\Dictionary;
+namespace ILIAS\MetaData\Editor\Dictionary;
 
-use ILIAS\MetaData\Elements\Base\BaseElementInterface;
+use ILIAS\MetaData\Paths\PathInterface;
+use ILIAS\MetaData\Paths\FactoryInterface as PathFactoryInterface;
+use ILIAS\MetaData\Elements\Structure\StructureElementInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface DictionaryInterface
+class TagFactory
 {
-    /**
-     * @return TagInterface[]
-     */
-    public function tagsForElement(
-        BaseElementInterface $element
-    ): \Generator;
+    protected PathFactoryInterface $path_factory;
+
+    public function __construct(
+        PathFactoryInterface $path_factory
+    ) {
+        $this->path_factory = $path_factory;
+    }
+    public function forElement(
+        StructureElementInterface $element
+    ): TagBuilder {
+        return new TagBuilder($this->path_factory, $element);
+    }
 }

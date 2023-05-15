@@ -18,19 +18,27 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Repository\Validation\Dictionary;
+namespace ILIAS\MetaData\Editor\Dictionary;
 
 use ILIAS\MetaData\Elements\Base\BaseElementInterface;
+use ILIAS\MetaData\Structure\Dictionaries\Dictionary as BaseDictionary;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface DictionaryInterface
+class LOMDictionary extends BaseDictionary implements DictionaryInterface
 {
-    /**
-     * @return TagInterface[]
-     */
-    public function tagsForElement(
+    public function tagForElement(
         BaseElementInterface $element
-    ): \Generator;
+    ): TagInterface {
+        foreach (parent::tagsForElement($element) as $tag) {
+            if (!($tag instanceof TagInterface)) {
+                throw new \ilMDRepositoryException('Invalid dictionary');
+            }
+            return $tag;
+        }
+        throw new \ilMDRepositoryException(
+            'No editor tag for element ' . $element->getDefinition()->name()
+        );
+    }
 }

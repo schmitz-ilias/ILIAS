@@ -30,17 +30,17 @@ use function PHPUnit\Framework\throwException;
  */
 class LOMDictionary extends BaseDictionary implements DictionaryInterface
 {
-    /**
-     * @return TagInterface[]
-     */
-    public function tagsForElement(
+    public function tagForElement(
         BaseElementInterface $element
-    ): \Generator {
+    ): TagInterface {
         foreach (parent::tagsForElement($element) as $tag) {
             if (!($tag instanceof TagInterface)) {
-                throw new \ilMDVocabulariesException('Invalid dictionary');
+                throw new \ilMDRepositoryException('Invalid dictionary');
             }
-            yield $tag;
+            return $tag;
         }
+        throw new \ilMDRepositoryException(
+            'No db tag for element ' . $element->getDefinition()->name()
+        );
     }
 }

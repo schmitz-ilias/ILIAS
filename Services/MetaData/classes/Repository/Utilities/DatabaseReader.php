@@ -157,15 +157,7 @@ class DatabaseReader implements DatabaseReaderInterface
         if ($struct instanceof StructureNavigatorInterface) {
             $struct = $struct->element();
         }
-        foreach ($this->dictionary->tagsForElement($struct) as $t) {
-            $tag = $t;
-        }
-        if (!isset($tag)) {
-            throw new \ilMDRepositoryException(
-                'No db tag for element ' . $struct->getDefinition()->name()
-            );
-        }
-        return $tag;
+        return $this->dictionary->tagForElement($struct);
     }
 
     protected function getSetWithRoot(

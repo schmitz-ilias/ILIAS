@@ -36,7 +36,7 @@ class LOMDictionary extends BaseDictionary implements DictionaryInterface
     ): \Generator {
         foreach (parent::tagsForElement($element) as $tag) {
             if (!($tag instanceof TagInterface)) {
-                throw new \ilMDVocabulariesException('Invalid dictionary');
+                throw new \ilMDRepositoryException('Invalid dictionary');
             }
             yield $tag;
         }

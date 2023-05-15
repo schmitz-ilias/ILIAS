@@ -18,19 +18,32 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Repository\Validation\Dictionary;
+namespace ILIAS\MetaData\Editor\Presenter;
 
 use ILIAS\MetaData\Elements\Base\BaseElementInterface;
+use ILIAS\MetaData\Elements\ElementInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface DictionaryInterface
+interface ElementsInterface
 {
-    /**
-     * @return TagInterface[]
-     */
-    public function tagsForElement(
-        BaseElementInterface $element
-    ): \Generator;
+    public function nameWithRepresentation(
+        ElementInterface $element,
+        bool $force_singular = false
+    ): string;
+
+    public function preview(ElementInterface $element): string;
+
+    public function name(
+        BaseElementInterface $element,
+        bool $plural = false
+    ): string;
+
+    public function nameWithParents(
+        BaseElementInterface $element,
+        ?BaseElementInterface $cut_off = null,
+        bool $plural = false,
+        bool $never_skip_initial = false
+    ): string;
 }

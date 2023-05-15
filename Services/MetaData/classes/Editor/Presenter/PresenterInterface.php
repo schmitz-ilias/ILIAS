@@ -18,19 +18,16 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Repository\Validation\Dictionary;
-
-use ILIAS\MetaData\Elements\Base\BaseElementInterface;
+namespace ILIAS\MetaData\Editor\Presenter;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface DictionaryInterface
+interface PresenterInterface
 {
-    /**
-     * @return TagInterface[]
-     */
-    public function tagsForElement(
-        BaseElementInterface $element
-    ): \Generator;
+    public function utilities(): UtilitiesInterface;
+
+    public function data(): DataInterface;
+
+    public function elements(): ElementsInterface;
 }

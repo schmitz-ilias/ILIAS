@@ -47,6 +47,8 @@ abstract class Dictionary implements DictionaryInterface
     }
 
     /**
+     * If possible, takes into account the index of
+     * elements when finding tags (beginning with 0).
      * @return TagInterface[]
      */
     public function tagsForElement(

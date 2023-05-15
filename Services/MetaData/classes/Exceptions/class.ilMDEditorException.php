@@ -18,19 +18,9 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Repository\Validation\Dictionary;
-
-use ILIAS\MetaData\Elements\Base\BaseElementInterface;
-
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface DictionaryInterface
+class ilMDEditorException extends ilException
 {
-    /**
-     * @return TagInterface[]
-     */
-    public function tagsForElement(
-        BaseElementInterface $element
-    ): \Generator;
 }

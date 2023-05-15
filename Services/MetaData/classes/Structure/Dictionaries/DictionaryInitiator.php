@@ -31,7 +31,7 @@ use ILIAS\MetaData\Structure\RepositoryInterface;
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-abstract class DictionaryInitiator implements DictionaryInitiatorInterface
+abstract class DictionaryInitiator
 {
     protected PathFactoryInterface $path_factory;
     private StructureSetInterface $structure;
@@ -76,10 +76,4 @@ abstract class DictionaryInitiator implements DictionaryInitiatorInterface
     {
         return $this->structure;
     }
-
-    /**
-     * Use addTagToElement and then at the end getTagAssignments
-     * to generate a dictionary.
-     */
-    abstract public function get(): DictionaryInterface;
 }

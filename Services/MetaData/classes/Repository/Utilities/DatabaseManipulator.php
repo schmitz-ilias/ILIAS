@@ -28,6 +28,7 @@ use ILIAS\MetaData\Elements\Markers\MarkableInterface;
 use ILIAS\MetaData\Elements\Markers\MarkerInterface;
 use ILIAS\MetaData\Repository\Dictionary\TagInterface;
 use ILIAS\MetaData\Elements\Markers\Action as MarkerAction;
+use ILIAS\MetaData\Repository\Dictionary\LOMDictionaryInitiator;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -138,16 +139,59 @@ class DatabaseManipulator implements DatabaseManipulatorInterface
                 $super_id,
                 ...$parent_ids
             );
-            return $id;
+        } else {
+            $id = $this->executor->create(
+                $tag,
+                $ressource_id,
+                null,
+                $data_value,
+                $super_id,
+                ...$parent_ids
+            );
         }
-        return $this->executor->create(
-            $tag,
-            $ressource_id,
-            null,
-            $data_value,
-            $super_id,
-            ...$parent_ids
-        );
+        if ($element->getDefinition()->name() === 'orComposite') {
+            return $this->getMDIDForOrComposite($element);
+        }
+        return $id;
+    }
+
+    /**
+     * This is specifically for updating/creating orComposites,
+     * due to how they are saved in the database. This should
+     * be changed, such that we can get rid of this workaround.
+     */
+    protected function getMDIDForOrComposite(ElementInterface $element): int
+    {
+        $type_element = null;
+        foreach ($element->getSubElements() as $sub) {
+            if ($sub->getDefinition()->name() === 'type') {
+                $type_element = $sub;
+                break;
+            }
+        }
+        $value_element = null;
+        foreach ($type_element?->getSubElements() ?? [] as $sub) {
+            if ($sub->getDefinition()->name() === 'value') {
+                $value_element = $sub;
+                break;
+            }
+        }
+        $type = $value_element?->getData()->value();
+        if ($marker = $value_element?->getMarker()) {
+            $type = $marker->dataValue();
+        }
+        switch ($type) {
+            case 'browser':
+                return LOMDictionaryInitiator::MD_ID_BROWSER;
+
+            case 'operating system':
+                return LOMDictionaryInitiator::MD_ID_OS;
+
+            default:
+                throw new \ilMDRepositoryException(
+                    'Invalid OrComposite. ID: ' . $element->getMDID()
+                );
+        }
     }
 
     protected function deleteElementAndSubElements(
@@ -186,15 +230,7 @@ class DatabaseManipulator implements DatabaseManipulatorInterface
     protected function tag(
         ElementInterface $element,
     ): TagInterface {
-        foreach ($this->dictionary->tagsForElement($element) as $t) {
-            $tag = $t;
-        }
-        if (!isset($tag)) {
-            throw new \ilMDRepositoryException(
-                'No db tag for element ' . $element->getDefinition()->name()
-            );
-        }
-        return $tag;
+        return $this->dictionary->tagForElement($element);
     }
 
     protected function marker(

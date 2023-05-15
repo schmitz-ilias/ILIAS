@@ -21,16 +21,13 @@ declare(strict_types=1);
 namespace ILIAS\MetaData\Vocabularies\Dictionary;
 
 use ILIAS\MetaData\Elements\Base\BaseElementInterface;
-use ILIAS\MetaData\Structure\Dictionaries\DictionaryInterface as BaseDictionaryInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface DictionaryInterface extends BaseDictionaryInterface
+interface DictionaryInterface
 {
     /**
-     * If possible, takes into account the index of
-     * elements when finding tags (beginning with 0).
      * @return TagInterface[]
      */
     public function tagsForElement(

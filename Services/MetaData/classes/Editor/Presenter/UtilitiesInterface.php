@@ -18,19 +18,23 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Repository\Validation\Dictionary;
+namespace ILIAS\MetaData\Editor\Presenter;
 
-use ILIAS\MetaData\Elements\Base\BaseElementInterface;
+use ILIAS\Data\DateFormat\DateFormat;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface DictionaryInterface
+interface UtilitiesInterface
 {
-    /**
-     * @return TagInterface[]
-     */
-    public function tagsForElement(
-        BaseElementInterface $element
-    ): \Generator;
+    public function shortenString(
+        string $string,
+        int $max_length
+    ): string;
+
+    public function getUserDateFormat(): DateFormat;
+
+    public function txt(string $key): string;
+
+    public function txtFill(string $key, string ...$values): string;
 }

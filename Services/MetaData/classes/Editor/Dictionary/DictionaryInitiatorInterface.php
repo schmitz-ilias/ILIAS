@@ -18,19 +18,14 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Repository\Validation\Dictionary;
+namespace ILIAS\MetaData\Editor\Dictionary;
 
-use ILIAS\MetaData\Elements\Base\BaseElementInterface;
+use ILIAS\MetaData\Structure\Dictionaries\DictionaryInitiatorInterface as BaseDictionaryInitiatorInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface DictionaryInterface
+interface DictionaryInitiatorInterface extends BaseDictionaryInitiatorInterface
 {
-    /**
-     * @return TagInterface[]
-     */
-    public function tagsForElement(
-        BaseElementInterface $element
-    ): \Generator;
+    public function get(): DictionaryInterface;
 }
