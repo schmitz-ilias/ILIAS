@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace ILIAS\MetaData\Paths\Navigator;
 
 use ILIAS\MetaData\Elements\Base\BaseElementInterface;
+use ILIAS\MetaData\Paths\Steps\StepInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -31,4 +32,6 @@ interface BaseNavigatorInterface
      * Returns null if there is no next step.
      */
     public function nextStep(): ?BaseNavigatorInterface;
+
+    public function currentStep(): ?StepInterface;
 }

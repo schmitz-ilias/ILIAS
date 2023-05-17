@@ -53,28 +53,31 @@ class Elements implements ElementsInterface
     }
 
     public function nameWithRepresentation(
-        ElementInterface $element,
-        bool $force_singular = false
+        bool $force_singular,
+        ElementInterface ...$elements
     ): string {
-        $tag = $this->dictionary->tagForElement($element);
-        $name = $this->name($element, $tag->isCollected() && !$force_singular);
+        $tag = $this->dictionary->tagForElement($elements[0]);
+        $name = $this->name(
+            $elements[0],
+            $tag->isCollected() && !$force_singular
+        );
         if ($tag->hasRepresentation()) {
             $values = $this->getDataValueStringByPath(
-                $element,
-                $tag->representation()
+                $tag->representation(),
+                ...$elements
             );
             $name = implode(self::SEPARATOR, [$name, $values]);
         }
         return $name;
     }
 
-    public function preview(ElementInterface $element): string
+    public function preview(ElementInterface ...$elements): string
     {
-        $tag = $this->dictionary->tagForElement($element);
+        $tag = $this->dictionary->tagForElement($elements[0]);
         if (!$tag->hasPreview()) {
             return '';
         }
-        return $this->getDataValueStringByPath($element, $tag->preview());
+        return $this->getDataValueStringByPath($tag->preview(), ...$elements);
     }
 
     public function name(
@@ -135,20 +138,22 @@ class Elements implements ElementsInterface
     }
 
     protected function getDataValueStringByPath(
-        ElementInterface $element,
-        PathInterface $path
+        PathInterface $path,
+        ElementInterface ...$elements
     ): string {
-        $navigator = $this->navigator_factory->navigator(
-            $path,
-            $element
-        );
         $values = [];
-        foreach ($navigator->elementsAtLastStep() as $el) {
-            if (
-                ($data = $el->getData())->type() !== Type::NULL &&
-                $data->value() !== ''
-            ) {
-                $values[] = $this->data->dataValue($data);
+        foreach ($elements as $element) {
+            $navigator = $this->navigator_factory->navigator(
+                $path,
+                $element
+            );
+            foreach ($navigator->elementsAtFinalStep() as $el) {
+                if (
+                    ($data = $el->getData())->type() !== Type::NULL &&
+                    $data->value() !== ''
+                ) {
+                    $values[] = $this->data->dataValue($data);
+                }
             }
         }
         return implode(self::DELIMITER, $values);

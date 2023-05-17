@@ -50,13 +50,13 @@ class Cleaner implements CleanerInterface
         Factory $element_factory,
         StructureSetInterface $structure_set,
         DataValidatorInterface $data_validator,
-        DictionaryInitiatorInterface $initiator,
+        DictionaryInterface $dictionary,
         \ilLogger $logger
     ) {
         $this->element_factory = $element_factory;
         $this->structure_set = $structure_set;
         $this->data_validator = $data_validator;
-        $this->dictionary = $initiator->get();
+        $this->dictionary = $dictionary;
         $this->logger = $logger;
     }
 

@@ -31,7 +31,7 @@ interface FactoryInterface
 
     /**
      * Returns absolute path from root to the given element.
-     * If leads_to_exactly one is set true, it tries to add
+     * If leads_to_exactly one is set true, it will add
      * mdid filters where possible such that the path only
      * leads to that specific element and not also others of
      * the same type and position.

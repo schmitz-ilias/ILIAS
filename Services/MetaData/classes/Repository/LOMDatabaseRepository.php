@@ -28,48 +28,56 @@ use ILIAS\MetaData\Repository\Utilities\ScaffoldProviderInterface;
 use ILIAS\MetaData\Elements\SetInterface;
 use ILIAS\MetaData\Paths\PathInterface;
 use ILIAS\MetaData\Repository\Utilities\DatabaseReaderInterface;
+use ILIAS\MetaData\Elements\RessourceID\RessourceIDFactoryInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 class LOMDatabaseRepository implements RepositoryInterface
 {
-    protected RessourceIDInterface $ressource_id;
+    protected RessourceIDFactoryInterface $ressource_factory;
     protected ScaffoldProviderInterface $scaffold_provider;
     protected DatabaseManipulatorInterface $manipulator;
     protected DatabaseReaderInterface $reader;
     protected CleanerInterface $cleaner;
 
     public function __construct(
-        RessourceIDInterface $ressource_id,
+        RessourceIDFactoryInterface $ressource_factory,
         ScaffoldProviderInterface $scaffold_provider,
         DatabaseManipulatorInterface $manipulator,
         DatabaseReaderInterface $reader,
         CleanerInterface $cleaner
     ) {
-        $this->ressource_id = $ressource_id;
+        $this->ressource_factory = $ressource_factory;
         $this->scaffold_provider = $scaffold_provider;
         $this->manipulator = $manipulator;
         $this->reader = $reader;
         $this->cleaner = $cleaner;
     }
 
-    public function getRessourceID(): RessourceIDInterface
-    {
-        return $this->ressource_id;
-    }
-
-    public function getMD(): SetInterface
-    {
+    public function getMD(
+        int $obj_id,
+        int $sub_id,
+        string $type
+    ): SetInterface {
         return $this->cleaner->clean(
-            $this->reader->getMD($this->ressource_id)
+            $this->reader->getMD(
+                $this->ressource_factory->ressourceID($obj_id, $sub_id, $type)
+            )
         );
     }
 
-    public function getMDOnPath(PathInterface $path): SetInterface
-    {
+    public function getMDOnPath(
+        PathInterface $path,
+        int $obj_id,
+        int $sub_id,
+        string $type
+    ): SetInterface {
         return $this->cleaner->clean(
-            $this->reader->getMDOnPath($path, $this->ressource_id)
+            $this->reader->getMDOnPath(
+                $path,
+                $this->ressource_factory->ressourceID($obj_id, $sub_id, $type)
+            )
         );
     }
 
@@ -88,8 +96,13 @@ class LOMDatabaseRepository implements RepositoryInterface
         $this->manipulator->manipulateMD($set);
     }
 
-    public function deleteAllMD(): void
-    {
-        $this->manipulator->deleteAllMD($this->ressource_id);
+    public function deleteAllMD(
+        int $obj_id,
+        int $sub_id,
+        string $type
+    ): void {
+        $this->manipulator->deleteAllMD(
+            $this->ressource_factory->ressourceID($obj_id, $sub_id, $type)
+        );
     }
 }

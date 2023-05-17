@@ -38,7 +38,7 @@ class DataValidatorService
     /**
      * @return DataValidatorInterface[]
      */
-    protected function validators(): \Generator
+    public function validators(): \Generator
     {
         yield Type::DATETIME->value => new DatetimeValidator();
         yield Type::DURATION->value => new DurationValidator();

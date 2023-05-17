@@ -29,6 +29,7 @@ use ILIAS\UI\Component\Input\Container\Form\Standard as StandardForm;
 use classes\Elements\Data\ilMDLOMDataFactory;
 use Validation\ilMDLOMDataConstraintProvider;
 use classes\Elements\Markers\ilMDMarkerFactory;
+use ILIAS\MetaData\Editor\Links\Parameter;
 
 /**
  * Meta Data editor
@@ -37,10 +38,8 @@ use classes\Elements\Markers\ilMDMarkerFactory;
  */
 class ilMDEditorGUI
 {
-    public const MD_SET = 'md_set';
-    public const MD_LINK = 'md_link';
-    public const MD_NODE_PATH = 'node_path';
-    public const MD_ACTION_PATH = 'action_path';
+    public const SET_FOR_TREE = 'md_set_for_tree';
+    public const PATH_FOR_TREE = 'md_path_for_tree';
 
     protected ilCtrl $ctrl;
     protected ilLanguage $lng;
@@ -216,7 +215,7 @@ class ilMDEditorGUI
             $this->library,
             $this->ui_factory,
             $this->presenter,
-            new ilMDFullEditorUtilitiesCollection(
+            new Services(
                 $this->data->uri(
                     ILIAS_HTTP_PATH . '/' .
                     $this->ctrl->getLinkTarget($this, 'fullEditor')
@@ -303,7 +302,7 @@ class ilMDEditorGUI
         );
         $this->ctrl->setParameter(
             $this,
-            self::MD_NODE_PATH,
+            Parameter::NODE_PATH->value,
             $node_path->getPathAsString()
         );
         $this->ctrl->redirect($this, 'fullEditor');
@@ -339,7 +338,7 @@ class ilMDEditorGUI
         );
         $this->ctrl->setParameter(
             $this,
-            self::MD_NODE_PATH,
+            Parameter::NODE_PATH->value,
             $node_path->getPathAsString()
         );
         $this->ctrl->redirect($this, 'fullEditor');
@@ -353,23 +352,20 @@ class ilMDEditorGUI
 
         // get the MD
         $root = $this->repo->getMD();
+        $path = $this->getNodePathFromRequest();
 
         // add slate with tree
         $this->global_screen->tool()->context()->current()->addAdditionalData(
-            self::MD_SET,
+            self::SET_FOR_TREE,
             $root
         );
         $this->global_screen->tool()->context()->current()->addAdditionalData(
-            self::MD_LINK,
-            $this->data->uri(
-                ILIAS_HTTP_PATH . '/' .
-                $this->ctrl->getLinkTarget($this, 'fullEditor')
-            )
+            self::PATH_FOR_TREE,
+            $path
         );
 
         // prepare MD by adding scaffolds
         $editor = $this->getFullEditor();
-        $path = $this->getNodePathFromRequest();
         $root = $editor->manipulateMD()->prepare($root, $path);
 
         // add content for element

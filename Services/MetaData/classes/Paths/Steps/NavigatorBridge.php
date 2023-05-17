@@ -104,11 +104,7 @@ class NavigatorBridge
     ): \Generator {
         foreach ($elements as $element) {
             $id = $element->getMDID();
-            if (is_int($id)) {
-                $id = (string) $id;
-            } elseif ($id instanceof NoID) {
-                $id = $id->value;
-            }
+            $id = is_int($id) ? (string) $id : $id->value;
             if (in_array($id, iterator_to_array($filter->values()), true)) {
                 yield $element;
             }

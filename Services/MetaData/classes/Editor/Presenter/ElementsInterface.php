@@ -29,11 +29,11 @@ use ILIAS\MetaData\Elements\ElementInterface;
 interface ElementsInterface
 {
     public function nameWithRepresentation(
-        ElementInterface $element,
-        bool $force_singular = false
+        bool $force_singular,
+        ElementInterface ...$elements
     ): string;
 
-    public function preview(ElementInterface $element): string;
+    public function preview(ElementInterface ...$elements): string;
 
     public function name(
         BaseElementInterface $element,

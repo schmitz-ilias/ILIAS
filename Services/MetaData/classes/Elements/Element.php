@@ -105,7 +105,11 @@ class Element extends BaseElement implements ElementInterface
             if ($curr_element->isMarked()) {
                 return;
             }
-            $curr_element->setMarker($factory->marker(Action::NEUTRAL));
+            $trail_action = Action::NEUTRAL;
+            if ($curr_element->isScaffold() && $action === Action::CREATE_OR_UPDATE) {
+                $trail_action = Action::CREATE_OR_UPDATE;
+            }
+            $curr_element->setMarker($factory->marker($trail_action));
             $curr_element = $curr_element->getSuperElement();
         }
     }

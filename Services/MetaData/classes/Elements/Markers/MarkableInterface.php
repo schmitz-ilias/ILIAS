@@ -38,7 +38,9 @@ interface MarkableInterface
      * Leaves a trail of markers from this element up to the root element,
      * or up to the first already marked element.
      * Places a marker with the given action and data value on this element,
-     * and neutral markers on the others.
+     * and neutral markers on the others, except for scaffolds: when the
+     * inital element is marked to be created or updated, so are the scaffolds
+     * on the way to root.
      */
     public function mark(
         MarkerFactoryInterface $factory,

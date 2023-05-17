@@ -58,7 +58,7 @@ class ScaffoldProvider implements ScaffoldProviderInterface
             $this->path_factory->toElement($element),
             $this->structure->getRoot()
         );
-        $structure_element = $navigator->elementAtLastStep();
+        $structure_element = $navigator->elementAtFinalStep();
 
         $sub_names = [];
         foreach ($element->getSubElements() as $sub) {

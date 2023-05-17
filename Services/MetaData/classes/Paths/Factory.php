@@ -168,13 +168,12 @@ class Factory implements FactoryInterface
         );
 
         $id = $element->getMDID();
-        if ($leads_to_exactly_one && is_int($id)) {
+        $id = is_int($id) ? (string) $id : $id->value;
+        if ($leads_to_exactly_one) {
             $builder = $builder->withAdditionalFilterAtCurrentStep(
                 FilterType::MDID,
-                (string) $id
+                $id
             );
-        } else {
-            $builder = $builder->withLeadsToExactlyOneElement(false);
         }
 
         return $builder;

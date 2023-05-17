@@ -32,7 +32,7 @@ interface StructureNavigatorInterface extends BaseNavigatorInterface
     /**
      * Returns the element at the end of the path.
      */
-    public function elementAtLastStep(): StructureElementInterface;
+    public function elementAtFinalStep(): StructureElementInterface;
 
     /**
      * Returns the element at the current step in the path.

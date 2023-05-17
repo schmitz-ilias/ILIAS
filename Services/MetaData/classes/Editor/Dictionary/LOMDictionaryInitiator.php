@@ -244,7 +244,7 @@ class LOMDictionaryInitiator extends BaseDictionaryInitiator implements Dictiona
         $this->addTagToElement(
             $this->tag($annotation)
                  ->withPreview($annotation->getSubElement('description')->getSubElement('string'))
-                 ->withPreview($annotation->getSubElement('entity'))
+                 ->withRepresentation($annotation->getSubElement('entity'))
                  ->withIsCollected(true)
                  ->withLastInTree(true)
                  ->get(),

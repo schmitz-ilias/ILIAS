@@ -26,7 +26,6 @@ use ILIAS\MetaData\Paths\FactoryInterface as PathFactoryInterface;
 use ILIAS\MetaData\Structure\Dictionaries\Tags\TagAssignmentInterface;
 use ILIAS\MetaData\Structure\Dictionaries\Tags\TagAssignment;
 use ILIAS\MetaData\Elements\Structure\StructureSetInterface;
-use ILIAS\MetaData\Structure\RepositoryInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>

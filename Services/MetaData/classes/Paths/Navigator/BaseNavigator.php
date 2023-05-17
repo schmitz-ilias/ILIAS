@@ -41,6 +41,7 @@ abstract class BaseNavigator implements BaseNavigatorInterface
      * @var StepInterface[]
      */
     private array $remaining_steps;
+    private ?StepInterface $current_step = null;
     private bool $leads_to_one;
 
     public function __construct(
@@ -72,6 +73,11 @@ abstract class BaseNavigator implements BaseNavigatorInterface
         $this->leads_to_one = $leads_to_one;
     }
 
+    public function currentStep(): StepInterface
+    {
+        return $this->current_step;
+    }
+
     public function nextStep(): ?BaseNavigatorInterface
     {
         if (empty($this->remaining_steps)) {
@@ -91,6 +97,7 @@ abstract class BaseNavigator implements BaseNavigatorInterface
             );
         }
 
+        $clone->current_step = $clone->remaining_steps[0];
         array_shift($clone->remaining_steps);
         $clone->elements = $new_elements;
         return $clone;
@@ -100,7 +107,7 @@ abstract class BaseNavigator implements BaseNavigatorInterface
      * @return BaseElementInterface[]
      * @throws \ilMDPathException
      */
-    public function elementsAtLastStep(): \Generator
+    public function elementsAtFinalStep(): \Generator
     {
         $clone = clone $this;
         while ($clone) {
@@ -112,9 +119,13 @@ abstract class BaseNavigator implements BaseNavigatorInterface
     /**
      * @throws \ilMDPathException
      */
-    public function firstElementAtLastStep(): ?BaseElementInterface
+    public function lastElementAtFinalStep(): ?BaseElementInterface
     {
-        return $this->elementsAtLastStep()->current();
+        $return = null;
+        foreach ($this->elementsAtFinalStep() as $element) {
+            $return = $element;
+        }
+        return $return;
     }
 
     /**
@@ -130,9 +141,13 @@ abstract class BaseNavigator implements BaseNavigatorInterface
     /**
      * @throws \ilMDPathException
      */
-    public function firstElement(): ?BaseElementInterface
+    public function lastElement(): ?BaseElementInterface
     {
-        return $this->elementsAtLastStep()->current();
+        $return = null;
+        foreach ($this->elements() as $element) {
+            $return = $element;
+        }
+        return $return;
     }
 
     /**

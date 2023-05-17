@@ -23,16 +23,29 @@ namespace ILIAS\MetaData\Repository;
 use ILIAS\MetaData\Elements\ElementInterface;
 use ILIAS\MetaData\Elements\SetInterface;
 use ILIAS\MetaData\Paths\PathInterface;
-use ILIAS\MetaData\Elements\RessourceID\RessourceIDInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 interface RepositoryInterface
 {
-    public function getRessourceID(): RessourceIDInterface;
-
-    public function getMD(): SetInterface;
+    /**
+     * * obj_id: Object ID (NOT ref_id!) of rbac object (e.g for page objects the obj_id
+     *  of the content object; for media objects this is set to 0, because their
+     *  object id are not assigned to ref ids).
+     *  NOTE: In the metadata tables, this corresponds to the field rbac_id.
+     * * sub_id: ID of the object carrying the metadata, which might be a subobject of an
+     *  enclosing content object (e.g for structure objects the obj_id of the
+     *  structure object). Might be the same as the objID.
+     *  NOTE: In the metadata tables, this corresponds to the field obj_id.
+     * * type: (Sub-)Type of the object (e.g st,pg,crs ...).
+     *  NOTE: In the metadata tables, this corresponds to the field obj_type.
+     */
+    public function getMD(
+        int $obj_id,
+        int $sub_id,
+        string $type
+    ): SetInterface;
 
     /**
      * Returns an MD set with only the elements specified on a path, and all nested
@@ -42,7 +55,12 @@ interface RepositoryInterface
      * conditions between elements. Be careful when dealing with vocabularies, or
      * Technical > Requirement > OrComposite.
      */
-    public function getMDOnPath(PathInterface $path): SetInterface;
+    public function getMDOnPath(
+        PathInterface $path,
+        int $obj_id,
+        int $sub_id,
+        string $type
+    ): SetInterface;
 
     /**
      * Returns all elements that could be added as sub-elements
@@ -59,10 +77,13 @@ interface RepositoryInterface
      * and creates, updates or deletes marked MD elements along the trail.
      * Non-scaffold elements with 'create or update' markers are
      * updated, and scaffold elements with 'create or update' markers
-     * are created with the data value on the marker. Scaffold elements
-     * with neutral markers are created with empty data.
+     * are created with the data value on the marker.
      */
     public function manipulateMD(SetInterface $set): void;
 
-    public function deleteAllMD(): void;
+    public function deleteAllMD(
+        int $obj_id,
+        int $sub_id,
+        string $type
+    ): void;
 }

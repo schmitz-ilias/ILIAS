@@ -34,6 +34,12 @@ class DataValidator implements DataValidatorInterface
      */
     protected array $validators;
 
+    public function __construct(
+        DataValidatorService $service
+    ) {
+        $this->validators = iterator_to_array($service->validators());
+    }
+
     public function isValid(ElementInterface $element, bool $ignore_marker): bool
     {
         return $this->getValidator($element->getData()->type())

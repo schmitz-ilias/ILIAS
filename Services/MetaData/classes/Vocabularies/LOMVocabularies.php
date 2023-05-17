@@ -116,7 +116,7 @@ class LOMVocabularies implements VocabulariesInterface
         $element = $this->navigator_factory->navigator(
             $path,
             $start
-        )->firstElementAtLastStep();
+        )->lastElementAtFinalStep();
 
         if (!isset($element)) {
             return null;

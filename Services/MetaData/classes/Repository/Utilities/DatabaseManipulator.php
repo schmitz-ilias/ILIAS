@@ -81,11 +81,8 @@ class DatabaseManipulator implements DatabaseManipulatorInterface
 
         switch ($marker->action()) {
             case MarkerAction::NEUTRAL:
-                if (!$element->isScaffold()) {
-                    break;
-                }
+                break;
 
-                // no break
             case MarkerAction::CREATE_OR_UPDATE:
                 $id = $this->createOrUpdateElement(
                     $element,

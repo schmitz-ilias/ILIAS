@@ -37,14 +37,14 @@ interface NavigatorInterface extends BaseNavigatorInterface
      * @return ElementInterface[]
      * @throws \ilMDPathException
      */
-    public function elementsAtLastStep(): \Generator;
+    public function elementsAtFinalStep(): \Generator;
 
     /**
      * Returns only the first element of those at the end of
      * the path, if one exists.
      * @throws \ilMDPathException
      */
-    public function firstElementAtLastStep(): ?ElementInterface;
+    public function lastElementAtFinalStep(): ?ElementInterface;
 
     /**
      * Returns the elements at the current step in the path.
@@ -61,5 +61,5 @@ interface NavigatorInterface extends BaseNavigatorInterface
      * if one exists.
      * @throws \ilMDPathException
      */
-    public function firstElement(): ?ElementInterface;
+    public function lastElement(): ?ElementInterface;
 }

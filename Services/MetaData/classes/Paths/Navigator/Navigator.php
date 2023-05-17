@@ -50,9 +50,9 @@ class Navigator extends BaseNavigator implements NavigatorInterface
      * @return ElementInterface[]
      * @throws \ilMDPathException
      */
-    public function elementsAtLastStep(): \Generator
+    public function elementsAtFinalStep(): \Generator
     {
-        foreach (parent::elementsAtLastStep() as $element) {
+        foreach (parent::elementsAtFinalStep() as $element) {
             if (!($element instanceof ElementInterface)) {
                 throw new \ilMDElementsException(
                     'Invalid Navigator.'
@@ -65,9 +65,15 @@ class Navigator extends BaseNavigator implements NavigatorInterface
     /**
      * @throws \ilMDPathException
      */
-    public function firstElementAtLastStep(): ?ElementInterface
+    public function lastElementAtFinalStep(): ?ElementInterface
     {
-        return $this->elementsAtLastStep()->current();
+        $element = parent::lastElementAtFinalStep();
+        if (($element instanceof ElementInterface) || is_null($element)) {
+            return $element;
+        }
+        throw new \ilMDPathException(
+            'Invalid Navigator.'
+        );
     }
 
     /**
@@ -78,7 +84,7 @@ class Navigator extends BaseNavigator implements NavigatorInterface
     {
         foreach (parent::elements() as $element) {
             if (!($element instanceof ElementInterface)) {
-                throw new \ilMDElementsException(
+                throw new \ilMDPathException(
                     'Invalid Navigator.'
                 );
             }
@@ -90,8 +96,14 @@ class Navigator extends BaseNavigator implements NavigatorInterface
     /**
      * @throws \ilMDPathException
      */
-    public function firstElement(): ?ElementInterface
+    public function lastElement(): ?ElementInterface
     {
-        return $this->elementsAtLastStep()->current();
+        $element = parent::lastElement();
+        if (($element instanceof ElementInterface) || is_null($element)) {
+            return $element;
+        }
+        throw new \ilMDPathException(
+            'Invalid Navigator.'
+        );
     }
 }

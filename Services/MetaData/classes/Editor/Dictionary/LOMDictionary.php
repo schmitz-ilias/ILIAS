@@ -30,15 +30,13 @@ class LOMDictionary extends BaseDictionary implements DictionaryInterface
 {
     public function tagForElement(
         BaseElementInterface $element
-    ): TagInterface {
+    ): ?TagInterface {
         foreach (parent::tagsForElement($element) as $tag) {
             if (!($tag instanceof TagInterface)) {
                 throw new \ilMDRepositoryException('Invalid dictionary');
             }
             return $tag;
         }
-        throw new \ilMDRepositoryException(
-            'No editor tag for element ' . $element->getDefinition()->name()
-        );
+        return null;
     }
 }
