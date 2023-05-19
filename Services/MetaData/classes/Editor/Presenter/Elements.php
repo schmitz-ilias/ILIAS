@@ -111,6 +111,7 @@ class Elements implements ElementsInterface
         $skip_arr = [Type::VOCAB_VALUE, Type::DURATION, Type::DATETIME, Type::STRING];
         $skip_initial =
             !$never_skip_initial &&
+            !$this->dictionary->tagForElement($element)->isLabelImportant() &&
             in_array($el->getDefinition()->dataType(), $skip_arr);
 
         while (!$el->isRoot()) {

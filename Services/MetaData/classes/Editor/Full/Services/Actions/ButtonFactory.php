@@ -24,7 +24,7 @@ use ILIAS\UI\Factory as UIFactory;
 use ILIAS\UI\Component\Button\Button;
 use ILIAS\UI\Component\Button\Standard as StandardButton;
 use ILIAS\UI\Component\Button\Shy as ShyButton;
-use ILIAS\MetaData\Editor\Presenter\Presenter;
+use ILIAS\MetaData\Editor\Presenter\PresenterInterface;
 use ILIAS\MetaData\Elements\ElementInterface;
 
 /**
@@ -33,11 +33,11 @@ use ILIAS\MetaData\Elements\ElementInterface;
 class ButtonFactory
 {
     protected UIFactory $factory;
-    protected Presenter $presenter;
+    protected PresenterInterface $presenter;
 
     public function __construct(
         UIFactory $factory,
-        Presenter $presenter
+        PresenterInterface $presenter
     ) {
         $this->factory = $factory;
         $this->presenter = $presenter;

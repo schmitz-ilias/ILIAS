@@ -28,21 +28,17 @@ use ILIAS\MetaData\Elements\Data\Type;
  */
 class DataValidator implements DataValidatorInterface
 {
-    /**
-     * Keys are the data types.
-     * @var DataValidatorInterface[]
-     */
-    protected array $validators;
+    protected DataValidatorService $validators;
 
     public function __construct(
-        DataValidatorService $service
+        DataValidatorService $validators
     ) {
-        $this->validators = iterator_to_array($service->validators());
+        $this->validators = $validators;
     }
 
     public function isValid(ElementInterface $element, bool $ignore_marker): bool
     {
-        return $this->getValidator($element->getData()->type())
+        return $this->validators->validator($element->getDefinition()->dataType())
                     ->isValid($element, $ignore_marker);
     }
 

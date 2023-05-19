@@ -26,7 +26,7 @@ use ILIAS\UI\Component\Tree\Node\Node;
 use ILIAS\Data\URI;
 use ILIAS\MetaData\Elements\ElementInterface;
 use ILIAS\MetaData\Paths\FactoryInterface as PathFactoryInterface;
-use ILIAS\MetaData\Editor\Presenter\Presenter;
+use ILIAS\MetaData\Editor\Presenter\PresenterInterface;
 use ILIAS\MetaData\Paths\PathInterface;
 use ILIAS\MetaData\Paths\Navigator\NavigatorFactoryInterface;
 use ILIAS\MetaData\Editor\Dictionary\DictionaryInterface;
@@ -49,13 +49,13 @@ class Recursion implements TreeRecursion
     protected array $current_elements;
 
     protected PathFactoryInterface $path_factory;
-    protected Presenter $presenter;
+    protected PresenterInterface $presenter;
     protected DictionaryInterface $dictionary;
     protected LinkFactory $link_factory;
 
     public function __construct(
         PathFactoryInterface $path_factory,
-        Presenter $presenter,
+        PresenterInterface $presenter,
         DictionaryInterface $dictionary,
         LinkFactory $link_factory,
         ElementInterface ...$current_elements

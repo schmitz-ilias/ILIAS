@@ -18,44 +18,51 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+namespace ILIAS\MetaData\Editor\Full\Services\Tables;
+
 use ILIAS\UI\Renderer;
-use ILIAS\UI\Factory;
-use classes\Elements\ilMDRootElement;
+use ILIAS\UI\Factory as UIFactory;
+use ILIAS\MetaData\Editor\Presenter\PresenterInterface as PresenterInterface;
+use ILIAS\MetaData\Editor\Full\Services\DataFinder;
+use ILIAS\MetaData\Elements\ElementInterface;
+use ILIAS\MetaData\Paths\FactoryInterface as PathFactory;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDFullEditorTableProvider
+class TableFactory
 {
-    protected Factory $factory;
+    protected UIFactory $ui_factory;
     protected Renderer $renderer;
-    protected ilMDLOMPresenter $presenter;
+    protected PresenterInterface $presenter;
     protected DataFinder $data_finder;
+    protected PathFactory $path_factory;
 
     public function __construct(
-        Factory $factory,
+        UIFactory $ui_factory,
         Renderer $renderer,
-        ilMDLOMPresenter $presenter,
+        PresenterInterface $presenter,
         DataFinder $data_finder,
+        PathFactory $path_factory,
     ) {
-        $this->factory = $factory;
+        $this->ui_factory = $ui_factory;
         $this->renderer = $renderer;
         $this->presenter = $presenter;
         $this->data_finder = $data_finder;
+        $this->path_factory = $path_factory;
     }
 
     public function getTable(
-        ilMDRootElement $root,
-        ilMDPathFromRoot $path
-    ): ilMDFullEditorTableGUI {
-        $table =  new ilMDFullEditorTableGUI(
+        ElementInterface ...$elements
+    ): TableGUI {
+        $table =  new TableGUI(
             null,
-            $root,
-            $path,
-            $this->factory,
+            $this->ui_factory,
             $this->renderer,
             $this->presenter,
-            $this->data_finder
+            $this->data_finder,
+            $this->path_factory,
+            ...$elements
         );
         $table->init();
         return $table;

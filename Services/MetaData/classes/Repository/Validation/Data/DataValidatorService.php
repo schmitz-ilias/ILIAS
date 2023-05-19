@@ -22,31 +22,63 @@ namespace ILIAS\MetaData\Repository\Validation\Data;
 
 use ILIAS\MetaData\Elements\Data\Type;
 use ILIAS\MetaData\Vocabularies\VocabulariesInterface;
+use ILIAS\MetaData\Editor\Full\Services\Inputs\DatetimeFactory;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 class DataValidatorService
 {
-    protected VocabulariesInterface $vocabularies;
+    protected DatetimeValidator $datetime;
+    protected DurationValidator $duration;
+    protected LangValidator $lang;
+    protected NonNegIntValidator $non_neg_int;
+    protected NullValidator $null;
+    protected StringValidator $string;
+    protected VocabSourceValidator $vocab_source;
+    protected VocabValueValidator $vocab_value;
 
     public function __construct(VocabulariesInterface $vocabularies)
     {
-        $this->vocabularies = $vocabularies;
+        $this->datetime = new DatetimeValidator();
+        $this->duration = new DurationValidator();
+        $this->lang = new LangValidator();
+        $this->non_neg_int = new NonNegIntValidator();
+        $this->null = new NullValidator();
+        $this->string = new StringValidator();
+        $this->vocab_source = new VocabSourceValidator($vocabularies);
+        $this->vocab_value = new VocabValueValidator($vocabularies);
     }
 
-    /**
-     * @return DataValidatorInterface[]
-     */
-    public function validators(): \Generator
+    public function validator(Type $type): DataValidatorInterface
     {
-        yield Type::DATETIME->value => new DatetimeValidator();
-        yield Type::DURATION->value => new DurationValidator();
-        yield Type::LANG->value => new LangValidator();
-        yield Type::NON_NEG_INT->value => new NonNegIntValidator();
-        yield Type::NULL->value => new NullValidator();
-        yield Type::STRING->value => new StringValidator();
-        yield Type::VOCAB_SOURCE->value => new VocabSourceValidator($this->vocabularies);
-        yield Type::VOCAB_VALUE->value => new VocabValueValidator($this->vocabularies);
+        switch ($type) {
+            case Type::NULL:
+                return $this->null;
+
+            case Type::STRING:
+                return $this->string;
+
+            case Type::LANG:
+                return $this->lang;
+
+            case Type::VOCAB_SOURCE:
+                return $this->vocab_source;
+
+            case Type::VOCAB_VALUE:
+                return $this->vocab_value;
+
+            case Type::DATETIME:
+                return $this->datetime;
+
+            case Type::NON_NEG_INT:
+                return $this->non_neg_int;
+
+            case Type::DURATION:
+                return $this->duration;
+        }
+        throw new \ilMDRepositoryException(
+            'Unhandled data type when validating.'
+        );
     }
 }

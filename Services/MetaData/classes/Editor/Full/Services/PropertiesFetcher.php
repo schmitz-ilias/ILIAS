@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 namespace ILIAS\MetaData\Editor\Full\Services;
 
-use ILIAS\MetaData\Editor\Presenter\Presenter;
+use ILIAS\MetaData\Editor\Presenter\PresenterInterface;
 use ILIAS\MetaData\Editor\Dictionary\DictionaryInterface;
 use ILIAS\MetaData\Elements\ElementInterface;
 
@@ -30,12 +30,12 @@ use ILIAS\MetaData\Elements\ElementInterface;
 class PropertiesFetcher
 {
     protected DictionaryInterface $dictionary;
-    protected Presenter $presenter;
+    protected PresenterInterface $presenter;
     protected DataFinder $data_finder;
 
     public function __construct(
         DictionaryInterface $dictionary,
-        Presenter $presenter,
+        PresenterInterface $presenter,
         DataFinder $data_finder
     ) {
         $this->dictionary = $dictionary;

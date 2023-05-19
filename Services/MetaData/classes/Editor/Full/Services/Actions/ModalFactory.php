@@ -25,7 +25,7 @@ use ILIAS\UI\Component\Modal\RoundTrip as RoundtripModal;
 use ILIAS\UI\Component\Input\Container\Form\Standard as StandardForm;
 use ILIAS\UI\Component\Input\Field\Group as Group;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use ILIAS\MetaData\Editor\Presenter\Presenter;
+use ILIAS\MetaData\Editor\Presenter\PresenterInterface;
 use ILIAS\MetaData\Paths\PathInterface;
 use ILIAS\MetaData\Elements\SetInterface;
 use ILIAS\MetaData\Editor\Full\Services\PropertiesFetcher;
@@ -41,13 +41,13 @@ class ModalFactory
 
     protected LinkProvider $link_provider;
     protected UIFactory $factory;
-    protected Presenter $presenter;
+    protected PresenterInterface $presenter;
     protected PropertiesFetcher $prop_provider;
 
     public function __construct(
         LinkProvider $link_provider,
         UIFactory $factory,
-        Presenter $presenter,
+        PresenterInterface $presenter,
         PropertiesFetcher $prop_provider
     ) {
         $this->link_provider = $link_provider;

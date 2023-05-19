@@ -27,7 +27,7 @@ use ILIAS\UI\Component\Input\Container\Form\Standard as StandardForm;
 use ILIAS\UI\Factory as UIFactory;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use ILIAS\MetaData\Editor\Dictionary\DictionaryInterface as EditorDictionaryInterface;
-use ILIAS\MetaData\Editor\Presenter\Presenter;
+use ILIAS\MetaData\Editor\Presenter\PresenterInterface;
 use ILIAS\MetaData\Repository\Validation\Dictionary\DictionaryInterface as ConstraintDictionaryInterface;
 use ILIAS\MetaData\Elements\SetInterface;
 use ILIAS\MetaData\Paths\PathInterface;
@@ -49,7 +49,7 @@ class FullEditor
     protected EditorDictionaryInterface $editor_dictionary;
     protected ConstraintDictionaryInterface $constraint_dictionary;
     protected NavigatorFactoryInterface $navigator_factory;
-    protected Presenter $presenter;
+    protected PresenterInterface $presenter;
     protected FullEditorServices $services;
 
     public function __construct(
@@ -57,7 +57,7 @@ class FullEditor
         EditorDictionaryInterface $editor_dictionary,
         ConstraintDictionaryInterface $constraint_dictionary,
         NavigatorFactoryInterface $navigator_factory,
-        Presenter $presenter,
+        PresenterInterface $presenter,
         FullEditorServices $services
     ) {
         $this->factory = $factory;

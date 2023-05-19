@@ -47,7 +47,7 @@ use ILIAS\MetaData\Elements\Markers\MarkerFactory;
  */
 class Services
 {
-    protected Presenter $presenter;
+    protected PresenterInterface $presenter;
     protected DictionaryInterface $dictionary;
     protected LinkFactoryInterface $link_factory;
     protected ParameterFetcherInterface $parameter_fetcher;

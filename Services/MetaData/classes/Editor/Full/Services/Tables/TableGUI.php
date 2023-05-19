@@ -18,51 +18,50 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+namespace ILIAS\MetaData\Editor\Full\Services\Tables;
+
 use ILIAS\UI\Component\Button\Button;
 use ILIAS\UI\Renderer;
-use ILIAS\UI\Factory;
-use classes\Elements\ilMDElement;
-use classes\Elements\ilMDRootElement;
+use ILIAS\UI\Factory as UIFactory;
+use ILIAS\MetaData\Editor\Presenter\PresenterInterface;
+use ILIAS\MetaData\Editor\Full\Services\DataFinder;
+use ILIAS\MetaData\Elements\Data\Type;
+use ILIAS\MetaData\Paths\FactoryInterface as PathFactory;
+use ILIAS\MetaData\Elements\ElementInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDFullEditorTableGUI extends ilTable2GUI
+class TableGUI extends \ilTable2GUI
 {
-    protected ilMDPathFromRoot $cmd_path;
-    protected ilMDRootElement $root;
-
-    protected Factory $factory;
+    protected UIFactory $ui_factory;
     protected Renderer $renderer;
-    protected ilMDLOMPresenter $presenter;
+    protected PresenterInterface $presenter;
     protected DataFinder $data_finder;
+    protected PathFactory $path_factory;
 
     /**
-     * @var ilMDElement[]
+     * @var ElementInterface[]
      */
-    protected array $current_elements;
+    protected array $elements;
 
     public function __construct(
         ?object $parent_obj,
-        ilMDRootElement $root,
-        ilMDPathFromRoot $cmd_path,
-        Factory $factory,
+        UIFactory $ui_factory,
         Renderer $renderer,
-        ilMDLOMPresenter $presenter,
+        PresenterInterface $presenter,
         DataFinder $data_finder,
+        PathFactory $path_factory,
+        ElementInterface ...$elements
     ) {
         parent::__construct($parent_obj);
-        $this->cmd_path = $cmd_path;
-        $this->root = $root;
-        $this->current_elements = $this->getElementsByPath(
-            $root,
-            $cmd_path
-        );
+        $this->elements = $elements;
 
-        $this->factory = $factory;
+        $this->ui_factory = $ui_factory;
         $this->renderer = $renderer;
         $this->presenter = $presenter;
         $this->data_finder = $data_finder;
+        $this->path_factory = $path_factory;
     }
 
     public function init(): void
@@ -71,20 +70,21 @@ class ilMDFullEditorTableGUI extends ilTable2GUI
             'tpl.full_editor_row.html',
             'Services/MetaData'
         );
-        $this->setTitle($this->presenter->getElementNameWithParents(
-            $this->current_elements[0],
+        $this->setTitle($this->presenter->elements()->nameWithParents(
+            $this->elements[0],
+            null,
             true
         ));
         $this->setExternalSegmentation(true);
 
         foreach ($this->data_finder->getDataCarryingElements(
-            $this->current_elements[0],
+            $this->elements[0],
             true
         ) as $data_el) {
-            $this->addColumn($this->presenter->getElementNameWithParents(
+            $this->addColumn($this->presenter->elements()->nameWithParents(
                 $data_el,
-                false,
-                $this->current_elements[0]->getName()
+                $this->elements[0],
+                false
             ));
         }
         $this->addColumn('');
@@ -99,26 +99,26 @@ class ilMDFullEditorTableGUI extends ilTable2GUI
         array $delete_buttons,
     ): void {
         $data = [];
-        foreach ($this->current_elements as $element) {
+        foreach ($this->elements as $element) {
             $res = [];
             foreach ($this->data_finder->getDataCarryingElements(
                 $element,
                 true
             ) as $data_el) {
-                $res[] = $data_el->isScaffold() ?
+                $res[] = $data_el->getData()->type() === Type::NULL ?
                     '' :
-                    $this->presenter->getDataValue($data_el->getData());
+                    $this->presenter->data()->dataValue($data_el->getData());
             }
-            $appended_path = (clone $this->cmd_path)
-                ->addMDIDFilter($element->getMDID());
+            $action_path_string = $this->path_factory->toElement($element, true)
+                                                     ->toString();
             $action_buttons = [];
-            if ($b = $delete_buttons[$appended_path->getPathAsString()] ?? null) {
+            if ($b = $delete_buttons[$action_path_string] ?? null) {
                 $action_buttons[] = $b;
             }
-            if ($b = $update_buttons[$appended_path->getPathAsString()] ?? null) {
+            if ($b = $update_buttons[$action_path_string] ?? null) {
                 $action_buttons[] = $b;
             }
-            $dropdown = $this->factory->dropdown()->standard($action_buttons);
+            $dropdown = $this->ui_factory->dropdown()->standard($action_buttons);
             $res['dropdown'] = $this->renderer->render($dropdown);
 
             $data[] = $res;
@@ -139,30 +139,5 @@ class ilMDFullEditorTableGUI extends ilTable2GUI
         $this->tpl->setCurrentBlock('action_column');
         $this->tpl->setVariable('ACTION_HTML', $a_set['dropdown']);
         $this->tpl->parse('action_column');
-    }
-
-    /**
-     * @param ilMDRootElement  $root
-     * @param ilMDPathFromRoot $path
-     * @return ilMDElement[]
-     */
-    protected function getElementsByPath(
-        ilMDRootElement $root,
-        ilMDPathFromRoot $path
-    ): array {
-        $els = $root->getSubElementsByPath($path);
-        $res = [];
-        foreach ($els as $el) {
-            if (!$el->isScaffold()) {
-                $res[] = $el;
-            }
-        }
-        if (count($res) < 1) {
-            throw new ilMDEditorException(
-                'The path to the current' .
-                ' element does not lead to an element.'
-            );
-        }
-        return $res;
     }
 }

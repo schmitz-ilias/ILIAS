@@ -26,14 +26,14 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 class ilMDFullEditorMDManipulator
 {
     protected ilMDRepository $repo;
-    protected ilMDFullEditorFormProvider $form_provider;
+    protected FormFactory $form_provider;
     protected ilMDMarkerFactory $marker_factory;
     protected ilMDPathFactory $path_factory;
     protected ilMDLOMVocabulariesDictionary $vocab_dict;
 
     public function __construct(
         ilMDRepository $repo,
-        ilMDFullEditorFormProvider $form_provider,
+        FormFactory $form_provider,
         ilMDMarkerFactory $marker_factory,
         ilMDPathFactory $path_factory,
         ilMDLOMVocabulariesDictionary $vocab_dict

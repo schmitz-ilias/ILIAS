@@ -50,7 +50,7 @@ class DataFinder
         bool $skip_vocab_source
     ): array {
         $elements = [];
-        $type = $current_element->getData()->type();
+        $type = $current_element->getDefinition()->dataType();
         if (
             $type !== Type::NULL &&
             !($skip_vocab_source && $type === Type::VOCAB_SOURCE)
