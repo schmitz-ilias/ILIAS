@@ -31,7 +31,8 @@ class LangFactory extends BaseFactory
 {
     protected function rawInput(
         ElementInterface $element,
-        ElementInterface $context_element
+        ElementInterface $context_element,
+        string $condition_value = ''
     ): FormInput {
         $langs = [];
         foreach (LangValidator::LANGUAGES as $key) {

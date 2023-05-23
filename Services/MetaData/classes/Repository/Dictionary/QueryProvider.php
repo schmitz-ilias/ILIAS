@@ -44,18 +44,18 @@ class QueryProvider
             is_null($this->table($table)) ||
             is_null($this->IDName($table))
         ) {
-            throw new \ilMDRepositoryException('Invalid MD table.');
+            throw new \ilMDRepositoryException('Invalid MD table: ' . $table);
         }
     }
 
     protected function table(string $table): ?string
     {
-        return LOMDictionaryInitiator::TABLES['key'] ?? null;
+        return LOMDictionaryInitiator::TABLES[$table] ?? null;
     }
 
     protected function IDName(string $table): ?string
     {
-        return LOMDictionaryInitiator::ID_NAME['key'] ?? null;
+        return LOMDictionaryInitiator::ID_NAME[$table] ?? null;
     }
 
     /**

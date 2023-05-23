@@ -29,27 +29,28 @@ use ILIAS\MetaData\Elements\ElementInterface;
 use ILIAS\MetaData\Editor\Full\Services\Inputs\InputFactory;
 use ILIAS\MetaData\Paths\Navigator\NavigatorFactoryInterface;
 use ILIAS\MetaData\Editor\Dictionary\DictionaryInterface as EditorDictionary;
+use ILIAS\MetaData\Editor\Full\Services\Actions\LinkProvider;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 class FormFactory
 {
-    protected UIFactory $factory;
-    protected Actions $action_provider;
+    protected UIFactory $ui_factory;
+    protected LinkProvider $link_provider;
     protected InputFactory $input_factory;
     protected EditorDictionary $editor_dictionary;
     protected NavigatorFactoryInterface $navigator_factory;
 
     public function __construct(
-        UIFactory $factory,
-        Actions $action_provider,
+        UIFactory $ui_factory,
+        LinkProvider $link_provider,
         InputFactory $input_factory,
         EditorDictionary $editor_dictionary,
         NavigatorFactoryInterface $navigator_factory
     ) {
-        $this->factory = $factory;
-        $this->action_provider = $action_provider;
+        $this->ui_factory = $ui_factory;
+        $this->link_provider = $link_provider;
         $this->input_factory = $input_factory;
         $this->editor_dictionary = $editor_dictionary;
         $this->navigator_factory = $navigator_factory;
@@ -60,8 +61,7 @@ class FormFactory
         ElementInterface $element,
         bool $with_title = true
     ): StandardForm {
-        $link = $this->action_provider->getLink()
-                                      ->update($base_path, $element);
+        $link = $this->link_provider->update($base_path, $element);
 
         return $this->getFormForElement(
             $base_path,
@@ -78,8 +78,7 @@ class FormFactory
         ElementInterface $element,
         bool $with_title = true
     ): StandardForm {
-        $link = $this->action_provider->getLink()
-                                      ->create($base_path, $element);
+        $link = $this->link_provider->create($base_path, $element);
         $editor_tag = $this->editor_dictionary->tagForElement($element);
         $context_element = $element;
         if ($created_with = $editor_tag?->createdWith()) {
@@ -115,7 +114,7 @@ class FormFactory
             )
             ];
         }
-        return $this->factory->input()->container()->form()->standard(
+        return $this->ui_factory->input()->container()->form()->standard(
             (string) $link,
             $section
         );

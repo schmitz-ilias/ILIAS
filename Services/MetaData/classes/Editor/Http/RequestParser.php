@@ -18,7 +18,7 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Editor\Links;
+namespace ILIAS\MetaData\Editor\Http;
 
 use ILIAS\Refinery\Factory as Refinery;
 use ILIAS\HTTP\GlobalHttpState;
@@ -28,7 +28,7 @@ use ILIAS\MetaData\Paths\FactoryInterface as PathFactoryInterface;
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ParameterFetcher implements ParameterFetcherInterface
+class RequestParser implements RequestParserInterface
 {
     protected GlobalHttpState $http;
     protected Refinery $refinery;
@@ -44,7 +44,26 @@ class ParameterFetcher implements ParameterFetcherInterface
         $this->path_factory = $path_factory;
     }
 
-    public function fetchPath(Parameter $parameter): PathInterface
+    public function fetchBasePath(): PathInterface
+    {
+        return $this->fetchPath(Parameter::BASE_PATH);
+    }
+
+    public function fetchActionPath(): PathInterface
+    {
+        return $this->fetchPath(Parameter::ACTION_PATH);
+    }
+
+    public function fetchRequestForForm(
+        bool $with_action_path
+    ): RequestForFormInterface {
+        return new RequestForForm(
+            $request = $this->http->request(),
+            $with_action_path ? $this->fetchActionPath() : null
+        );
+    }
+
+    protected function fetchPath(Parameter $parameter): PathInterface
     {
         $request_wrapper = $this->http->wrapper()->query();
         if ($request_wrapper->has($parameter->value)) {

@@ -30,7 +30,8 @@ class StringFactory extends BaseFactory
 {
     protected function rawInput(
         ElementInterface $element,
-        ElementInterface $context_element
+        ElementInterface $context_element,
+        string $condition_value = ''
     ): FormInput {
         $super_name = $element->getSuperElement()
                               ->getDefinition()

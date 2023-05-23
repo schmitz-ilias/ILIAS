@@ -41,7 +41,7 @@ class LOMReader implements ReaderInterface
 
     protected function getDefinitionArray(): array
     {
-        return require("..\..\StructureDefinition\LOMStructure.php");
+        return require(__DIR__ . "/../../../StructureDefinition/LOMStructure.php");
     }
 
     public function definition(): DefinitionInterface
@@ -86,7 +86,7 @@ class LOMReader implements ReaderInterface
     {
         if (
             !isset($this->definition_array['type']) ||
-            is_null($type = Type::tryFrom($this->definition_array['type']))
+            is_null($type = $this->definition_array['type'])
         ) {
             $this->throwStructureException('invalid data type');
         }

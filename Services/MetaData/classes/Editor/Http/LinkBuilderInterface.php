@@ -18,14 +18,19 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Editor\Links;
+namespace ILIAS\MetaData\Editor\Http;
 
-use ILIAS\MetaData\Paths\PathInterface;
+use ILIAS\Data\URI;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface ParameterFetcherInterface
+interface LinkBuilderInterface
 {
-    public function fetchPath(Parameter $parameter): PathInterface;
+    public function withParameter(
+        Parameter $parameter,
+        string $value
+    ): LinkBuilderInterface;
+
+    public function get(): URI;
 }

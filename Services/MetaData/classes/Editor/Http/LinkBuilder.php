@@ -18,14 +18,15 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Editor\Links;
+namespace ILIAS\MetaData\Editor\Http;
 
+use ILIAS\Data\URI;
 use ILIAS\Data\Factory as DataFactory;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class Factory implements FactoryInterface
+class LinkBuilder implements LinkBuilderInterface
 {
     protected \ilCtrlInterface $ctrl;
     protected DataFactory $data_factory;
@@ -38,14 +39,38 @@ class Factory implements FactoryInterface
 
     public function __construct(
         \ilCtrlInterface $ctrl,
-        DataFactory $data_factory
+        DataFactory $data_factory,
+        Command $command
     ) {
         $this->ctrl = $ctrl;
         $this->data_factory = $data_factory;
+        $this->command = $command;
     }
 
-    public function custom(Command $command): BuilderInterface
+    public function withParameter(
+        Parameter $parameter,
+        string $value
+    ): LinkBuilder {
+        $clone = clone $this;
+        $clone->parameters[$parameter->value] = $value;
+        return $clone;
+    }
+
+    public function get(): URI
     {
-        return new Builder($this->ctrl, $this->data_factory, $command);
+        $class = strtolower(\ilMDEditorGUI::class);
+        foreach ($this->parameters as $key => $value) {
+            $this->ctrl->setParameterByClass(
+                $class,
+                $key,
+                $value
+            );
+        }
+        $link = $this->ctrl->getLinkTargetByClass(
+            $class,
+            $this->command->value
+        );
+        $this->ctrl->clearParametersByClass($class);
+        return $this->data_factory->uri($link);
     }
 }

@@ -32,9 +32,9 @@ use ILIAS\MetaData\Paths\Navigator\NavigatorFactoryInterface;
 use ILIAS\MetaData\Editor\Dictionary\DictionaryInterface;
 use ILIAS\MetaData\Editor\Dictionary\TagInterface;
 use ILIAS\MetaData\Paths\Filters\FilterType;
-use ILIAS\MetaData\Editor\Links\Command;
-use ILIAS\MetaData\Editor\Links\Parameter;
-use ILIAS\MetaData\Editor\Links\Factory as LinkFactory;
+use ILIAS\MetaData\Editor\Http\Command;
+use ILIAS\MetaData\Editor\Http\Parameter;
+use ILIAS\MetaData\Editor\Http\LinkFactory as LinkFactory;
 
 /**
  *  Tree Recursion, putting Entries into a Tree
@@ -234,7 +234,7 @@ class Recursion implements TreeRecursion
         }
         $path_string = $builder->get()->toString();
         return $this->link_factory->custom(Command::SHOW_FULL)
-                                  ->withParameter(Parameter::NODE_PATH, $path_string)
+                                  ->withParameter(Parameter::BASE_PATH, $path_string)
                                   ->get();
     }
 

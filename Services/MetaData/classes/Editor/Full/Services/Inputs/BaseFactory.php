@@ -51,8 +51,25 @@ abstract class BaseFactory
 
     abstract protected function rawInput(
         ElementInterface $element,
-        ElementInterface $context_element
+        ElementInterface $context_element,
+        string $condition_value = ''
     ): FormInput;
+
+    protected function conditionInput(
+        ElementInterface $element,
+        ElementInterface $context_element,
+        ElementInterface $conditional_element
+    ): FormInput {
+        throw new \ilMDEditorException(
+            'Only vocabulary values can serve as conditions.'
+        );
+    }
+
+    public function getConditionElement(
+        ElementInterface $element
+    ): ?ElementInterface {
+        return null;
+    }
 
     /**
      * @return string|string[]
@@ -65,15 +82,19 @@ abstract class BaseFactory
 
     final public function getInput(
         ElementInterface $element,
-        ElementInterface $context_element
+        ElementInterface $context_element,
+        ?ElementInterface $conditional_element = null,
+        string $condition_value = ''
     ): FormInput {
         $label = $this->presenter->elements()->nameWithParents(
             $element,
             $context_element,
             false
         );
-        $input = $this->rawInput($element, $context_element)
-                      ->withLabel($label);
+        $input = isset($conditional_element) ?
+            $this->conditionInput($element, $context_element, $conditional_element) :
+            $this->rawInput($element, $context_element);
+        $input = $input->withLabel($label);
 
         if (($data = $element->getData())->type() !== Type::NULL) {
             $input = $input->withValue(

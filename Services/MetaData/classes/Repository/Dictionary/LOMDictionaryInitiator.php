@@ -28,7 +28,7 @@ use ILIAS\MetaData\Elements\Structure\StructureElementInterface;
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class LOMDictionaryInitiator extends BaseDictionaryInitiator implements DictionaryInitiatorInterface
+class LOMDictionaryInitiator extends BaseDictionaryInitiator
 {
     /**
      * These are needed to accomodate the special method

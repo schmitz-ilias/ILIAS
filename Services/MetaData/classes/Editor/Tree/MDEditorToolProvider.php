@@ -30,11 +30,9 @@ use ILIAS\GlobalScreen\ScreenContext\Stack\CalledContexts;
 use ILIAS\GlobalScreen\Scope\MainMenu\Collector\Renderer\Hasher;
 use ILIAS\MetaData\Elements\SetInterface;
 use ILIAS\MetaData\Paths\PathInterface;
-use ILIAS\MetaData\Paths\Services\Services as PathServices;
-use ILIAS\MetaData\Editor\Services\Services as EditorServices;
 use ILIAS\DI\Container;
-use ILIAS\MetaData\Structure\Services\Services as StructureServices;
 use ILIAS\MetaData\Elements\ElementInterface;
+use ILIAS\MetaData\Services\Services;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -43,18 +41,12 @@ class MDEditorToolProvider extends AbstractDynamicToolProvider
 {
     use Hasher;
 
-    protected PathServices $path_services;
-    protected EditorServices $editor_services;
+    protected Services $services;
 
     public function __construct(Container $dic)
     {
         parent::__construct($dic);
-        $this->path_services = new PathServices();
-        $this->editor_services = new EditorServices(
-            $this->dic,
-            $this->path_services,
-            new StructureServices()
-        );
+        $this->services = new Services($dic);
     }
 
     public function isInterestedInContexts(): ContextCollection
@@ -129,10 +121,10 @@ class MDEditorToolProvider extends AbstractDynamicToolProvider
     protected function getUITree(SetInterface $set, PathInterface $path): Tree
     {
         $recursion = new Recursion(
-            $this->path_services->pathFactory(),
-            $this->editor_services->presenter(),
-            $this->editor_services->dictionary(),
-            $this->editor_services->linkFactory(),
+            $this->services->paths()->pathFactory(),
+            $this->services->editor()->presenter(),
+            $this->services->editor()->dictionary(),
+            $this->services->editor()->linkFactory(),
             ...$this->getElements($set, $path)
         );
         $f = $this->dic->ui()->factory();
@@ -148,7 +140,7 @@ class MDEditorToolProvider extends AbstractDynamicToolProvider
      */
     protected function getElements(SetInterface $set, PathInterface $path): \Generator
     {
-        yield from $this->path_services->navigatorFactory()->navigator(
+        yield from $this->services->paths()->navigatorFactory()->navigator(
             $path,
             $set->getRoot()
         )->elementsAtFinalStep();

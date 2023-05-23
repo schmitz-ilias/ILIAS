@@ -26,6 +26,7 @@ use ILIAS\MetaData\Editor\Presenter\PresenterInterface;
 use ILIAS\MetaData\Repository\Validation\Dictionary\DictionaryInterface as ConstraintDictionary;
 use ILIAS\Refinery\Factory as Refinery;
 use ILIAS\MetaData\Elements\Data\Type;
+use ILIAS\MetaData\Paths\FactoryInterface as PathFactory;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -45,7 +46,8 @@ class FactoryTypesService
         PresenterInterface $presenter,
         ConstraintDictionary $constraint_dictionary,
         VocabulariesInterface $vocabularies,
-        Refinery $refinery
+        Refinery $refinery,
+        PathFactory $path_factory
     ) {
         $this->datetime = new DatetimeFactory(
             $ui_factory,
@@ -84,7 +86,8 @@ class FactoryTypesService
             $ui_factory,
             $presenter,
             $constraint_dictionary,
-            $vocabularies
+            $vocabularies,
+            $path_factory
         );
     }
 

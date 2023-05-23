@@ -18,14 +18,20 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Repository\Dictionary;
+namespace ILIAS\MetaData\Editor\Http;
 
-use ILIAS\MetaData\Structure\Dictionaries\DictionaryInitiatorInterface as BaseDictionaryInitiatorInterface;
+use ILIAS\MetaData\Paths\PathInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface DictionaryInitiatorInterface extends BaseDictionaryInitiatorInterface
+interface RequestParserInterface
 {
-    public function get(): DictionaryInterface;
+    public function fetchBasePath(): PathInterface;
+
+    public function fetchActionPath(): PathInterface;
+
+    public function fetchRequestForForm(
+        bool $with_action_path
+    ): RequestForFormInterface;
 }

@@ -20,13 +20,12 @@ declare(strict_types=1);
 
 namespace ILIAS\MetaData\Vocabularies\Dictionary;
 
-use ILIAS\MetaData\Structure\Dictionaries\DictionaryInitiatorInterface as BaseDictionaryInitiatorInterface;
 use ILIAS\MetaData\Paths\PathInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface DictionaryInitiatorInterface extends BaseDictionaryInitiatorInterface
+interface DictionaryInitiatorInterface
 {
     public function get(): DictionaryInterface;
 

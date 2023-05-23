@@ -18,13 +18,18 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Editor\Links;
+namespace ILIAS\MetaData\Editor\Observers;
+
+use ILIAS\MetaData\Paths\PathInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-enum Parameter: string
+interface ObserverHandlerInterface
 {
-    case NODE_PATH = 'md_node_path';
-    case ACTION_PATH = 'md_action_path';
+    public function addObserver(object $class, string $method, string $element): void;
+
+    public function callObservers(string $element): void;
+
+    public function callObserversByPath(PathInterface $path): void;
 }

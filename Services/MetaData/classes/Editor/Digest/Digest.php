@@ -18,77 +18,37 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+namespace ILIAS\MetaData\Editor\Digest;
+
 use ILIAS\UI\Component\Input\Container\Form\Standard as StandardForm;
 use ILIAS\UI\Factory as UIFactory;
-use Psr\Http\Message\ServerRequestInterface as Request;
 use ILIAS\Refinery\Factory as Refinery;
 use ILIAS\UI\Component\Input\Field\Section;
 use ILIAS\UI\Component\Modal\Interruptive;
 use ILIAS\UI\Component\Signal;
-use classes\Elements\Data\ilMDLOMDataFactory;
-use classes\Vocabularies\ilMDVocabulary;
-use classes\Elements\ilMDBaseElement;
-use classes\Elements\Markers\ilMDMarkerFactory;
-use classes\Elements\ilMDRootElement;
+use ILIAS\MetaData\Paths\FactoryInterface as PathFactory;
+use ILIAS\MetaData\Editor\Presenter\PresenterInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class ilMDLOMDigestGUI
+class Digest
 {
-    protected ilMDLOMDatabaseRepository $repo;
-    protected ilMDPathFactory $path_factory;
-    protected ilMDMarkerFactory $marker_factory;
-    protected UIFactory $factory;
+    protected PathFactory $path_factory;
+    protected UIFactory $ui_factory;
     protected Refinery $refinery;
-    protected ilLanguage $lng;
-
-    protected ilMDVocabulary $role_vocab;
-    protected ilMDVocabulary $cp_vocab;
+    protected PresenterInterface $presenter;
 
     public function __construct(
-        ilMDLOMDatabaseRepository $repo,
-        ilMDPathFactory $path_factory,
-        ilMDMarkerFactory $marker_factory,
-        ilMDLOMLibrary $library,
+        PathFactory $path_factory,
         UIFactory $factory,
         Refinery $refinery,
-        ilLanguage $lng
+        PresenterInterface $presenter
     ) {
-        $this->repo = $repo;
         $this->path_factory = $path_factory;
-        $this->marker_factory = $marker_factory;
-        $this->factory = $factory;
+        $this->ui_factory = $factory;
         $this->refinery = $refinery;
-        $this->lng = $lng;
-        $this->lng->loadLanguageModule('meta');
-
-        $this->role_vocab = $library
-            ->getLOMVocabulariesDictionary($path_factory)
-            ->getStructure()
-            ->movePointerToEndOfPath(
-                $this->path_factory
-                    ->getPathFromRoot()
-                    ->addStep('lifeCycle')
-                    ->addStep('contribute')
-                    ->addStep('role')
-                    ->addStep('value')
-            )
-            ->getTagAtPointer()
-            ->getVocabularies()[0];
-
-        $this->cp_vocab = $library
-            ->getLOMVocabulariesDictionary($path_factory)
-            ->getStructure()
-            ->movePointerToEndOfPath(
-                $this->path_factory
-                    ->getPathFromRoot()
-                    ->addStep('rights')
-                    ->addStep('copyrightAndOtherRestrictions')
-                    ->addStep('value')
-            )
-            ->getTagAtPointer()
-            ->getVocabularies()[0];
+        $this->presenter = $presenter;
     }
 
     public function getForm(
@@ -97,7 +57,7 @@ class ilMDLOMDigestGUI
         ?Request $request = null,
         ?Signal $signal = null,
     ): StandardForm {
-        $ff = $this->factory->input()->field();
+        $ff = $this->ui_factory->input()->field();
 
         // section general
         // title
@@ -252,7 +212,7 @@ class ilMDLOMDigestGUI
             $tlt_sections[] = $ff
                 ->section(
                     $nums,
-                    $this->lng->txt('meta_typical_learning_time') . ' class.ilMDLOMDigestGUI.php' .
+                    $this->lng->txt('meta_typical_learning_time') . ' Digest.php' .
                     (count($tlt_sections) > 0 ? count($tlt_sections) + 1 : '')
                 )
                 ->withAdditionalTransformation(
@@ -296,7 +256,7 @@ class ilMDLOMDigestGUI
             $sections['rights'] = $sec_rights;
         }
         $sections['tlts'] = $tlts;
-        $form = $this->factory->input()->container()->form()->standard(
+        $form = $this->ui_factory->input()->container()->form()->standard(
             $post_url,
             $sections
         );
@@ -311,7 +271,7 @@ class ilMDLOMDigestGUI
         ilMDRootElement $root,
         ?Signal $signal
     ): Section {
-        $ff = $this->factory->input()->field();
+        $ff = $this->ui_factory->input()->field();
         $oer_settings = $this->getOerHarvesterSettings();
 
         $description =
@@ -412,7 +372,7 @@ class ilMDLOMDigestGUI
             return null;
         }
 
-        $modal = $this->factory->modal()->interruptive(
+        $modal = $this->ui_factory->modal()->interruptive(
             $this->lng->txt("meta_copyright_change_warning_title"),
             $this->lng->txt("meta_copyright_change_info"),
             $post_url

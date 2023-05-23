@@ -29,7 +29,7 @@ use ILIAS\MetaData\Structure\Dictionaries\Tags\TagAssignmentInterface;
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-abstract class Dictionary implements DictionaryInterface
+abstract class Dictionary
 {
     protected PathFactoryInterface $path_factory;
 

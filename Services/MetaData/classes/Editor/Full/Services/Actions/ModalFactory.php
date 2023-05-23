@@ -24,13 +24,17 @@ use ILIAS\UI\Factory as UIFactory;
 use ILIAS\UI\Component\Modal\RoundTrip as RoundtripModal;
 use ILIAS\UI\Component\Input\Container\Form\Standard as StandardForm;
 use ILIAS\UI\Component\Input\Field\Group as Group;
-use Psr\Http\Message\ServerRequestInterface as Request;
 use ILIAS\MetaData\Editor\Presenter\PresenterInterface;
 use ILIAS\MetaData\Paths\PathInterface;
 use ILIAS\MetaData\Elements\SetInterface;
 use ILIAS\MetaData\Editor\Full\Services\PropertiesFetcher;
-use ILIAS\MetaData\Editor\Links\Command;
+use ILIAS\MetaData\Editor\Http\Command;
 use ILIAS\MetaData\Elements\ElementInterface;
+use ILIAS\MetaData\Editor\Full\Services\FormFactory;
+use ILIAS\MetaData\Repository\Validation\Dictionary\DictionaryInterface as ConstraintDictionaryInterface;
+use ILIAS\MetaData\Repository\Validation\Dictionary\Restriction;
+use ILIAS\MetaData\Paths\FactoryInterface;
+use ILIAS\MetaData\Editor\Http\RequestForFormInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -42,25 +46,37 @@ class ModalFactory
     protected LinkProvider $link_provider;
     protected UIFactory $factory;
     protected PresenterInterface $presenter;
-    protected PropertiesFetcher $prop_provider;
+    protected PropertiesFetcher $properties_fetcher;
+    protected FormFactory $form_factory;
+    protected ConstraintDictionaryInterface $constraint_dictionary;
+    protected FactoryInterface $path_factory;
 
     public function __construct(
         LinkProvider $link_provider,
         UIFactory $factory,
         PresenterInterface $presenter,
-        PropertiesFetcher $prop_provider
+        PropertiesFetcher $properties_fetcher,
+        FormFactory $form_factory,
+        ConstraintDictionaryInterface $constraint_dictionary,
+        FactoryInterface $path_factory
     ) {
         $this->link_provider = $link_provider;
         $this->factory = $factory;
         $this->presenter = $presenter;
-        $this->prop_provider = $prop_provider;
+        $this->properties_fetcher = $properties_fetcher;
+        $this->form_factory = $form_factory;
+        $this->constraint_dictionary = $constraint_dictionary;
     }
 
     public function delete(
         PathInterface $base_path,
         ElementInterface $to_be_deleted,
         bool $props_from_data = false
-    ): FlexibleModal {
+    ): ?FlexibleModal {
+        if (!$this->isDeletable($to_be_deleted)) {
+            return null;
+        }
+
         $action = $this->link_provider->delete(
             $base_path,
             $to_be_deleted
@@ -69,9 +85,9 @@ class ModalFactory
         $items = [];
         $index = 0;
         if ($props_from_data) {
-            $content = $this->prop_provider->getPropertiesByData($to_be_deleted);
+            $content = $this->properties_fetcher->getPropertiesByData($to_be_deleted);
         } else {
-            $content = $this->prop_provider->getPropertiesByPreview($to_be_deleted);
+            $content = $this->properties_fetcher->getPropertiesByPreview($to_be_deleted);
         }
         foreach ($content as $key => $value) {
             $items[] = $this->factory->modal()->interruptiveItem()->keyValue(
@@ -95,10 +111,15 @@ class ModalFactory
     }
 
     public function update(
+        PathInterface $base_path,
         ElementInterface $to_be_updated,
-        StandardForm $form,
-        ?Request $request = null
+        ?RequestForFormInterface $request = null
     ): FlexibleModal {
+        $form = $this->form_factory->getUpdateForm(
+            $base_path,
+            $to_be_updated,
+            false
+        );
         $modal =  $this->getRoundtripModal(
             $to_be_updated,
             $form,
@@ -110,10 +131,15 @@ class ModalFactory
     }
 
     public function create(
+        PathInterface $base_path,
         ElementInterface $to_be_created,
-        StandardForm $form,
-        ?Request $request = null
+        ?RequestForFormInterface $request = null
     ): FlexibleModal {
+        $form = $this->form_factory->getCreateForm(
+            $base_path,
+            $to_be_created,
+            false
+        );
         // if the modal is empty, directly return the form action
         if (empty($form->getInputs())) {
             return new FlexibleModal($form->getPostURL());
@@ -133,7 +159,7 @@ class ModalFactory
         ElementInterface $element,
         StandardForm $form,
         Command $action_cmd,
-        ?Request $request = null
+        ?RequestForFormInterface $request
     ): RoundtripModal {
         $modal = $this->factory->modal()->roundtrip(
             $this->getModalTitle($action_cmd, $element),
@@ -141,10 +167,21 @@ class ModalFactory
             $form->getInputs(),
             $form->getPostURL()
         );
+        return $this->handleError($modal, $element, $request);
+    }
 
+    protected function handleError(
+        RoundtripModal $modal,
+        ElementInterface $element,
+        ?RequestForFormInterface $request
+    ): RoundtripModal {
+        $action_path = $this->path_factory->toElement($element, true);
+        if ($action_path->toString() !== $request?->path()?->toString()) {
+            $request = null;
+        }
         // For error handling, make the modal open on load and pass request
         if ($request) {
-            $modal = $modal->withRequest($request);
+            $modal = $request->applyRequestToModal($modal);
 
             /*
              * Show error message in a box, since KS groups don't pass along
@@ -159,12 +196,12 @@ class ModalFactory
                     [$this->factory->messageBox()->failure($error)],
                     $modal->getInputs(),
                     $modal->getPostURL()
-                )->withRequest($request);
+                );
+                $modal = $request->applyRequestToModal($modal);
             }
 
             $modal = $modal->withOnLoad($modal->getShowSignal());
         }
-
         return $modal;
     }
 
@@ -199,5 +236,15 @@ class ModalFactory
                 true
             )
         );
+    }
+
+    protected function isDeletable(ElementInterface $element): bool
+    {
+        foreach ($this->constraint_dictionary->tagsForElement($element) as $tag) {
+            if ($tag->restriction() === Restriction::NOT_DELETABLE) {
+                return false;
+            }
+        }
+        return true;
     }
 }

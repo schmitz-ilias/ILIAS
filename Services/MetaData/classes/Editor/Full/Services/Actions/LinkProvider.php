@@ -21,10 +21,10 @@ declare(strict_types=1);
 namespace ILIAS\MetaData\Editor\Full\Services\Actions;
 
 use ILIAS\MetaData\Paths\PathInterface;
-use ILIAS\MetaData\Editor\Links\Factory as LinkFactory;
+use ILIAS\MetaData\Editor\Http\LinkFactoryInterface as LinkFactory;
 use ILIAS\Data\URI;
-use ILIAS\MetaData\Editor\Links\Command;
-use ILIAS\MetaData\Editor\Links\Parameter;
+use ILIAS\MetaData\Editor\Http\Command;
+use ILIAS\MetaData\Editor\Http\Parameter;
 use ILIAS\MetaData\Paths\FactoryInterface as PathFactory;
 use ILIAS\MetaData\Elements\ElementInterface;
 
@@ -84,7 +84,7 @@ class LinkProvider
     ): URI {
         return $this->link_factory
             ->custom($action_cmd)
-            ->withParameter(Parameter::NODE_PATH, $base_path->toString())
+            ->withParameter(Parameter::BASE_PATH, $base_path->toString())
             ->withParameter(Parameter::ACTION_PATH, $action_path->toString())
             ->get();
     }

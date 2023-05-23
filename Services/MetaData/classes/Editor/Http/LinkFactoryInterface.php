@@ -18,21 +18,12 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Editor\Full\Services\Inputs;
-
-use ILIAS\UI\Component\Input\Field\FormInput;
-use ILIAS\MetaData\Elements\ElementInterface;
+namespace ILIAS\MetaData\Editor\Http;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class VocabSourceFactory extends BaseFactory
+interface LinkFactoryInterface
 {
-    protected function rawInput(
-        ElementInterface $element,
-        ElementInterface $context_element,
-        string $condition_value = ''
-    ): FormInput {
-        return $this->ui_factory->hidden();
-    }
+    public function custom(Command $command): LinkBuilderInterface;
 }

@@ -28,7 +28,7 @@ use ILIAS\MetaData\Elements\Structure\StructureElementInterface;
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class LOMDictionaryInitiator extends BaseDictionaryInitiator implements DictionaryInitiatorInterface
+class LOMDictionaryInitiator extends BaseDictionaryInitiator
 {
     protected TagFactory $tag_factory;
 
@@ -273,7 +273,7 @@ class LOMDictionaryInitiator extends BaseDictionaryInitiator implements Dictiona
         $this->addTagToElement(
             $this->tag($taxon_path)
                  ->withPreview($taxon_entry_string)
-                 ->withCreatedWith($source = $class->getSubElement('source'))
+                 ->withCreatedWith($source = $taxon_path->getSubElement('source'))
                  ->withRepresentation($source->getSubElement('string'))
                  ->get(),
             $taxon_path

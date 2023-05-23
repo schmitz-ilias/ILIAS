@@ -18,12 +18,19 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Editor\Links;
+namespace ILIAS\MetaData\Editor\Http;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface FactoryInterface
+enum Command: string
 {
-    public function custom(Command $command): BuilderInterface;
+    case INDEX = 'listSection';
+    case SHOW_DIGEST = 'listQuickEdit';
+    case UPDATE_DIGEST = 'updateQuickEdit';
+    case SHOW_FULL = 'fullEditor';
+    case CREATE_FULL = 'fullEditorCreate';
+    case UPDATE_FULL = 'fullEditorUpdate';
+    case DELETE_FULL = 'fullEditorDelete';
+    case DEBUG = 'debug';
 }

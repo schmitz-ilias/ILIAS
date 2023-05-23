@@ -18,19 +18,14 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Editor\Links;
+namespace ILIAS\MetaData\Editor\Full;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-enum Command: string
+enum ContentType: string
 {
-    case INDEX = 'listSection';
-    case SHOW_DIGEST = 'listQuickEdit';
-    case UPDATE_DIGEST = 'updateQuickEdit';
-    case SHOW_FULL = 'fullEditor';
-    case CREATE_FULL = 'fullEditorCreate';
-    case UPDATE_FULL = 'fullEditorUpdate';
-    case DELETE_FULL = 'fullEditorDelete';
-    case DEBUG = 'debug';
+    case MAIN = 'main';
+    case TOOLBAR = 'toolbar';
+    case MODAL = 'modal';
 }

@@ -18,7 +18,7 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Editor\Services\Manipulator;
+namespace ILIAS\MetaData\Editor\Manipulator;
 
 use ILIAS\MetaData\Repository\RepositoryInterface;
 use ILIAS\MetaData\Elements\Markers\MarkerFactoryInterface;

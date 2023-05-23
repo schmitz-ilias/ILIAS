@@ -48,7 +48,8 @@ class DatetimeFactory extends BaseFactory
 
     protected function rawInput(
         ElementInterface $element,
-        ElementInterface $context_element
+        ElementInterface $context_element,
+        string $condition_value = ''
     ): FormInput {
         return $this->ui_factory
             ->dateTime('placeholder')

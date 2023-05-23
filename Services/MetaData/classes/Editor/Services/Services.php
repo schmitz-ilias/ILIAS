@@ -28,19 +28,20 @@ use ILIAS\MetaData\Editor\Presenter\Elements;
 use ILIAS\DI\Container as GlobalContainer;
 use ILIAS\MetaData\Paths\Services\Services as PathServices;
 use ILIAS\MetaData\Structure\Services\Services as StructureServices;
-use ILIAS\MetaData\Vocabularies\Services\Services as VocabulariesServices;
 use ILIAS\MetaData\Editor\Dictionary\LOMDictionaryInitiator;
 use ILIAS\MetaData\Editor\Dictionary\TagFactory;
-use ILIAS\MetaData\Editor\Links\FactoryInterface as LinkFactoryInterface;
-use ILIAS\MetaData\Editor\Links\ParameterFetcherInterface;
-use ILIAS\MetaData\Editor\Links\Factory as LinkFactory;
+use ILIAS\MetaData\Editor\Http\LinkFactoryInterface;
+use ILIAS\MetaData\Editor\Http\RequestParserInterface;
+use ILIAS\MetaData\Editor\Http\LinkFactory;
 use ILIAS\Data\Factory as DataFactory;
-use ILIAS\MetaData\Editor\Links\ParameterFetcher;
+use ILIAS\MetaData\Editor\Http\RequestParser;
 use ILIAS\MetaData\Editor\Dictionary\DictionaryInterface;
-use ILIAS\MetaData\Editor\Services\Manipulator\ManipulatorInterface;
-use ILIAS\MetaData\Editor\Services\Manipulator\Manipulator;
 use ILIAS\MetaData\Repository\Services\Services as RepositoryServices;
 use ILIAS\MetaData\Elements\Markers\MarkerFactory;
+use ILIAS\MetaData\Editor\Manipulator\ManipulatorInterface;
+use ILIAS\MetaData\Editor\Manipulator\Manipulator;
+use ILIAS\MetaData\Editor\Observers\ObserverHandler;
+use ILIAS\MetaData\Editor\Observers\ObserverHandlerInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -50,8 +51,9 @@ class Services
     protected PresenterInterface $presenter;
     protected DictionaryInterface $dictionary;
     protected LinkFactoryInterface $link_factory;
-    protected ParameterFetcherInterface $parameter_fetcher;
+    protected RequestParserInterface $request_parser;
     protected ManipulatorInterface $manipulator;
+    protected ObserverHandlerInterface $observer_handler;
 
     protected GlobalContainer $dic;
     protected PathServices $path_services;
@@ -115,12 +117,12 @@ class Services
         );
     }
 
-    public function parameterFetcher(): ParameterFetcherInterface
+    public function requestParser(): RequestParserInterface
     {
-        if (isset($this->parameter_fetcher)) {
-            return $this->parameter_fetcher;
+        if (isset($this->request_parser)) {
+            return $this->request_parser;
         }
-        return $this->parameter_fetcher = new ParameterFetcher(
+        return $this->request_parser = new RequestParser(
             $this->dic->http(),
             $this->dic->refinery(),
             $this->path_services->pathFactory()
@@ -137,5 +139,13 @@ class Services
             new MarkerFactory(),
             $this->path_services->navigatorFactory()
         );
+    }
+
+    public function observerHandler(): ObserverHandlerInterface
+    {
+        if (isset($this->observer_handler)) {
+            return $this->observer_handler;
+        }
+        return $this->observer_handler = new ObserverHandler();
     }
 }

@@ -18,14 +18,13 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Repository\Validation\Dictionary;
-
-use ILIAS\MetaData\Structure\Dictionaries\DictionaryInitiatorInterface as BaseDictionaryInitiatorInterface;
+namespace ILIAS\MetaData\Editor\Http;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface DictionaryInitiatorInterface extends BaseDictionaryInitiatorInterface
+enum Parameter: string
 {
-    public function get(): DictionaryInterface;
+    case BASE_PATH = 'md_base_path';
+    case ACTION_PATH = 'md_action_path';
 }

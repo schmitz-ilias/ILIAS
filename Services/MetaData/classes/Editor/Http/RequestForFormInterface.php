@@ -18,14 +18,20 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Editor\Dictionary;
+namespace ILIAS\MetaData\Editor\Http;
 
-use ILIAS\MetaData\Structure\Dictionaries\DictionaryInitiatorInterface as BaseDictionaryInitiatorInterface;
+use ILIAS\MetaData\Paths\PathInterface;
+use ILIAS\UI\Component\Input\Container\Form\Standard as StandardForm;
+use ILIAS\UI\Component\Modal\RoundTrip as RoundtripModal;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface DictionaryInitiatorInterface extends BaseDictionaryInitiatorInterface
+interface RequestForFormInterface
 {
-    public function get(): DictionaryInterface;
+    public function path(): ?PathInterface;
+
+    public function applyRequestToForm(StandardForm $form): StandardForm;
+
+    public function applyRequestToModal(RoundtripModal $modal): RoundtripModal;
 }

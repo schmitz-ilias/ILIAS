@@ -31,6 +31,8 @@ use ILIAS\MetaData\Elements\ElementInterface;
 use ILIAS\MetaData\Repository\Dictionary\ExpectedParameter;
 use ILIAS\MetaData\Editor\Full\Services\DataFinder;
 use ILIAS\MetaData\Paths\FactoryInterface as PathFactory;
+use ILIAS\MetaData\Vocabularies\VocabulariesInterface;
+use ILIAS\MetaData\Paths\Navigator\NavigatorFactoryInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -41,7 +43,9 @@ class InputFactory
     protected Refinery $refinery;
     protected PresenterInterface $presenter;
     protected PathFactory $path_factory;
+    protected NavigatorFactoryInterface $navigator_factory;
     protected DataFinder $data_finder;
+    protected VocabulariesInterface $vocabularies;
     protected FactoryTypesService $types;
 
     /**
@@ -58,7 +62,9 @@ class InputFactory
         Refinery $refinery,
         PresenterInterface $presenter,
         PathFactory $path_factory,
+        NavigatorFactoryInterface $navigator_factory,
         DataFinder $data_finder,
+        VocabulariesInterface $vocabularies,
         DatabaseDictionary $db_dictionary,
         FactoryTypesService $types
     ) {
@@ -66,7 +72,9 @@ class InputFactory
         $this->refinery = $refinery;
         $this->presenter = $presenter;
         $this->path_factory = $path_factory;
+        $this->navigator_factory = $navigator_factory;
         $this->data_finder = $data_finder;
+        $this->vocabularies = $vocabularies;
         $this->db_dictionary = $db_dictionary;
         $this->types = $types;
     }
@@ -76,21 +84,36 @@ class InputFactory
         ElementInterface $context_element,
         bool $with_title
     ): Section|Group {
+        $conditional_elements = [];
+        $input_elements = [];
+        foreach ($this->data_finder->getDataCarryingElements($element) as $data_carrier) {
+            if ($el = $this->getConditionElement($data_carrier)) {
+                $conditional_element = $data_carrier;
+                $data_carrier = $el;
+            }
+            $path_string = $this->path_factory->toElement($data_carrier, true)
+                                              ->toString();
+            $input_elements[$path_string] = $data_carrier;
+            if (isset($conditional_element)) {
+                $conditional_elements[$path_string] = $conditional_element;
+            }
+        }
+
         $inputs = [];
         $exclude_required = [];
-        foreach ($this->data_finder->getDataCarryingElements($element) as $data_carrier) {
-            $input = $this->types->factory($data_carrier->getDefinition()->dataType())->getInput(
-                $data_carrier,
-                $context_element
+        foreach ($input_elements as $path_string => $input_element) {
+            $input = $this->types->factory($input_element->getDefinition()->dataType())->getInput(
+                $input_element,
+                $context_element,
+                $conditional_elements[$path_string] ?? null
             );
-            $path_string = $this->path_factory->toElement($data_carrier, true)->toString();
             $inputs[$path_string] = $input;
 
             /**
              * If a data element can't be created, it needs to be excluded
              * from checking whether at least one input field is not empty.
              */
-            if ($this->db_dictionary->tagForElement($data_carrier)->create() === '') {
+            if ($this->db_dictionary->tagForElement($input_element)->create() === '') {
                 $exclude_required[] = $path_string;
             }
         }
@@ -104,23 +127,40 @@ class InputFactory
             $fields = $this->ui_factory->group($inputs);
         }
 
-        // flatten the output of conditional inputs
-        $fields = $fields->withAdditionalTransformation(
+        return $this->addNotEmptyConstraintIfNeeded(
+            $context_element,
+            $this->flattenOutputs($fields),
+            ...$exclude_required
+        );
+    }
+
+    protected function getConditionElement(
+        ElementInterface $element
+    ): ?ElementInterface {
+        foreach ($this->vocabularies->vocabulariesForElement($element) as $vocab) {
+            if ($path = $vocab->condition()?->path()) {
+                return $this->navigator_factory->navigator($path, $element)
+                                               ->lastElementAtFinalStep();
+            }
+        }
+        return null;
+    }
+
+    protected function flattenOutputs(
+        Section|Group $fields
+    ): Section|Group {
+        return $fields->withAdditionalTransformation(
             $this->refinery->custom()->transformation(function ($vs) {
-                foreach ($vs as $key => $v) {
-                    if (is_array($v)) {
-                        $vs[$key] = $v[self::COND_VALUE]['value'];
-                        $vs[$v[self::COND_VALUE]['path']] = $v[self::VALUE];
+                foreach ($vs as $key => $value) {
+                    if (is_array($value)) {
+                        $vs[$key] = $value[0];
+                        foreach ($value as $k => $v) {
+                            $vs[$k] = $v;
+                        }
                     }
                 }
                 return $vs;
             })
-        );
-
-        return $this->addNotEmptyConstraintIfNeeded(
-            $context_element,
-            $fields,
-            ...$exclude_required
         );
     }
 

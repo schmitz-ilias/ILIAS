@@ -18,19 +18,14 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Editor\Links;
-
-use ILIAS\Data\URI;
+namespace ILIAS\MetaData\Editor\Digest;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-interface BuilderInterface
+enum ContentType: string
 {
-    public function withParameter(
-        Parameter $parameter,
-        string $value
-    ): BuilderInterface;
-
-    public function get(): URI;
+    case FORM = 'form';
+    case JS_SOURCE = 'js source';
+    case MODAL = 'modal';
 }

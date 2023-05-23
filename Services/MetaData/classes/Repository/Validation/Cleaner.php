@@ -27,7 +27,6 @@ use ILIAS\MetaData\Elements\Factory;
 use ILIAS\MetaData\Elements\Element;
 use ILIAS\MetaData\Elements\ElementInterface;
 use ILIAS\MetaData\Repository\Validation\Dictionary\DictionaryInterface;
-use ILIAS\MetaData\Repository\Validation\Dictionary\DictionaryInitiatorInterface;
 use ILIAS\MetaData\Elements\Markers\MarkableInterface;
 use ILIAS\MetaData\Repository\Validation\Dictionary\Restriction;
 use ILIAS\MetaData\Elements\Markers\Action;

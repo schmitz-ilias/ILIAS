@@ -18,21 +18,24 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
+use ILIAS\MetaData\Editor\Http\Parameter;
+use ILIAS\MetaData\Services\Services;
+use ILIAS\MetaData\Editor\Full\FullEditorInitiator;
 use ILIAS\UI\Renderer;
-use ILIAS\UI\Factory;
-use ILIAS\Refinery\Factory as Refinery;
-use ILIAS\HTTP\GlobalHttpState;
-use Psr\Http\Message\ServerRequestInterface as Request;
+use ILIAS\MetaData\Editor\Presenter\PresenterInterface;
+use ILIAS\MetaData\Editor\Http\RequestParserInterface;
+use ILIAS\MetaData\Repository\RepositoryInterface;
+use ILIAS\MetaData\Editor\Observers\ObserverHandler;
 use ILIAS\GlobalScreen\Services as GlobalScreen;
-use ILIAS\Data\Factory as Data;
-use ILIAS\UI\Component\Input\Container\Form\Standard as StandardForm;
-use classes\Elements\Data\ilMDLOMDataFactory;
-use Validation\ilMDLOMDataConstraintProvider;
-use classes\Elements\Markers\ilMDMarkerFactory;
-use ILIAS\MetaData\Editor\Links\Parameter;
+use ILIAS\UI\Factory as UIFactory;
+use ILIAS\MetaData\Editor\Http\RequestForFormInterface;
+use ILIAS\MetaData\Elements\SetInterface;
+use ILIAS\MetaData\Paths\PathInterface;
+use ILIAS\MetaData\Editor\Full\FullEditor;
+use ILIAS\MetaData\Editor\Full\ContentType;
+use ILIAS\MetaData\Editor\Full\Services\Tables\Table;
 
 /**
- * Meta Data editor
  * @author       Stefan Meyer <smeyer.ilias@gmx.de>
  * @ilCtrl_Calls ilMDEditorGUI: ilFormPropertyDispatchGUI
  */
@@ -41,72 +44,45 @@ class ilMDEditorGUI
     public const SET_FOR_TREE = 'md_set_for_tree';
     public const PATH_FOR_TREE = 'md_path_for_tree';
 
+    protected FullEditorInitiator $full_editor_initiator;
+
     protected ilCtrl $ctrl;
-    protected ilLanguage $lng;
     protected ilGlobalTemplateInterface $tpl;
-    protected ilTabsGUI $tabs_gui;
-    protected Factory $ui_factory;
     protected Renderer $ui_renderer;
-    protected ilToolbarGUI $toolbarGUI;
-    protected GlobalHttpState $http;
-    protected Refinery $refinery;
-    protected GlobalScreen $global_screen;
-
-    protected ilMDLOMDatabaseRepository $repo;
-    protected ilMDPathFactory $path_factory;
-    protected ilMDMarkerFactory $marker_factory;
-    protected ilMDLOMLibrary $library;
-    protected ilMDLOMPresenter $presenter;
+    protected PresenterInterface $presenter;
+    protected RepositoryInterface $repository;
+    protected RequestParserInterface $request_parser;
+    protected ObserverHandler $observer_handler;
     protected ilAccessHandler $access;
-    protected Data $data;
+    protected ilToolbarGUI $toolbar;
+    protected GlobalScreen $global_screen;
+    protected ilTabsGUI $tabs;
+    protected UIFactory $ui_factory;
 
-    protected array $observers = [];
-
-    protected int $rbac_id;
     protected int $obj_id;
-    public string $obj_type;
+    protected int $sub_id;
+    public string $type;
 
-    public function __construct(int $a_rbac_id, int $a_obj_id, string $a_obj_type)
+    public function __construct(int $obj_id, int $sub_id, string $type)
     {
         global $DIC;
 
-        $this->lng = $DIC->language();
-        $this->tpl = $DIC->ui()->mainTemplate();
-        $this->tabs_gui = $DIC->tabs();
+        $this->full_editor_initiator = new FullEditorInitiator(
+            $services = new Services($DIC)
+        );
+
         $this->ctrl = $DIC->ctrl();
-        $this->toolbarGUI = $DIC->toolbar();
-        $this->global_screen = $DIC->globalScreen();
-
-        $this->ui_factory = $DIC->ui()->factory();
+        $this->tpl = $DIC->ui()->mainTemplate();
         $this->ui_renderer = $DIC->ui()->renderer();
-        $this->http = $DIC->http();
-        $this->refinery = $DIC->refinery();
-
-        $this->rbac_id = $a_rbac_id;
-        $this->obj_id = $a_obj_id;
-        $this->obj_type = $a_obj_type;
-
-        $this->repo = new ilMDLOMDatabaseRepository(
-            $a_rbac_id,
-            $a_obj_id === 0 ? $a_rbac_id : $a_obj_id,
-            $a_obj_type
-        );
-        $this->path_factory = new ilMDPathFactory();
-        $data_factory = new ilMDLOMDataFactory(
-            new ilMDLOMDataConstraintProvider($this->refinery)
-        );
-        $this->marker_factory = new ilMDMarkerFactory($data_factory);
-        $this->library = new ilMDLOMLibrary(new ilMDTagFactory());
-        $this->data = new Data();
-        $this->presenter = new ilMDLOMPresenter(
-            $this->lng,
-            $DIC->user(),
-            $this->data->dateFormat(),
-            $this->library->getLOMDictionary()
-        );
+        $this->presenter = $services->editor()->presenter();
+        $this->request_parser = $services->editor()->requestParser();
+        $this->repository = $services->repository()->repository();
+        $this->observer_handler = $services->editor()->observerHandler();
         $this->access = $DIC->access();
-
-        $this->lng->loadLanguageModule('meta');
+        $this->toolbar = $DIC->toolbar();
+        $this->global_screen = $DIC->globalScreen();
+        $this->tabs = $DIC->tabs();
+        $this->ui_factory = $DIC->ui()->factory();
     }
 
     public function executeCommand(): void
@@ -117,7 +93,8 @@ class ilMDEditorGUI
         switch ($next_class) {
             default:
                 if (!$cmd) {
-                    $cmd = "listQuickEdit";
+                    //$cmd = "listQuickEdit";
+                    $cmd = "fullEditor";
                 }
                 $this->$cmd();
                 break;
@@ -126,7 +103,7 @@ class ilMDEditorGUI
 
     public function debug(): bool
     {
-        $xml_writer = new ilMD2XML($this->rbac_id, $this->obj_id, $this->obj_type);
+        $xml_writer = new ilMD2XML($this->obj_id, $this->sub_id, $this->type);
         $xml_writer->startExport();
 
         $button = $this->renderButtonToFullEditor();
@@ -145,7 +122,7 @@ class ilMDEditorGUI
         $button = $this->renderButtonToFullEditor();
 
         $digest = $this->getLOMDigest();
-        $root = $this->repo->getMD();
+        $root = $this->repository->getMD();
         $modal_content = '';
         $modal_signal = null;
         $link = $this->ctrl->getLinkTarget($this, 'updateQuickEdit');
@@ -171,10 +148,14 @@ class ilMDEditorGUI
         $this->checkAccess();
 
         $digest = $this->getLOMDigest();
-        $root = $this->repo->getMD();
+        $set = $this->repository->getMD(
+            $this->obj_id,
+            $this->sub_id,
+            $this->type
+        );
         $link = $this->ctrl->getLinkTarget($this, 'updateQuickEdit');
         $request = $this->http->request();
-        if (!$digest->update($root, $request)) {
+        if (!$digest->update($set, $request)) {
             $this->tpl->setOnScreenMessage(
                 'failure',
                 $this->lng->txt('msg_form_save_error'),
@@ -194,9 +175,9 @@ class ilMDEditorGUI
         $this->ctrl->redirect($this, 'listQuickEdit');
     }
 
-    protected function getLOMDigest(): ilMDLOMDigestGUI
+    protected function getLOMDigest(): Digest
     {
-        return new ilMDLOMDigestGUI(
+        return new Digest(
             $this->repo,
             $this->path_factory,
             $this->marker_factory,
@@ -204,31 +185,6 @@ class ilMDEditorGUI
             $this->ui_factory,
             $this->refinery,
             $this->lng
-        );
-    }
-
-    protected function getFullEditor(): ilMDFullEditorGUI
-    {
-        return new ilMDFullEditorGUI(
-            $this->repo,
-            $this->path_factory,
-            $this->library,
-            $this->ui_factory,
-            $this->presenter,
-            new Services(
-                $this->data->uri(
-                    ILIAS_HTTP_PATH . '/' .
-                    $this->ctrl->getLinkTarget($this, 'fullEditor')
-                ),
-                $this->ui_factory,
-                $this->ui_renderer,
-                $this->refinery,
-                $this->repo,
-                $this->presenter,
-                $this->library,
-                $this->path_factory,
-                $this->marker_factory
-            )
         );
     }
 
@@ -247,53 +203,43 @@ class ilMDEditorGUI
         $this->checkAccess();
 
         // get the paths from the http request
-        $node_path = $this->getNodePathFromRequest();
-        $update_path = $this->getActionPathFromRequest();
+        $base_path = $this->request_parser->fetchBasePath();
+        $action_path = $this->request_parser->fetchActionPath();
 
         // get and prepare the MD
-        $root = $this->repo->getMD();
-        $editor = $this->getFullEditor();
-        $root = $editor->manipulateMD()->prepare($root, $node_path);
+        $set = $this->repository->getMD(
+            $this->obj_id,
+            $this->sub_id,
+            $this->type
+        );
+        $editor = $this->full_editor_initiator->init();
+        $set = $editor->manipulateMD()->prepare($set, $base_path);
 
         // update or create
-        $request = $this->http->request();
-        if ($create) {
-            $success = $editor->manipulateMD()->create(
-                $root,
-                $node_path,
-                $update_path,
-                $request
-            );
-        } else {
-            $success = $editor->manipulateMD()->update(
-                $root,
-                $node_path,
-                $update_path,
-                $request
-            );
-        }
+        $request = $this->request_parser->fetchRequestForForm(true);
+        $success = $editor->manipulateMD()->createOrUpdate(
+            $set,
+            $base_path,
+            $action_path,
+            $request
+        );
         if (!$success) {
-            if (
-                $editor->decideContentType($root, $node_path) ===
-                ilMDFullEditorGUI::FORM
-            ) {
-                $this->tpl->setOnScreenMessage(
-                    'failure',
-                    $this->lng->txt('msg_form_save_error'),
-                    true
-                );
-            }
-            $this->fullEditor($request, $update_path);
+            $this->tpl->setOnScreenMessage(
+                'failure',
+                $this->presenter->utilities()->txt('msg_form_save_error'),
+                true
+            );
+            $this->renderFullEditor($set, $base_path, $editor, $request);
             return;
         }
 
         // call listeners
-        $this->callListenersFullEditor($update_path);
+        $this->observer_handler->callObserversByPath($action_path);
 
         // redirect back to the full editor
         $this->tpl->setOnScreenMessage(
             'success',
-            $this->lng->txt(
+            $this->presenter->utilities()->txt(
                 $create ?
                     'meta_add_element_success' :
                     'meta_edit_element_success'
@@ -302,8 +248,8 @@ class ilMDEditorGUI
         );
         $this->ctrl->setParameter(
             $this,
-            Parameter::NODE_PATH->value,
-            $node_path->getPathAsString()
+            Parameter::BASE_PATH->value,
+            $base_path->toString()
         );
         $this->ctrl->redirect($this, 'fullEditor');
     }
@@ -313,211 +259,117 @@ class ilMDEditorGUI
         $this->checkAccess();
 
         // get the paths from the http request
-        $node_path = $this->getNodePathFromRequest();
-        $delete_path = $this->getActionPathFromRequest();
+        $base_path = $this->request_parser->fetchBasePath();
+        $delete_path = $this->request_parser->fetchActionPath();
 
         // get the MD
-        $editor = $this->getFullEditor();
-        $root = $this->repo->getMD();
+        $set = $this->repository->getMD(
+            $this->obj_id,
+            $this->sub_id,
+            $this->type
+        );
+        $editor = $this->full_editor_initiator->init();
 
         // delete
-        $node_path = $editor->manipulateMD()->deleteAndTrimNodePath(
-            $root,
-            $node_path,
+        $base_path = $editor->manipulateMD()->deleteAndTrimBasePath(
+            $set,
+            $base_path,
             $delete_path
         );
 
         // call listeners
-        $this->callListenersFullEditor($delete_path);
+        $this->observer_handler->callObserversByPath($delete_path);
 
         // redirect back to the full editor
         $this->tpl->setOnScreenMessage(
             'success',
-            $this->lng->txt('meta_delete_element_success'),
+            $this->presenter->utilities()->txt('meta_delete_element_success'),
             true
         );
         $this->ctrl->setParameter(
             $this,
-            Parameter::NODE_PATH->value,
-            $node_path->getPathAsString()
+            Parameter::BASE_PATH->value,
+            $base_path->toString()
         );
         $this->ctrl->redirect($this, 'fullEditor');
     }
 
-    protected function fullEditor(
-        ?Request $request = null,
-        ?ilMDPathFromRoot $path_for_request = null
-    ): void {
+    protected function fullEditor(): void
+    {
         $this->setTabsForFullEditor();
 
-        // get the MD
-        $root = $this->repo->getMD();
-        $path = $this->getNodePathFromRequest();
+        // get the paths from the http request
+        $base_path = $this->request_parser->fetchBasePath();
 
+        // get and prepare the MD
+        $set = $this->repository->getMD(
+            $this->obj_id,
+            $this->sub_id,
+            $this->type
+        );
+        $editor = $this->full_editor_initiator->init();
+        $set = $editor->manipulateMD()->prepare($set, $base_path);
+
+        // add content for element
+        $this->renderFullEditor($set, $base_path, $editor);
+    }
+
+    protected function renderFullEditor(
+        SetInterface $set,
+        PathInterface $base_path,
+        FullEditor $full_editor,
+        ?RequestForFormInterface $request = null
+    ): void {
         // add slate with tree
         $this->global_screen->tool()->context()->current()->addAdditionalData(
             self::SET_FOR_TREE,
-            $root
+            $set
         );
         $this->global_screen->tool()->context()->current()->addAdditionalData(
             self::PATH_FOR_TREE,
-            $path
+            $base_path
         );
 
-        // prepare MD by adding scaffolds
-        $editor = $this->getFullEditor();
-        $root = $editor->manipulateMD()->prepare($root, $path);
+        // render toolbar, modals and main content
+        $content = $full_editor->getContent($set, $base_path, $request);
+        $template_content = [];
+        foreach ($content as $type => $entity) {
+            switch ($type) {
+                case ContentType::MAIN:
+                    if ($entity instanceof Table) {
+                        $entity = $this->ui_factory->legacy(
+                            $entity->getHTML()
+                        );
+                    }
+                    break;
 
-        // add content for element
-        $create_modals = $editor->getCreateModals(
-            $root,
-            $path,
-            $request,
-            $path_for_request
-        );
-        $create_signals = array_map(
-            fn ($arg) => $arg->getFlexibleSignal(),
-            $create_modals
-        );
-        $update_modals = $editor->getUpdateModals(
-            $root,
-            $path,
-            $request,
-            $path_for_request
-        );
-        $update_signals = array_map(
-            fn ($arg) => $arg->getFlexibleSignal(),
-            $update_modals
-        );
-        $delete_modals = $editor->getDeleteModals($root, $path);
-        $delete_signals = array_map(
-            fn ($arg) => $arg->getFlexibleSignal(),
-            $delete_modals
-        );
-        $content = $editor->getContent(
-            $root,
-            $path,
-            $create_signals,
-            $update_signals,
-            $delete_signals
-        );
-        if ($content instanceof ilTable2GUI) {
-            $content = $this->ui_factory->legacy(
-                $content->getHTML()
-            );
+                case ContentType::MODAL:
+                    if ($modal = $entity->getModal()) {
+                        $template_content[] = $modal;
+                    }
+                    break;
+
+                case ContentType::TOOLBAR:
+                    $this->toolbar->addComponent($entity);
+                    break;
+            }
         }
-        if ($request && $content instanceof StandardForm) {
-            $content = $content->withRequest($request);
-        }
-        if ($tb_content = $editor->getToolbarContent(
-            $root,
-            $path,
-            $create_signals,
-            $update_signals,
-            $delete_signals
-        )) {
-            $this->toolbarGUI->addComponent($tb_content);
-        }
-        $this->tpl->setContent(
-            $this->ui_renderer->render(
-                array_merge(
-                    [$content],
-                    array_filter(array_values(array_map(
-                        fn ($arg) => $arg->getModal(),
-                        $create_modals
-                    ))),
-                    array_filter(array_values(array_map(
-                        fn ($arg) => $arg->getModal(),
-                        $update_modals
-                    ))),
-                    array_filter(array_values(array_map(
-                        fn ($arg) => $arg->getModal(),
-                        $delete_modals
-                    )))
-                )
-            )
-        );
+        $this->tpl->setContent($this->ui_renderer->render($template_content));
     }
 
     protected function setTabsForFullEditor(): void
     {
-        $this->tabs_gui->clearSubTabs();
-        foreach ($this->tabs_gui->target as $tab) {
-            if (($tab['id'] ?? null) !== $this->tabs_gui->getActiveTab()) {
-                $this->tabs_gui->removeTab($tab['id']);
+        $this->tabs->clearSubTabs();
+        foreach ($this->tabs->target as $tab) {
+            if (($tab['id'] ?? null) !== $this->tabs->getActiveTab()) {
+                $this->tabs->removeTab($tab['id']);
             }
         }
-        $this->tabs_gui->removeNonTabbedLinks();
-        $this->tabs_gui->setBackTarget(
-            $this->lng->txt('back'),
+        $this->tabs->removeNonTabbedLinks();
+        $this->tabs->setBackTarget(
+            $this->presenter->utilities()->txt('back'),
             $this->ctrl->getLinkTarget($this, 'listQuickEdit')
         );
-    }
-
-    protected function getNodePathFromRequest(): ilMDPathFromRoot
-    {
-        return $this->getPathFromRequest(self::MD_NODE_PATH);
-    }
-
-    protected function getActionPathFromRequest(): ilMDPathFromRoot
-    {
-        return $this->getPathFromRequest(self::MD_ACTION_PATH);
-    }
-
-    protected function getPathFromRequest(string $key): ilMDPathFromRoot
-    {
-        $request_wrapper = $this->http->wrapper()->query();
-        $path = $this->path_factory->getPathFromRoot();
-        if ($request_wrapper->has($key)) {
-            $path_string = $request_wrapper->retrieve(
-                $key,
-                $this->refinery->kindlyTo()->string()
-            );
-            $path->setPathFromString($path_string);
-        }
-        return $path;
-    }
-
-    protected function callListenersFullEditor(
-        ilMDPathFromRoot $action_path
-    ): void {
-        switch ($action_path->getStep(1)) {
-            case 'general':
-                $this->callListeners('General');
-                break;
-
-            case 'lifeCycle':
-                $this->callListeners('Lifecycle');
-                break;
-
-            case 'metaMetadata':
-                $this->callListeners('MetaMetaData');
-                break;
-
-            case 'technical':
-                $this->callListeners('Technical');
-                break;
-
-            case 'educational':
-                $this->callListeners('Educational');
-                break;
-
-            case 'rights':
-                $this->callListeners('Rights');
-                break;
-
-            case 'relation':
-                $this->callListeners('Relation');
-                break;
-
-            case 'annotation':
-                $this->callListeners('Annotation');
-                break;
-
-            case 'classification':
-                $this->callListeners('Classification');
-                break;
-        }
     }
 
     protected function renderButtonToFullEditor(): string
@@ -525,10 +377,10 @@ class ilMDEditorGUI
         $bulky = $this->ui_factory->button()->bulky(
             $this->ui_factory->symbol()->icon()->standard(
                 'mds',
-                $this->lng->txt('meta_button_to_full_editor_label'),
+                $this->presenter->utilities()->txt('meta_button_to_full_editor_label'),
                 'medium'
             ),
-            $this->lng->txt('meta_button_to_full_editor_label'),
+            $this->presenter->utilities()->txt('meta_button_to_full_editor_label'),
             $this->ctrl->getLinkTarget($this, 'fullEditor')
         );
         if (DEVMODE) {
@@ -547,41 +399,29 @@ class ilMDEditorGUI
 
     protected function checkAccess(): void
     {
-        $ref_ids = ilObject::_getAllReferences($this->rbac_id);
+        $ref_ids = ilObject::_getAllReferences($this->obj_id);
         foreach ($ref_ids as $ref_id) {
             if ($this->access->checkAccess(
                 'write',
                 '',
                 $ref_id,
                 '',
-                $this->rbac_id
+                $this->obj_id
             )) {
                 return;
             }
         }
-        throw new ilPermissionException($this->lng->txt('permission_denied'));
+        throw new ilPermissionException($this->presenter->utilities()->txt('permission_denied'));
     }
 
     // Observer methods
-    public function addObserver(object $a_class, string $a_method, string $a_element): bool
+    public function addObserver(object $a_class, string $a_method, string $a_element): void
     {
-        $this->observers[$a_element]['class'] = $a_class;
-        $this->observers[$a_element]['method'] = $a_method;
-
-        return true;
+        $this->observer_handler->addObserver($a_class, $a_method, $a_element);
     }
 
-    /**
-     * @return mixed
-     */
-    public function callListeners(string $a_element)
+    public function callListeners(string $a_element): void
     {
-        if (isset($this->observers[$a_element])) {
-            $class = &$this->observers[$a_element]['class'];
-            $method = $this->observers[$a_element]['method'];
-
-            return $class->$method($a_element);
-        }
-        return '';
+        $this->observer_handler->callObservers($a_element);
     }
 }

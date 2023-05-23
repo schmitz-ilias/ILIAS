@@ -26,6 +26,7 @@ use ILIAS\MetaData\Editor\Presenter\PresenterInterface as PresenterInterface;
 use ILIAS\MetaData\Editor\Full\Services\DataFinder;
 use ILIAS\MetaData\Elements\ElementInterface;
 use ILIAS\MetaData\Paths\FactoryInterface as PathFactory;
+use ILIAS\MetaData\Editor\Full\Services\Actions\ButtonFactory;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -36,35 +37,30 @@ class TableFactory
     protected Renderer $renderer;
     protected PresenterInterface $presenter;
     protected DataFinder $data_finder;
-    protected PathFactory $path_factory;
+    protected ButtonFactory $button_factory;
 
     public function __construct(
         UIFactory $ui_factory,
         Renderer $renderer,
         PresenterInterface $presenter,
         DataFinder $data_finder,
-        PathFactory $path_factory,
+        ButtonFactory $button_factory
     ) {
         $this->ui_factory = $ui_factory;
         $this->renderer = $renderer;
         $this->presenter = $presenter;
         $this->data_finder = $data_finder;
-        $this->path_factory = $path_factory;
+        $this->button_factory = $button_factory;
     }
 
-    public function getTable(
-        ElementInterface ...$elements
-    ): TableGUI {
-        $table =  new TableGUI(
-            null,
+    public function table(): TableBuilder
+    {
+        return new TableBuilder(
             $this->ui_factory,
             $this->renderer,
             $this->presenter,
             $this->data_finder,
-            $this->path_factory,
-            ...$elements
+            $this->button_factory
         );
-        $table->init();
-        return $table;
     }
 }

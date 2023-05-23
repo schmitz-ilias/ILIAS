@@ -20,129 +20,184 @@ declare(strict_types=1);
 
 namespace ILIAS\MetaData\Editor\Full\Services;
 
-use ILIAS\Data\URI;
-use ILIAS\UI\Renderer;
-use ILIAS\UI\Factory;
-use ILIAS\Refinery\Factory as Refinery;
+use ILIAS\MetaData\Editor\Full\Services\Actions\Actions;
+use ILIAS\MetaData\Editor\Full\Services\Inputs\InputFactory;
+use ILIAS\MetaData\Editor\Full\Services\Tables\TableFactory;
+use ILIAS\DI\Container as GlobalContainer;
+use ILIAS\MetaData\Paths\Services\Services as PathServices;
+use ILIAS\MetaData\Repository\Services\Services as RepositoryServices;
+use ILIAS\MetaData\Editor\Services\Services as EditorServices;
+use ILIAS\MetaData\Vocabularies\Services\Services as VocabulariesServices;
+use ILIAS\MetaData\Editor\Full\Services\Inputs\FactoryTypesService;
+use ILIAS\MetaData\Editor\Dictionary\DictionaryInterface;
+use ILIAS\MetaData\Editor\Dictionary\LOMDictionaryInitiator;
+use ILIAS\MetaData\Editor\Dictionary\TagFactory;
+use ILIAS\MetaData\Structure\Services\Services as StructureServices;
+use ILIAS\MetaData\Editor\Full\Services\Actions\LinkProvider;
+use ILIAS\MetaData\Editor\Full\Services\Actions\ButtonFactory;
+use ILIAS\MetaData\Editor\Full\Services\Actions\ModalFactory;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 class Services
 {
-    protected ilMDFullEditorActionProvider $action_provider;
-    protected ilMDFullEditorInputProvider $input_provider;
-    protected PropertiesFetcher $prop_provider;
-    protected ilMDFullEditorFormProvider $form_provider;
-    protected ilMDFullEditorTableProvider $table_provider;
-    protected ilMDFullEditorDataFinder $data_finder;
-    protected ilMDFullEditorMDManipulator $manipulator;
+    protected Actions $actions;
+    protected InputFactory $input_factory;
+    protected PropertiesFetcher $properties_fetcher;
+    protected FormFactory $form_factory;
+    protected TableFactory $table_factory;
+    protected DataFinder $data_finder;
+    protected ManipulatorAdapter $manipulator_adapter;
+    protected LinkProvider $link_provider;
+
+    protected GlobalContainer $dic;
+    protected PathServices $path_services;
+    protected RepositoryServices $repository_services;
+    protected VocabulariesServices $vocabularies_services;
+    protected StructureServices $structure_services;
+    protected EditorServices $editor_services;
 
     public function __construct(
-        URI $base_link,
-        Factory $factory,
-        Renderer $renderer,
-        Refinery $refinery,
-        ilMDRepository $repo,
-        ilMDLOMPresenter $presenter,
-        ilMDLOMLibrary $library,
-        ilMDPathFactory $path_factory,
-        ilMDMarkerFactory $marker_factory
+        GlobalContainer $dic,
+        PathServices $path_services,
+        RepositoryServices $repository_services,
+        VocabulariesServices $vocabularies_services,
+        StructureServices $structure_services,
+        EditorServices $editor_services
     ) {
-        $this->data_finder = new ilMDFullEditorDataFinder(
-            $library->getLOMDictionary()
-        );
-        $this->prop_provider = new PropertiesFetcher(
-            $library->getLOMEditorGUIDictionary($path_factory),
-            $presenter,
-            $this->data_finder
-        );
-        $this->action_provider = new ilMDFullEditorActionProvider(
-            $link_provider = new ilMDFullEditorActionLinkProvider(
-                $base_link
-            ),
-            new ilMDFullEditorActionButtonProvider(
-                $factory,
-                $presenter
-            ),
-            new ilMDFullEditorActionModalProvider(
-                $link_provider,
-                $factory,
-                $presenter,
-                $this->prop_provider
-            )
-        );
-        $this->input_provider = new ilMDFullEditorInputProvider(
-            $factory->input()->field(),
+        $this->dic = $dic;
+        $this->path_services = $path_services;
+        $this->repository_services = $repository_services;
+        $this->vocabularies_services = $vocabularies_services;
+        $this->editor_services = $editor_services;
+    }
+
+    public function dataFinder(): DataFinder
+    {
+        if (isset($this->data_finder)) {
+            return $this->data_finder;
+        }
+        return $this->data_finder = new DataFinder();
+    }
+
+    public function inputFactory(): InputFactory
+    {
+        if (isset($this->input_factory)) {
+            return $this->input_factory;
+        }
+        $field_factory = $this->dic->ui()->factory()->input()->field();
+        $refinery = $this->dic->refinery();
+        $presenter = $this->editor_services->presenter();
+        $path_factory = $this->path_services->pathFactory();
+        $vocabularies = $this->vocabularies_services->vocabularies();
+        return $this->input_factory = new InputFactory(
+            $field_factory,
             $refinery,
             $presenter,
-            $library->getLOMVocabulariesDictionary(
-                $path_factory
-            ),
-            $library->getLOMConstraintDictionary(),
-            $library->getLOMEditorGUIDictionary(
-                $path_factory
-            ),
-            $this->data_finder,
-            $library->getLOMDatabaseDictionary(null)
-        );
-        $this->form_provider = new ilMDFullEditorFormProvider(
-            $factory,
-            $this->action_provider,
-            $this->input_provider,
-            $library->getLOMEditorGUIDictionary(
-                $path_factory
-            )
-        );
-        $this->table_provider = new ilMDFullEditorTableProvider(
-            $factory,
-            $renderer,
-            $presenter,
-            $this->data_finder
-        );
-        $this->manipulator = new ilMDFullEditorMDManipulator(
-            $repo,
-            $this->form_provider,
-            $marker_factory,
             $path_factory,
-            $library->getLOMVocabulariesDictionary(
+            $this->path_services->navigatorFactory(),
+            $this->dataFinder(),
+            $vocabularies,
+            $this->repository_services->databaseDictionary(),
+            new FactoryTypesService(
+                $field_factory,
+                $presenter,
+                $this->repository_services->constraintDictionary(),
+                $vocabularies,
+                $refinery,
                 $path_factory
             )
         );
     }
 
-    public function dataFinder(): ilMDFullEditorDataFinder
+    public function propertiesFetcher(): PropertiesFetcher
     {
-        return $this->data_finder;
+        if (isset($this->properties_fetcher)) {
+            return $this->properties_fetcher;
+        }
+        return $this->properties_fetcher = new PropertiesFetcher(
+            $this->editor_services->dictionary(),
+            $this->editor_services->presenter(),
+            $this->dataFinder()
+        );
     }
 
-    public function inputProvider(): ilMDFullEditorInputProvider
+    public function actions(): Actions
     {
-        return $this->input_provider;
+        if (isset($this->actions)) {
+            return $this->actions;
+        }
+        $ui_factory = $this->dic->ui()->factory();
+        $presenter = $this->editor_services->presenter();
+        $link_provider = $this->linkProvider();
+        return $this->actions = new Actions(
+            $link_provider,
+            new ButtonFactory(
+                $ui_factory,
+                $presenter
+            ),
+            new ModalFactory(
+                $link_provider,
+                $ui_factory,
+                $presenter,
+                $this->propertiesFetcher(),
+                $this->formFactory(),
+                $this->repository_services->constraintDictionary(),
+                $this->path_services->pathFactory()
+            )
+        );
     }
 
-    public function propertiesProvider(): PropertiesFetcher
+    public function formFactory(): FormFactory
     {
-        return $this->prop_provider;
+        if (isset($this->form_factory)) {
+            return $this->form_factory;
+        }
+        return $this->form_factory = new FormFactory(
+            $this->dic->ui()->factory(),
+            $this->linkProvider(),
+            $this->inputFactory(),
+            $this->editor_services->dictionary(),
+            $this->path_services->navigatorFactory()
+        );
     }
 
-    public function actionProvider(): ilMDFullEditorActionProvider
+    public function tableFactory(): TableFactory
     {
-        return $this->action_provider;
+        if (isset($this->table_factory)) {
+            return $this->table_factory;
+        }
+        return $this->table_factory = new TableFactory(
+            $this->dic->ui()->factory(),
+            $this->dic->ui()->renderer(),
+            $this->editor_services->presenter(),
+            $this->dataFinder(),
+            $this->actions()->getButton()
+        );
     }
 
-    public function formProvider(): ilMDFullEditorFormProvider
+    public function manipulatorAdapter(): ManipulatorAdapter
     {
-        return $this->form_provider;
+        if (isset($this->manipulator_adapter)) {
+            return $this->manipulator_adapter;
+        }
+        return $this->manipulator_adapter = new ManipulatorAdapter(
+            $this->editor_services->manipulator(),
+            $this->formFactory(),
+            $this->path_services->pathFactory(),
+            $this->path_services->navigatorFactory()
+        );
     }
 
-    public function tableProvider(): ilMDFullEditorTableProvider
+    protected function linkProvider(): LinkProvider
     {
-        return $this->table_provider;
-    }
-
-    public function manipulator(): ilMDFullEditorMDManipulator
-    {
-        return $this->manipulator;
+        if (isset($this->link_provider)) {
+            return $this->link_provider;
+        }
+        return $this->link_provider = new LinkProvider(
+            $this->editor_services->linkFactory(),
+            $this->path_services->pathFactory()
+        );
     }
 }

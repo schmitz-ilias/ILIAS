@@ -25,28 +25,28 @@ namespace ILIAS\MetaData\Editor\Full\Services\Actions;
  */
 class Actions
 {
-    protected ButtonFactory $button_provider;
-    protected ModalFactory $modal_provider;
+    protected ButtonFactory $button_factory;
+    protected ModalFactory $modal_factory;
     protected LinkProvider $link_provider;
 
     public function __construct(
         LinkProvider $link_provider,
-        ButtonFactory $button_provider,
-        ModalFactory $modal_provider
+        ButtonFactory $button_factory,
+        ModalFactory $modal_factory
     ) {
         $this->link_provider = $link_provider;
-        $this->button_provider = $button_provider;
-        $this->modal_provider = $modal_provider;
+        $this->button_factory = $button_factory;
+        $this->modal_factory = $modal_factory;
     }
 
     public function getModal(): ModalFactory
     {
-        return $this->modal_provider;
+        return $this->modal_factory;
     }
 
     public function getButton(): ButtonFactory
     {
-        return $this->button_provider;
+        return $this->button_factory;
     }
 
     public function getLink(): LinkProvider
