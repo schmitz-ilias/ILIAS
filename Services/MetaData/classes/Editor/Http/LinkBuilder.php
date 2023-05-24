@@ -66,7 +66,7 @@ class LinkBuilder implements LinkBuilderInterface
                 $value
             );
         }
-        $link = $this->ctrl->getLinkTargetByClass(
+        $link = ILIAS_HTTP_PATH . '/' . $this->ctrl->getLinkTargetByClass(
             $class,
             $this->command->value
         );

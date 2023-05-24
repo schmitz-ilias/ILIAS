@@ -39,8 +39,7 @@ abstract class BaseSet implements BaseSetInterface
 
     public function __clone()
     {
-        $clone = clone $this;
-        $clone->root = clone $this->root;
+        $this->root = clone $this->root;
     }
 
     public function getRoot(): BaseElementInterface

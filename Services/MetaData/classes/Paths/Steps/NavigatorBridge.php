@@ -25,6 +25,7 @@ use ILIAS\MetaData\Paths\Filters\FilterType;
 use ILIAS\MetaData\Elements\NoID;
 use ILIAS\MetaData\Elements\ElementInterface;
 use ILIAS\MetaData\Elements\Base\BaseElementInterface;
+use ILIAS\MetaData\Elements\Markers\MarkableInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -89,7 +90,7 @@ class NavigatorBridge
         }
 
         foreach ($element->getSubElements() as $sub) {
-            if ($sub->getDefinition()->name() === $name) {
+            if (strtolower($sub->getDefinition()->name()) === strtolower($name)) {
                 yield $sub;
             }
         }
@@ -139,6 +140,9 @@ class NavigatorBridge
                 continue;
             }
             $data = $element->getData()->value();
+            if ($element instanceof MarkableInterface && $element->isMarked()) {
+                $data = $element->getMarker()->dataValue();
+            }
             if (in_array($data, iterator_to_array($filter->values()), true)) {
                 yield $element;
             }

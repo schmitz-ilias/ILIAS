@@ -31,6 +31,7 @@ use ILIAS\MetaData\Elements\Markers\MarkableInterface;
 use ILIAS\MetaData\Elements\Markers\Action;
 use ILIAS\MetaData\Paths\Steps\StepInterface;
 use ILIAS\MetaData\Paths\Filters\FilterType;
+use ILIAS\MetaData\Paths\Steps\StepToken;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -53,7 +54,7 @@ class Manipulator implements ManipulatorInterface
 
     public function addScaffolds(
         SetInterface $set,
-        PathInterface $path
+        ?PathInterface $path = null
     ): SetInterface {
         $set = clone $set;
         $to_be_scaffolded = [];
@@ -75,7 +76,7 @@ class Manipulator implements ManipulatorInterface
                 }
                 $next = array_merge(
                     $next,
-                    $element->getSubElements()
+                    iterator_to_array($element->getSubElements())
                 );
             }
             $to_be_scaffolded = $next;
@@ -164,9 +165,12 @@ class Manipulator implements ManipulatorInterface
         ElementInterface $element,
         StepInterface $step
     ): ?ElementInterface {
+        if ($step->name() === StepToken::SUPER) {
+            return $element->getSuperElement();
+        }
         foreach ($this->repository->getScaffoldsForElement($element) as $scaffold) {
             if (
-                $scaffold->getDefinition()->name() === $step->name() &&
+                strtolower($scaffold->getDefinition()->name()) === strtolower($step->name()) &&
                 $element instanceof ScaffoldableInterface
             ) {
                 $scaffold_with_name = $scaffold;
@@ -209,8 +213,12 @@ class Manipulator implements ManipulatorInterface
      */
     protected function getElements(
         SetInterface $set,
-        PathInterface $path
+        ?PathInterface $path = null
     ): \Generator {
+        if (!isset($path)) {
+            yield $set->getRoot();
+            return;
+        }
         yield from $this->navigator_factory->navigator(
             $path,
             $set->getRoot()

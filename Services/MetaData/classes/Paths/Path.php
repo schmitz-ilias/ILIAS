@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace ILIAS\MetaData\Paths;
 
 use ILIAS\MetaData\Paths\Steps\StepInterface;
+use ILIAS\MetaData\Paths\Steps\StepToken;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -85,6 +86,9 @@ class Path implements PathInterface, \Stringable
     protected function stepToString(StepInterface $step): string
     {
         $string = $step->name();
+        if ($string instanceof StepToken) {
+            $string = $string->value;
+        }
         foreach ($step->filters() as $filter) {
             $string .= Token::FILTER_SEPARATOR->value .
                 $filter->type()->value .
@@ -92,7 +96,7 @@ class Path implements PathInterface, \Stringable
 
             $string .= implode(
                 Token::FILTER_VALUE_SEPARATOR->value,
-                $filter->values()
+                iterator_to_array($filter->values())
             );
         }
         return $string;

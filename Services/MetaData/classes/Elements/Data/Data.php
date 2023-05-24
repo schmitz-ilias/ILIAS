@@ -30,6 +30,7 @@ class Data implements DataInterface
 
     public function __construct(Type $type, string $value)
     {
+        $this->type = $type;
         $this->value = $value;
     }
 

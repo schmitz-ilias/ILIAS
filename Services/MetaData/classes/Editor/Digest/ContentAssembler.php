@@ -35,12 +35,24 @@ use ILIAS\MetaData\Editor\Http\LinkFactory;
 use ILIAS\MetaData\Editor\Http\Command;
 use ILIAS\MetaData\Repository\Validation\Data\DurationValidator;
 use ILIAS\UI\Component\Signal;
+use ILIAS\MetaData\Editor\Manipulator\ManipulatorInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 class ContentAssembler
 {
+    // post variables
+    public const KEYWORDS = 'keywords';
+    public const GENERAL = 'general';
+    public const AUTHORS = 'authors';
+    public const RIGHTS = 'rights';
+    public const TYPICAL_LEARNING_TIME = 'tlt';
+
+    public const CUSTOM_CP = 'custom_cp';
+    public const CUSTOM_CP_DESCRIPTION = 'custom_cp_description';
+    public const OER_BLOCKED = 'oer_blocked_';
+
     protected PathFactory $path_factory;
     protected NavigatorFactoryInterface $navigator_factory;
     protected UIFactory $ui_factory;
@@ -65,6 +77,7 @@ class ContentAssembler
         $this->ui_factory = $factory;
         $this->refinery = $refinery;
         $this->presenter = $presenter;
+        $this->path_collection = $path_collection;
         $this->link_factory = $link_factory;
         $this->copyright_handler = $copyright_handler;
     }
@@ -77,24 +90,24 @@ class ContentAssembler
         ?RequestForFormInterface $request = null
     ): \Generator {
         $sections = [
-            'general' => $this->getGeneralSection($set),
-            'authors' => $this->getAuthorsSection($set)
+            self::GENERAL => $this->getGeneralSection($set),
+            self::AUTHORS => $this->getAuthorsSection($set)
         ];
         foreach ($this->getCopyrightContent($set) as $type => $entity) {
             if ($type === ContentType::FORM) {
-                $sections['rights'] = $entity;
+                $sections[self::RIGHTS] = $entity;
                 continue;
             }
             yield $type => $entity;
         }
-        $sections['tlt'] = $this->getTypicalLearningTimeSection($set);
+        $sections[self::TYPICAL_LEARNING_TIME] = $this->getTypicalLearningTimeSection($set);
         $form = $this->ui_factory->input()->container()->form()->standard(
             (string) $this->link_factory->custom(Command::UPDATE_DIGEST)->get(),
             $sections
         );
 
         if (isset($request)) {
-            return $request->applyRequestToForm($form);
+            $form = $request->applyRequestToForm($form);
         }
         yield ContentType::FORM => $form;
     }
@@ -107,20 +120,23 @@ class ContentAssembler
         $inputs = [];
 
         $title_el = $this->navigator_factory->navigator(
-            $this->path_collection->title(),
+            $path = $this->path_collection->title(),
             $root
         )->lastElementAtFinalStep();
-        $inputs[$this->path_factory->toElement($title_el, true)->toString()] = $ff
+        $inputs[$path->toString()] = $ff
             ->text($this->presenter->utilities()->txt('meta_title'))
             ->withRequired(true)
-            ->withValue($title_el->getData()->value());
+            ->withValue($title_el?->getData()?->value() ?? '');
 
-        $decr_els = $this->navigator_factory->navigator(
-            $this->path_collection->descriptions(),
+        $descr_els = $this->navigator_factory->navigator(
+            $descr_path = $this->path_collection->descriptions(),
             $root
         )->elementsAtFinalStep();
-        foreach ($decr_els as $el) {
-            $label = $this->presenter->utilities()->txt('meta_description');
+        $descr_els = iterator_to_array($descr_els);
+        $label = $this->presenter->utilities()->txt('meta_description');
+        $empty_descr = true;
+        foreach ($descr_els as $el) {
+            $empty_descr = false;
             foreach ($el->getSuperElement()->getSubElements() as $sub) {
                 if (
                     $sub->getDefinition()->name() !== 'language' ||
@@ -134,6 +150,10 @@ class ContentAssembler
                 ->textarea($label)
                 ->withValue($el->getData()->value());
         }
+        if ($empty_descr) {
+            $inputs[$descr_path->toString()] = $ff
+                ->textarea($label);
+        }
 
         $langs = [];
         foreach (LangValidator::LANGUAGES as $key) {
@@ -144,12 +164,17 @@ class ContentAssembler
             $langs
         );
         $lang_els = $this->navigator_factory->navigator(
-            $this->path_collection->languages(),
+            $langs_path = $this->path_collection->languages(),
             $root
         )->elementsAtFinalStep();
+        $empty_langs = true;
         foreach ($lang_els as $el) {
+            $empty_langs = false;
             $inputs[$this->path_factory->toElement($el, true)->toString()] = (clone $lang_input)
-                ->withValue($el->getData());
+                ->withValue($el->getData()->value());
+        }
+        if ($empty_langs) {
+            $inputs[$langs_path->toString()] = clone $lang_input;
         }
 
         $keywords = [];
@@ -162,7 +187,7 @@ class ContentAssembler
                 $strings[] = $el->getData()->value();
             }
         }
-        $inputs[$keywords_path->toString()] = $ff->tag(
+        $inputs[self::KEYWORDS] = $ff->tag(
             $this->presenter->utilities()->txt('keywords'),
             $keywords
         )->withValue($keywords);
@@ -179,19 +204,24 @@ class ContentAssembler
         $ff = $this->ui_factory->input()->field();
         $inputs = [];
 
-        $author_els = $this->navigator_factory->navigator(
-            $this->path_collection->firstThreeAuthors(),
-            $set->getRoot()
-        )->elementsAtFinalStep();
+        $paths = [
+            $this->path_collection->firstAuthor(),
+            $this->path_collection->secondAuthor(),
+            $this->path_collection->thirdAuthor()
+        ];
         $labels = [
             $this->presenter->utilities()->txt('meta_first_author'),
             $this->presenter->utilities()->txt('meta_second_author'),
             $this->presenter->utilities()->txt('meta_third_author')
         ];
-        foreach ($author_els as $el) {
-            $inputs[$this->path_factory->toElement($el, true)->toString()] = $ff
+        foreach ($paths as $path) {
+            $el = $this->navigator_factory->navigator(
+                $path,
+                $set->getRoot()
+            )->lastElementAtFinalStep();
+            $inputs[$path->toString()] = $ff
                 ->text(array_shift($labels))
-                ->withValue($el->getData()->value());
+                ->withValue($el?->getData()?->value() ?? '');
         }
 
         return $ff->section(
@@ -238,8 +268,8 @@ class ContentAssembler
             $this->path_collection->copyright(),
             $set->getRoot()
         )->lastElementAtFinalStep();
-        $cp_description = $cp_description_el->getData()->value();
-        if ($cp_description) {
+        $cp_description = $cp_description_el?->getData()->value();
+        if ($cp_description !== '' && $cp_description !== null) {
             $current_id = $this->copyright_handler->extractCPEntryID($cp_description);
         } else {
             $current_id = $this->copyright_handler->getDefaultCPEntryID();
@@ -253,7 +283,7 @@ class ContentAssembler
                 $this->copyright_handler->doesObjectTypeSupportHarvesting($set->getRessourceID()->type()) &&
                 $this->copyright_handler->isCopyrightTemplateActive($entry)
             ) {
-                $sub_inputs['copyright_oer_blocked_' . $entry->getEntryId()] = $ff
+                $sub_inputs[self::OER_BLOCKED] = $ff
                     ->checkbox(
                         $this->presenter->utilities()->txt('meta_oer_blocked'),
                         $this->presenter->utilities()->txt('meta_oer_blocked_info')
@@ -281,8 +311,7 @@ class ContentAssembler
                         )
                     );
             }
-
-            $options[$this->copyright_handler->createIdentifierForEntry($entry)] = $option;
+            $options[$this->copyright_handler->createIdentifierForID($entry->getEntryId())] = $option;
         }
 
         //custom input as the last option
@@ -290,17 +319,17 @@ class ContentAssembler
             ->textarea($this->presenter->utilities()->txt('meta_description'))
             ->withValue($current_id === 0 ? $cp_description : '');
         $custom = $ff->group(
-            ['copyright_text' => $custom_text],
+            [self::CUSTOM_CP_DESCRIPTION => $custom_text],
             $this->presenter->utilities()->txt('meta_cp_own')
         );
-        $options['custom'] = $custom;
+        $options[self::CUSTOM_CP] = $custom;
 
         $copyright = $ff
             ->switchableGroup(
                 $options,
                 $this->presenter->utilities()->txt('meta_copyright')
             )
-            ->withValue($current_id)
+            ->withValue($this->copyright_handler->createIdentifierForID($current_id))
             ->withAdditionalOnLoadCode(
                 function ($id) use ($signal) {
                     return 'il.MetaDataCopyrightListener.init("' .
@@ -308,9 +337,8 @@ class ContentAssembler
                 }
             );
 
-        $path_string = $this->path_factory->toElement($cp_description_el, true)->toString();
         return $ff->section(
-            [$path_string => $copyright],
+            [$copyright],
             $this->presenter->utilities()->txt('meta_rights')
         );
     }
@@ -322,13 +350,12 @@ class ContentAssembler
         $inputs = [];
 
         $tlt_el = $this->navigator_factory->navigator(
-            $this->path_collection->firstTypicalLearningTime(),
+            $path = $this->path_collection->firstTypicalLearningTime(),
             $set->getRoot()
         )->lastElementAtFinalStep();
-        $path = $this->path_factory->toElement($tlt_el, true)->toString();
         preg_match(
             DurationValidator::DURATION_REGEX,
-            $tlt_el->getData()->value(),
+            $tlt_el?->getData()?->value() ?? '',
             $matches,
             PREG_UNMATCHED_AS_NULL
         );
@@ -381,7 +408,7 @@ class ContentAssembler
         );
 
         return $ff->section(
-            [$path => $group],
+            [$path->toString() => $group],
             $this->presenter->utilities()->txt('meta_typical_learning_time')
         );
     }

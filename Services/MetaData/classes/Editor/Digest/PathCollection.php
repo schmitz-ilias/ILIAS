@@ -30,11 +30,16 @@ use ILIAS\MetaData\Paths\Filters\FilterType;
  */
 class PathCollection
 {
+    protected PathFactory $path_factory;
+    protected StructureSetInterface $structure;
+
     protected PathInterface $title;
     protected PathInterface $descriptions;
     protected PathInterface $languages;
     protected PathInterface $keywords;
-    protected PathInterface $first_three_authors;
+    protected PathInterface $first_author;
+    protected PathInterface $second_author;
+    protected PathInterface $third_author;
     protected PathInterface $first_typical_learning_time;
     protected PathInterface $copyright;
     protected PathInterface $has_copyright;
@@ -43,46 +48,35 @@ class PathCollection
         PathFactory $path_factory,
         StructureSetInterface $structure
     ) {
-        $this->init($path_factory, $structure);
+        $this->path_factory = $path_factory;
+        $this->structure = $structure;
+        $this->init();
     }
 
-    protected function init(
-        PathFactory $path_factory,
-        StructureSetInterface $structure
-    ): void {
-        $general = $structure->getRoot()->getSubElement('general');
-        $this->title = $path_factory->toElement(
+    protected function init(): void
+    {
+        $general = $this->structure->getRoot()->getSubElement('general');
+        $this->title = $this->path_factory->toElement(
             $general->getSubElement('title')->getSubElement('string')
         );
-        $this->descriptions = $path_factory->toElement(
+        $this->descriptions = $this->path_factory->toElement(
             $general->getSubElement('description')->getSubElement('string')
         );
-        $this->languages = $path_factory->toElement(
+        $this->languages = $this->path_factory->toElement(
             $general->getSubElement('language')
         );
-        $this->keywords = $path_factory->toElement(
+        $this->keywords = $this->path_factory->toElement(
             $general->getSubElement('keyword')->getSubElement('string')
         );
 
-        $lifecycle = $structure->getRoot()->getSubElement('lifeCycle');
-        $contribute = $lifecycle->getSubElement('contribute');
-        $role = $contribute->getSubElement('role');
-        $entity = $contribute->getSubElement('entity');
-        $this->first_three_authors = $path_factory
-            ->custom()
-            ->withNextStep($lifecycle->getDefinition())
-            ->withNextStep($contribute->getDefinition())
-            ->withNextStep($role->getDefinition())
-            ->withAdditionalFilterAtCurrentStep(FilterType::DATA, 'author')
-            ->withNextStepToSuperElement()
-            ->withNextStep($entity->getDefinition())
-            ->withAdditionalFilterAtCurrentStep(FilterType::INDEX, '1', '2', '3')
-            ->get();
+        $this->first_author = $this->authorWithIndex(1);
+        $this->second_author = $this->authorWithIndex(2);
+        $this->third_author = $this->authorWithIndex(3);
 
-        $educational = $structure->getRoot()->getSubElement('educational');
-        $tlt = $structure->getRoot()->getSubElement('typicalLearningTime');
-        $duration = $structure->getRoot()->getSubElement('duration');
-        $this->first_typical_learning_time = $path_factory
+        $educational = $this->structure->getRoot()->getSubElement('educational');
+        $tlt = $educational->getSubElement('typicalLearningTime');
+        $duration = $tlt->getSubElement('duration');
+        $this->first_typical_learning_time = $this->path_factory
             ->custom()
             ->withNextStep($educational->getDefinition())
             ->withAdditionalFilterAtCurrentStep(FilterType::INDEX, '1')
@@ -90,11 +84,11 @@ class PathCollection
             ->withNextStep($duration->getDefinition())
             ->get();
 
-        $rights = $structure->getRoot()->getSubElement('rights');
-        $this->descriptions = $path_factory->toElement(
+        $rights = $this->structure->getRoot()->getSubElement('rights');
+        $this->copyright = $this->path_factory->toElement(
             $rights->getSubElement('description')->getSubElement('string')
         );
-        $this->title = $path_factory->toElement(
+        $this->has_copyright = $this->path_factory->toElement(
             $rights->getSubElement('copyrightAndOtherRestrictions')->getSubElement('value')
         );
     }
@@ -119,9 +113,61 @@ class PathCollection
         return $this->keywords;
     }
 
-    public function firstThreeAuthors(): PathInterface
+    public function keywordsBetweenIndices(
+        int $first_index,
+        int $last_index
+    ): PathInterface {
+        $indices = [];
+        for ($i = $first_index; $i <= $last_index; $i++) {
+            $indices[] = (string) $i;
+        }
+
+        $general = $this->structure->getRoot()->getSubElement('general');
+        $keyword = $general->getSubElement('keyword');
+        $string = $keyword->getSubElement('string');
+        return $this->path_factory
+            ->custom()
+            ->withNextStep($general->getDefinition())
+            ->withNextStep($keyword->getDefinition())
+            ->withAdditionalFilterAtCurrentStep(FilterType::INDEX, ...$indices)
+            ->withNextStep($string->getDefinition())
+            ->get();
+    }
+
+    public function firstAuthor(): PathInterface
     {
-        return $this->first_three_authors;
+        return $this->first_author;
+    }
+
+    public function secondAuthor(): PathInterface
+    {
+        return $this->second_author;
+    }
+
+    public function thirdAuthor(): PathInterface
+    {
+        return $this->third_author;
+    }
+
+    protected function authorWithIndex(int $index): PathInterface
+    {
+        $lifecycle = $this->structure->getRoot()->getSubElement('lifeCycle');
+        $contribute = $lifecycle->getSubElement('contribute');
+        $role = $contribute->getSubElement('role');
+        $value = $role->getSubElement('value');
+        $entity = $contribute->getSubElement('entity');
+        return $this->path_factory
+            ->custom()
+            ->withNextStep($lifecycle->getDefinition())
+            ->withNextStep($contribute->getDefinition())
+            ->withNextStep($role->getDefinition())
+            ->withNextStep($value->getDefinition())
+            ->withAdditionalFilterAtCurrentStep(FilterType::DATA, 'author')
+            ->withNextStepToSuperElement()
+            ->withNextStepToSuperElement()
+            ->withNextStep($entity->getDefinition())
+            ->withAdditionalFilterAtCurrentStep(FilterType::INDEX, (string) $index)
+            ->get();
     }
 
     public function firstTypicalLearningTime(): PathInterface

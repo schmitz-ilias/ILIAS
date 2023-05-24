@@ -88,9 +88,9 @@ class CopyrightHandler
         return \ilMDCopyrightSelectionEntry::getDefault();
     }
 
-    public function createIdentifierForEntry(\ilMDCopyrightSelectionEntry $entry): string
+    public function createIdentifierForID(int $entry_id): string
     {
-        return \ilMDCopyrightSelectionEntry::createIdentifier($entry->getEntryId());
+        return \ilMDCopyrightSelectionEntry::createIdentifier($entry_id);
     }
 
     public function isOerHarvesterBlocked(int $obj_id): bool

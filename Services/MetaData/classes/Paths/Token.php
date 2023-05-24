@@ -28,7 +28,7 @@ namespace ILIAS\MetaData\Paths;
 enum Token: string
 {
     case START_AT_ROOT = '@';
-    case START_AT_CURRENT = '+';
+    case START_AT_CURRENT = '=';
     case LEADS_TO_EXACTLY_ONE = '#';
     case SEPARATOR = ';';
     case FILTER_SEPARATOR = '|';

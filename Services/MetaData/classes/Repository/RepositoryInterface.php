@@ -77,7 +77,8 @@ interface RepositoryInterface
      * and creates, updates or deletes marked MD elements along the trail.
      * Non-scaffold elements with 'create or update' markers are
      * updated, and scaffold elements with 'create or update' markers
-     * are created with the data value on the marker.
+     * are created with the data value on the marker. Stops when encountering
+     * a neutral marker on a scaffold.
      */
     public function manipulateMD(SetInterface $set): void;
 

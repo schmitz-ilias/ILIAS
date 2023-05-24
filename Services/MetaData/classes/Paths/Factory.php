@@ -22,6 +22,7 @@ namespace ILIAS\MetaData\Paths;
 
 use ILIAS\MetaData\Elements\Base\BaseElementInterface;
 use ILIAS\MetaData\Paths\Filters\FilterType;
+use ILIAS\MetaData\Paths\Steps\StepToken;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -45,7 +46,7 @@ class Factory implements FactoryInterface
     ): BuilderInterface {
         $pattern = '/^(' . strtolower(Token::LEADS_TO_EXACTLY_ONE->value) .
             ')?(' . strtolower(Token::START_AT_ROOT->value) . '|' .
-            strtolower(Token::START_AT_CURRENT->value) . ')$/g';
+            strtolower(Token::START_AT_CURRENT->value) . ')$/';
         if (!preg_match($pattern, $string, $matches)) {
             throw new \ilMDPathException(
                 'Cannot create path, invalid modes in input string: ' . $string
@@ -67,17 +68,18 @@ class Factory implements FactoryInterface
         string $string
     ): BuilderInterface {
         $exploded = explode(Token::FILTER_SEPARATOR->value, strtolower($string));
-        $builder->withNextStepFromName($exploded[0], false);
+        $name = StepToken::tryFrom($exploded[0]) ?? $exploded[0];
+        $builder = $builder->withNextStepFromName($name, false);
         $exploded = array_slice($exploded, 1);
         foreach ($exploded as $filter_string) {
             $exploded_filter = explode(
                 Token::FILTER_VALUE_SEPARATOR->value,
-                strtolower($string)
+                strtolower($filter_string)
             );
             $type = FilterType::tryFrom($exploded_filter[0]);
             $exploded_filter = array_slice($exploded_filter, 1);
             if (!is_null($type)) {
-                $builder = $builder->withAdditionalFilterAtCurrentStep(
+                $builder = $builder = $builder->withAdditionalFilterAtCurrentStep(
                     $type,
                     ...$exploded_filter
                 );

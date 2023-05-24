@@ -46,12 +46,12 @@ class RequestParser implements RequestParserInterface
 
     public function fetchBasePath(): PathInterface
     {
-        return $this->fetchPath(Parameter::BASE_PATH);
+        return $this->fetchPath(Parameter::BASE_PATH, false);
     }
 
     public function fetchActionPath(): PathInterface
     {
-        return $this->fetchPath(Parameter::ACTION_PATH);
+        return $this->fetchPath(Parameter::ACTION_PATH, true);
     }
 
     public function fetchRequestForForm(
@@ -63,8 +63,10 @@ class RequestParser implements RequestParserInterface
         );
     }
 
-    protected function fetchPath(Parameter $parameter): PathInterface
-    {
+    protected function fetchPath(
+        Parameter $parameter,
+        bool $throw_error
+    ): PathInterface {
         $request_wrapper = $this->http->wrapper()->query();
         if ($request_wrapper->has($parameter->value)) {
             $path_string = $request_wrapper->retrieve(
@@ -73,6 +75,10 @@ class RequestParser implements RequestParserInterface
             );
             return $this->path_factory->fromString($path_string);
         }
-        throw new \ilMDEditorException('Parameter not found.');
+        if ($throw_error) {
+            throw new \ilMDEditorException('Parameter not found.');
+        } else {
+            return $this->path_factory->custom()->get();
+        }
     }
 }

@@ -32,8 +32,11 @@ use ILIAS\MetaData\Editor\Http\RequestForFormInterface;
 use ILIAS\MetaData\Elements\SetInterface;
 use ILIAS\MetaData\Paths\PathInterface;
 use ILIAS\MetaData\Editor\Full\FullEditor;
-use ILIAS\MetaData\Editor\Full\ContentType;
+use ILIAS\MetaData\Editor\Full\ContentType as FullContentType;
+use ILIAS\MetaData\Editor\Digest\ContentType as DigestContentType;
 use ILIAS\MetaData\Editor\Full\Services\Tables\Table;
+use ILIAS\MetaData\Editor\Digest\DigestInitiator;
+use ILIAS\MetaData\Editor\Digest\Digest;
 
 /**
  * @author       Stefan Meyer <smeyer.ilias@gmx.de>
@@ -45,6 +48,7 @@ class ilMDEditorGUI
     public const PATH_FOR_TREE = 'md_path_for_tree';
 
     protected FullEditorInitiator $full_editor_initiator;
+    protected DigestInitiator $digest_initiator;
 
     protected ilCtrl $ctrl;
     protected ilGlobalTemplateInterface $tpl;
@@ -67,9 +71,9 @@ class ilMDEditorGUI
     {
         global $DIC;
 
-        $this->full_editor_initiator = new FullEditorInitiator(
-            $services = new Services($DIC)
-        );
+        $services = new Services($DIC);
+        $this->full_editor_initiator = new FullEditorInitiator($services);
+        $this->digest_initiator = new DigestInitiator($services);
 
         $this->ctrl = $DIC->ctrl();
         $this->tpl = $DIC->ui()->mainTemplate();
@@ -83,6 +87,10 @@ class ilMDEditorGUI
         $this->global_screen = $DIC->globalScreen();
         $this->tabs = $DIC->tabs();
         $this->ui_factory = $DIC->ui()->factory();
+
+        $this->obj_id = $obj_id;
+        $this->sub_id = $sub_id === 0 ? $obj_id : $sub_id;
+        $this->type = $type;
     }
 
     public function executeCommand(): void
@@ -117,51 +125,37 @@ class ilMDEditorGUI
         $this->listQuickEdit();
     }
 
-    public function listQuickEdit(?Request $request = null): void
+    public function listQuickEdit(): void
     {
-        $button = $this->renderButtonToFullEditor();
-
-        $digest = $this->getLOMDigest();
-        $root = $this->repository->getMD();
-        $modal_content = '';
-        $modal_signal = null;
-        $link = $this->ctrl->getLinkTarget($this, 'updateQuickEdit');
-        if ($modal = $digest->prepareChangeCopyrightModal($link)) {
-            $modal_content = $this->ui_renderer->render($modal);
-            $modal_signal = $modal->getShowSignal();
-            $this->tpl->addJavaScript(
-                'Services/MetaData/js/ilMetaCopyrightListener.js'
-            );
-        }
-
-        $this->tpl->setContent(
-            $button .
-            $modal_content .
-            $this->ui_renderer->render(
-                $digest->getForm($root, $link, $request, $modal_signal)
-            )
+        $digest = $this->digest_initiator->init();
+        $set = $this->repository->getMD(
+            $this->obj_id,
+            $this->sub_id,
+            $this->type
         );
+
+        $this->renderDigest($set, $digest);
     }
 
     public function updateQuickEdit(): void
     {
         $this->checkAccess();
 
-        $digest = $this->getLOMDigest();
+        $digest = $this->digest_initiator->init();
         $set = $this->repository->getMD(
             $this->obj_id,
             $this->sub_id,
             $this->type
         );
-        $link = $this->ctrl->getLinkTarget($this, 'updateQuickEdit');
-        $request = $this->http->request();
-        if (!$digest->update($set, $request)) {
+
+        $request = $this->request_parser->fetchRequestForForm(false);
+        if (!$digest->updateMD($set, $request)) {
             $this->tpl->setOnScreenMessage(
                 'failure',
-                $this->lng->txt('msg_form_save_error'),
+                $this->presenter->utilities()->txt('msg_form_save_error'),
                 true
             );
-            $this->listQuickEdit($request);
+            $this->renderDigest($set, $digest, $request);
             return;
         }
 
@@ -171,20 +165,36 @@ class ilMDEditorGUI
         $this->callListeners('Lifecycle');
 
         // Redirect here to read new title and description
-        $this->tpl->setOnScreenMessage('success', $this->lng->txt("saved_successfully"), true);
+        $this->tpl->setOnScreenMessage(
+            'success',
+            $this->presenter->utilities()->txt("saved_successfully"),
+            true
+        );
         $this->ctrl->redirect($this, 'listQuickEdit');
     }
 
-    protected function getLOMDigest(): Digest
-    {
-        return new Digest(
-            $this->repo,
-            $this->path_factory,
-            $this->marker_factory,
-            $this->library,
-            $this->ui_factory,
-            $this->refinery,
-            $this->lng
+    protected function renderDigest(
+        SetInterface $set,
+        Digest $digest,
+        ?RequestForFormInterface $request = null
+    ): void {
+        $content = $digest->getContent($set, $request);
+        $template_content = [];
+        foreach ($content as $type => $entity) {
+            switch ($type) {
+                case DigestContentType::FORM:
+                case DigestContentType::MODAL:
+                    $template_content[] = $entity;
+                    break;
+
+                case DigestContentType::JS_SOURCE:
+                    $this->tpl->addJavaScript($entity);
+                    break;
+            }
+        }
+        $this->tpl->setContent(
+            $this->renderButtonToFullEditor() .
+            $this->ui_renderer->render($template_content)
         );
     }
 
@@ -335,21 +345,22 @@ class ilMDEditorGUI
         $template_content = [];
         foreach ($content as $type => $entity) {
             switch ($type) {
-                case ContentType::MAIN:
+                case FullContentType::MAIN:
                     if ($entity instanceof Table) {
                         $entity = $this->ui_factory->legacy(
                             $entity->getHTML()
                         );
                     }
+                    $template_content[] = $entity;
                     break;
 
-                case ContentType::MODAL:
+                case FullContentType::MODAL:
                     if ($modal = $entity->getModal()) {
                         $template_content[] = $modal;
                     }
                     break;
 
-                case ContentType::TOOLBAR:
+                case FullContentType::TOOLBAR:
                     $this->toolbar->addComponent($entity);
                     break;
             }

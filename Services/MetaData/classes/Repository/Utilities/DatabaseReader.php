@@ -32,6 +32,7 @@ use ILIAS\MetaData\Repository\Dictionary\TagInterface;
 use ILIAS\MetaData\Paths\Navigator\NavigatorFactoryInterface;
 use ILIAS\MetaData\Paths\Navigator\StructureNavigatorInterface;
 use ILIAS\MetaData\Structure\Definitions\DefinitionInterface;
+use ILIAS\MetaData\Elements\Data\Type;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -104,12 +105,17 @@ class DatabaseReader implements DatabaseReaderInterface
             $tag = $this->tag($sub);
             $result = $this->executor->read($tag, $ressource_id, $super_id, ...$parent_ids);
             foreach ($result as $id => $data) {
+                if (
+                    $sub->getDefinition()->dataType() !== Type::NULL &&
+                    ($data === null || $data === '')
+                ) {
+                    continue;
+                }
                 $definition = $this->definition($sub);
                 $appended_parents = $parent_ids;
                 if ($tag->isParent()) {
                     $appended_parents[] = $id;
                 }
-
                 yield $this->element_factory->element(
                     $id,
                     $definition,
@@ -168,7 +174,8 @@ class DatabaseReader implements DatabaseReaderInterface
         return $this->element_factory->set(
             $ressource_id,
             $this->element_factory->root(
-                $root_definition
+                $root_definition,
+                ...$elements
             )
         );
     }

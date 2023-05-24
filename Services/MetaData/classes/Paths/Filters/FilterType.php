@@ -21,12 +21,13 @@ declare(strict_types=1);
 namespace ILIAS\MetaData\Paths\Filters;
 
 /**
+ * Values should always be all lowercase
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 enum FilterType: string
 {
-    case NULL = 'NULL';
-    case MDID = 'ID';
-    case INDEX = 'INDEX';
-    case DATA = 'DATA';
+    case NULL = 'null';
+    case MDID = 'id';
+    case INDEX = 'index';
+    case DATA = 'data';
 }

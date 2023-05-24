@@ -51,7 +51,7 @@ abstract class BaseNavigator implements BaseNavigatorInterface
     ) {
         $this->bridge = $bridge;
 
-        $this->remaining_steps = $path->steps();
+        $this->remaining_steps = iterator_to_array($path->steps());
         $this->leadsToOne($path->leadsToExactlyOneElement());
         if ($path->isRelative()) {
             $this->elements = [$start_element];
@@ -110,8 +110,8 @@ abstract class BaseNavigator implements BaseNavigatorInterface
     public function elementsAtFinalStep(): \Generator
     {
         $clone = clone $this;
-        while ($clone) {
-            $clone = $clone->nextStep();
+        while ($next = $clone->nextStep()) {
+            $clone = $next;
         }
         yield from $clone->elements();
     }

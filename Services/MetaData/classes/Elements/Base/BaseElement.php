@@ -32,7 +32,7 @@ abstract class BaseElement implements BaseElementInterface
     /**
      * @var BaseElement[]
      */
-    private array $sub_elements;
+    private array $sub_elements = [];
     private ?BaseElement $super_element = null;
     private DefinitionInterface $definition;
     private int|NoID $md_id;
@@ -51,7 +51,9 @@ abstract class BaseElement implements BaseElementInterface
 
     public function __clone()
     {
-        $this->setSuperElement(null);
+        if (!is_null($this->super_element)) {
+            $this->setSuperElement(null);
+        }
         $map = function (BaseElement $arg) {
             $arg = clone $arg;
             $arg->setSuperElement($this);

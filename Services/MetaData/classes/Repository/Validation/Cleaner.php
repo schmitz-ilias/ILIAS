@@ -106,8 +106,8 @@ class Cleaner implements CleanerInterface
                 );
                 continue;
             }
-            $message = $sub->getData()->value() . ' is not valid as' .
-                $sub->getData()->type()->value . 'data.';
+            $message = $sub->getData()->value() . ' is not valid as ' .
+                $sub->getData()->type()->value . ' data.';
             $this->throwErrorOrLog($sub, $message);
         }
     }
@@ -124,9 +124,12 @@ class Cleaner implements CleanerInterface
             return;
         }
         $marker = $element->getMarker();
-        if (!$this->data_validator->isValid($element, false)) {
-            $message = $marker->dataValue() . ' is not valid as' .
-                $element->getDefinition()->dataType()->value . 'data.';
+        if (
+            (!$element->isScaffold() || $marker->action() !== Action::DELETE) &&
+            !$this->data_validator->isValid($element, false)
+        ) {
+            $message = $marker->dataValue() . ' is not valid as ' .
+                $element->getDefinition()->dataType()->value . ' data.';
             $this->throwErrorOrLog($element, $message, true);
         }
         foreach ($this->dictionary->tagsForElement($element) as $tag) {
@@ -191,6 +194,9 @@ class Cleaner implements CleanerInterface
         $id = $element->getMDID();
         $id = is_int($id) ? (string) $id : $id->value;
         $message = $element->getDefinition()->name() . ' (ID ' . $id . '): ' . $message;
+        if ($super = $element->getSuperElement()) {
+            $message = $super->getDefinition()->name() . ': ' . $message;
+        }
         if ($throw_error) {
             throw new \ilMDRepositoryException('Invalid marker on element ' . $message);
         }
