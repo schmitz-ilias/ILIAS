@@ -85,7 +85,7 @@ class FormFactory
             $element = $this->navigator_factory->navigator(
                 $created_with,
                 $element
-            );
+            )->lastElementAtFinalStep();
         }
         return $this->getFormForElement(
             $base_path,
@@ -93,7 +93,7 @@ class FormFactory
             $context_element,
             $link,
             $with_title,
-            !$created_with || $editor_tag->isLastInTree()
+            !$created_with && !$editor_tag?->isLastInTree()
         );
     }
 

@@ -207,6 +207,24 @@ class LOMDictionaryInitiator extends BaseDictionaryInitiator
                  ->get(),
             $rights
         );
+        $this->addTagToElement(
+            $this->tag($cost = $rights->getSubElement('cost'))
+                 ->withPreview($cost->getSubElement('value'))
+                 ->get(),
+            $cost
+        );
+        $this->addTagToElement(
+            $this->tag($cor = $rights->getSubElement('copyrightAndOtherRestrictions'))
+                 ->withPreview($cor->getSubElement('value'))
+                 ->get(),
+            $cor
+        );
+        $this->addTagToElement(
+            $this->tag($description = $rights->getSubElement('description'))
+                 ->withPreview($description->getSubElement('string'))
+                 ->get(),
+            $description
+        );
     }
 
     protected function setTagsForRelation(
@@ -250,7 +268,25 @@ class LOMDictionaryInitiator extends BaseDictionaryInitiator
                  ->get(),
             $annotation
         );
-        $this->setImportantLabelTag($annotation->getSubElement('entity'));
+        $this->addTagToElement(
+            $this->tag($entity = $annotation->getSubElement('entity'))
+                 ->withPreview($entity)
+                 ->withImportantLabel(true)
+                 ->get(),
+            $entity
+        );
+        $this->addTagToElement(
+            $this->tag($date = $annotation->getSubElement('date'))
+                 ->withPreview($date->getSubElement('dateTime'))
+                 ->get(),
+            $date
+        );
+        $this->addTagToElement(
+            $this->tag($description = $annotation->getSubElement('description'))
+                 ->withPreview($description->getSubElement('string'))
+                 ->get(),
+            $description
+        );
     }
 
     protected function setTagsForClassification(

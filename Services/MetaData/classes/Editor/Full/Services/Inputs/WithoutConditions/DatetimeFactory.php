@@ -18,7 +18,7 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Editor\Full\Services\Inputs;
+namespace ILIAS\MetaData\Editor\Full\Services\Inputs\WithoutConditions;
 
 use ILIAS\Refinery\Factory as Refinery;
 use ILIAS\UI\Component\Input\Field\FormInput;
@@ -27,12 +27,12 @@ use ILIAS\UI\Component\Input\Field\Factory as UIFactory;
 use ILIAS\MetaData\Repository\Validation\Dictionary\DictionaryInterface as ConstraintDictionary;
 use ILIAS\MetaData\Editor\Presenter\PresenterInterface;
 use ILIAS\MetaData\Elements\Data\DataInterface;
-use ILIAS\MetaData\Repository\Validation\Data\DurationValidator;
+use ILIAS\MetaData\Repository\Validation\Data\DatetimeValidator;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class DurationFactory extends BaseFactory
+class DatetimeFactory extends BaseFactory
 {
     protected Refinery $refinery;
 
@@ -51,57 +51,31 @@ class DurationFactory extends BaseFactory
         ElementInterface $context_element,
         string $condition_value = ''
     ): FormInput {
-        $num = $this->ui_factory
-            ->numeric('placeholder')
+        return $this->ui_factory
+            ->dateTime('placeholder')
+            ->withFormat($this->presenter->utilities()->getUserDateFormat())
             ->withAdditionalTransformation(
-                $this->refinery->int()->isGreaterThanOrEqual(0)
+                $this->refinery->custom()->transformation(
+                    function ($v) {
+                        return (string) $v?->format('Y-m-d');
+                    }
+                )
             );
-        $nums = [];
-        foreach ($this->presenter->data()->durationLabels() as $label) {
-            $nums[] = (clone $num)->withLabel($label);
-        }
-        return $this->ui_factory->group($nums)->withAdditionalTransformation(
-            $this->refinery->custom()->transformation(function ($vs) {
-                if (
-                    count(array_unique($vs)) === 1 &&
-                    array_unique($vs)[0] === null
-                ) {
-                    return '';
-                }
-                $r = 'P';
-                $signifiers = ['Y', 'M', 'D', 'H', 'M', 'S'];
-                foreach ($vs as $key => $int) {
-                    if (isset($int)) {
-                        $r .= $int . $signifiers[$key];
-                    }
-                    if (
-                        $key === 2 &&
-                        !isset($vs[3]) &&
-                        !isset($vs[4]) &&
-                        !isset($vs[5])
-                    ) {
-                        return $r;
-                    }
-                    if ($key === 2) {
-                        $r .= 'T';
-                    }
-                }
-                return $r;
-            })
-        );
     }
 
-    /**
-     * @return string[]
-     */
-    protected function dataValueForInput(DataInterface $data): array
+    protected function dataValueForInput(DataInterface $data): string
     {
         preg_match(
-            DurationValidator::DURATION_REGEX,
+            DatetimeValidator::DATETIME_REGEX,
             $data->value(),
             $matches,
             PREG_UNMATCHED_AS_NULL
         );
-        return array_slice($matches, 1);
+        $date = new \DateTimeImmutable(
+            ($matches[1] ?? '0000') . '-' .
+            ($matches[2] ?? '01') . '-' .
+            ($matches[3] ?? '01')
+        );
+        return $this->presenter->utilities()->getUserDateFormat()->applyTo($date);
     }
 }

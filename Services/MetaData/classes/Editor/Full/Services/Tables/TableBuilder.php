@@ -71,6 +71,10 @@ class TableBuilder
         FlexibleSignal $update_signal,
         ?FlexibleSignal $delete_signal
     ): TableBuilder {
+        if (!isset($this->template_element)) {
+            $this->template_element = $element;
+        }
+
         $res = [];
 
         foreach ($this->data_finder->getDataCarryingElements(
@@ -78,7 +82,7 @@ class TableBuilder
             true
         ) as $data_el) {
             $data = '';
-            if ($data_el->getData()->type() === Type::NULL) {
+            if ($data_el->getData()->type() !== Type::NULL) {
                 $data = $this->presenter->data()->dataValue($data_el->getData());
             }
             $res[] = $data;
@@ -102,6 +106,9 @@ class TableBuilder
 
     protected function init(): Table
     {
+        if (!isset($this->template_element)) {
+            throw new \ilMDEditorException('Table cannot be empty.');
+        }
         $table = new Table();
         $table->setRowTemplate(
             'tpl.full_editor_row.html',

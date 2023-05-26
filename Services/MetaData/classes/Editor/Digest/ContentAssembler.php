@@ -48,6 +48,9 @@ class ContentAssembler
     public const AUTHORS = 'authors';
     public const RIGHTS = 'rights';
     public const TYPICAL_LEARNING_TIME = 'tlt';
+    public const FIRST_AUTHOR = 'first_author';
+    public const SECOND_AUTHOR = 'second_author';
+    public const THIRD_AUTHOR = 'third_author';
 
     public const CUSTOM_CP = 'custom_cp';
     public const CUSTOM_CP_DESCRIPTION = 'custom_cp_description';
@@ -184,7 +187,7 @@ class ContentAssembler
         )->elementsAtFinalStep();
         foreach ($keyword_els as $el) {
             if (!$el->isScaffold()) {
-                $strings[] = $el->getData()->value();
+                $keywords[] = $el->getData()->value();
             }
         }
         $inputs[self::KEYWORDS] = $ff->tag(
@@ -214,12 +217,17 @@ class ContentAssembler
             $this->presenter->utilities()->txt('meta_second_author'),
             $this->presenter->utilities()->txt('meta_third_author')
         ];
+        $post_keys = [
+            self::FIRST_AUTHOR,
+            self::SECOND_AUTHOR,
+            self::THIRD_AUTHOR
+        ];
         foreach ($paths as $path) {
             $el = $this->navigator_factory->navigator(
                 $path,
                 $set->getRoot()
             )->lastElementAtFinalStep();
-            $inputs[$path->toString()] = $ff
+            $inputs[array_shift($post_keys)] = $ff
                 ->text(array_shift($labels))
                 ->withValue($el?->getData()?->value() ?? '');
         }
@@ -276,6 +284,7 @@ class ContentAssembler
         }
 
         $options = [];
+        $outdated = [];
         foreach ($this->copyright_handler->getCPEntries() as $entry) {
             //give the option to block harvesting
             $sub_inputs = [];
@@ -294,24 +303,17 @@ class ContentAssembler
             }
 
             $option = $ff->group($sub_inputs, $entry->getTitle());
+            $identifier = $this->copyright_handler->createIdentifierForID($entry->getEntryId());
 
             // outdated entries throw an error when selected
             if ($entry->getOutdated()) {
-                $option = $option
-                    ->withLabel(
-                        '(' . $this->presenter->utilities()->txt('meta_copyright_outdated') .
-                        ') ' . $entry->getTitle()
-                    )
-                    ->withAdditionalTransformation(
-                        $this->refinery->custom()->constraint(
-                            function () {
-                                return false;
-                            },
-                            $this->presenter->utilities()->txt('meta_copyright_outdated_error')
-                        )
-                    );
+                $option = $option->withLabel(
+                    '(' . $this->presenter->utilities()->txt('meta_copyright_outdated') .
+                    ') ' . $entry->getTitle()
+                );
+                $outdated[] = $identifier;
             }
-            $options[$this->copyright_handler->createIdentifierForID($entry->getEntryId())] = $option;
+            $options[$identifier] = $option;
         }
 
         //custom input as the last option
@@ -324,17 +326,30 @@ class ContentAssembler
         );
         $options[self::CUSTOM_CP] = $custom;
 
+        $value = $current_id === 0 ?
+            self::CUSTOM_CP :
+            $this->copyright_handler->createIdentifierForID($current_id);
         $copyright = $ff
             ->switchableGroup(
                 $options,
                 $this->presenter->utilities()->txt('meta_copyright')
             )
-            ->withValue($this->copyright_handler->createIdentifierForID($current_id))
+            ->withValue($value)
             ->withAdditionalOnLoadCode(
                 function ($id) use ($signal) {
                     return 'il.MetaDataCopyrightListener.init("' .
                         $signal . '","' . $id . '");';
                 }
+            )->withAdditionalTransformation(
+                $this->refinery->custom()->constraint(
+                    function ($v) use ($outdated) {
+                        if (in_array($v[0], $outdated, true)) {
+                            return false;
+                        }
+                        return true;
+                    },
+                    $this->presenter->utilities()->txt('meta_copyright_outdated_error')
+                )
             );
 
         return $ff->section(

@@ -259,7 +259,7 @@ class ilMDEditorGUI
         $this->ctrl->setParameter(
             $this,
             Parameter::BASE_PATH->value,
-            $base_path->toString()
+            urlencode($base_path->toString())
         );
         $this->ctrl->redirect($this, 'fullEditor');
     }
@@ -299,7 +299,7 @@ class ilMDEditorGUI
         $this->ctrl->setParameter(
             $this,
             Parameter::BASE_PATH->value,
-            $base_path->toString()
+            urlencode($base_path->toString())
         );
         $this->ctrl->redirect($this, 'fullEditor');
     }
@@ -416,7 +416,7 @@ class ilMDEditorGUI
                 'write',
                 '',
                 $ref_id,
-                '',
+                $this->type,
                 $this->obj_id
             )) {
                 return;

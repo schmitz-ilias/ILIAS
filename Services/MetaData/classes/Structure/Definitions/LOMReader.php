@@ -28,15 +28,21 @@ use ILIAS\MetaData\Elements\Data\Type;
 class LOMReader implements ReaderInterface
 {
     protected array $definition_array;
+    protected int $depth = 0;
 
     public function __construct(
+        int $depth = 0,
         ?array $definition_array = null
     ) {
+        if ($this->depth > 10) {
+            throw new \ilMDStructureException('LOM Structure is nested to deep.');
+        }
         if (!is_null($definition_array)) {
             $this->definition_array = $definition_array;
             return;
         }
         $this->definition_array = $this->getDefinitionArray();
+        $this->depth = $depth;
     }
 
     protected function getDefinitionArray(): array
@@ -60,9 +66,11 @@ class LOMReader implements ReaderInterface
     {
         $sub_definitions = $this->definition_array['sub'] ?? [];
         foreach ($this->definition_array['sub'] as $sub_definition) {
-            $clone = clone $this;
-            $clone->definition_array = $sub_definition;
-            yield $clone;
+            $reader = new LOMReader(
+                $this->depth + 1,
+                $sub_definition
+            );
+            yield $reader;
         }
     }
 

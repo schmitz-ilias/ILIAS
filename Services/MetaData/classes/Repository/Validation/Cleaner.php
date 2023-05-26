@@ -125,7 +125,7 @@ class Cleaner implements CleanerInterface
         }
         $marker = $element->getMarker();
         if (
-            (!$element->isScaffold() || $marker->action() !== Action::DELETE) &&
+            $marker->action() === Action::CREATE_OR_UPDATE &&
             !$this->data_validator->isValid($element, false)
         ) {
             $message = $marker->dataValue() . ' is not valid as ' .

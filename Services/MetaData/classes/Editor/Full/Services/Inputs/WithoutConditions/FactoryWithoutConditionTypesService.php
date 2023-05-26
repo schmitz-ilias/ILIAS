@@ -18,7 +18,7 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Editor\Full\Services\Inputs;
+namespace ILIAS\MetaData\Editor\Full\Services\Inputs\WithoutConditions;
 
 use ILIAS\MetaData\Vocabularies\VocabulariesInterface;
 use ILIAS\UI\Component\Input\Field\Factory as UIFactory;
@@ -31,7 +31,7 @@ use ILIAS\MetaData\Paths\FactoryInterface as PathFactory;
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class FactoryTypesService
+class FactoryWithoutConditionTypesService
 {
     protected DatetimeFactory $datetime;
     protected DurationFactory $duration;
@@ -46,8 +46,7 @@ class FactoryTypesService
         PresenterInterface $presenter,
         ConstraintDictionary $constraint_dictionary,
         VocabulariesInterface $vocabularies,
-        Refinery $refinery,
-        PathFactory $path_factory
+        Refinery $refinery
     ) {
         $this->datetime = new DatetimeFactory(
             $ui_factory,
@@ -86,8 +85,7 @@ class FactoryTypesService
             $ui_factory,
             $presenter,
             $constraint_dictionary,
-            $vocabularies,
-            $path_factory
+            $vocabularies
         );
     }
 
@@ -117,7 +115,7 @@ class FactoryTypesService
 
             default:
                 throw new \ilMDRepositoryException(
-                    'Unhandled data type when validating.'
+                    'Unhandled data type when building inputs.'
                 );
         }
     }

@@ -18,26 +18,27 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Editor\Full\Services\Inputs;
+namespace ILIAS\MetaData\Editor\Full\Services\Inputs\WithoutConditions;
 
 use ILIAS\UI\Component\Input\Field\FormInput;
 use ILIAS\MetaData\Elements\ElementInterface;
-use ILIAS\MetaData\Repository\Validation\Data\LangValidator;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class LangFactory extends BaseFactory
+class StringFactory extends BaseFactory
 {
     protected function rawInput(
         ElementInterface $element,
         ElementInterface $context_element,
         string $condition_value = ''
     ): FormInput {
-        $langs = [];
-        foreach (LangValidator::LANGUAGES as $key) {
-            $langs[$key] = $this->presenter->data()->language($key);
+        $super_name = $element->getSuperElement()
+                              ->getDefinition()
+                              ->name();
+        if ($super_name === 'description') {
+            return $this->ui_factory->textarea('placeholder');
         }
-        return $this->ui_factory->select('placeholder', $langs);
+        return $this->ui_factory->text('placeholder');
     }
 }

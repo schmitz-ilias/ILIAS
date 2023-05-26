@@ -25,7 +25,7 @@ namespace ILIAS\MetaData\Structure\Dictionaries\Tags;
  */
 abstract class Tag implements TagInterface
 {
-    private array $indices;
+    private array $indices = [];
 
     public function __construct(int ...$indices)
     {

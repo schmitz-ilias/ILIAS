@@ -65,12 +65,22 @@ class ScaffoldProvider implements ScaffoldProviderInterface
             $sub_names[] = $sub->getDefinition()->name();
         }
 
+        $previous_sub = null;
         foreach ($structure_element->getSubElements() as $sub) {
-            $unique = $sub->getDefinition()->unqiue();
-            $name = $sub->getDefinition()->name();
-            if (!$unique || !in_array($name, $sub_names)) {
-                yield $this->scaffold_factory->scaffold($sub->getDefinition());
+            $sub = $sub->getDefinition();
+            if (
+                isset($previous_sub) &&
+                (!$previous_sub->unqiue() || !in_array($previous_sub->name(), $sub_names))
+            ) {
+                yield $sub->name() => $this->scaffold_factory->scaffold($previous_sub);
             }
+            $previous_sub = $sub;
+        }
+        if (
+            isset($previous_sub) &&
+            (!$previous_sub->unqiue() || !in_array($previous_sub->name(), $sub_names))
+        ) {
+            yield '' => $this->scaffold_factory->scaffold($previous_sub);
         }
     }
 }

@@ -264,7 +264,7 @@ class QueryProvider
     {
         $read =
             'SELECT ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
-            " FROM ((SELECT '" . LOMDictionaryInitiator::MD_ID_OS . "'" .
+            ' FROM ((SELECT ' . $this->db->quote(LOMDictionaryInitiator::MD_ID_OS, \ilDBConstants::T_INTEGER) .
             ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
             ', parent_type, parent_id, rbac_id, obj_id, obj_type, ' .
             $this->db->quoteIdentifier($this->IDName('requirement')) .
@@ -272,7 +272,7 @@ class QueryProvider
             ' WHERE (CHAR_LENGTH(operating_system_name) > 0 OR' .
             ' CHAR_LENGTH(os_min_version) > 0 OR CHAR_LENGTH(os_max_version) > 0)' .
             ') UNION (' .
-            "SELECT '" . LOMDictionaryInitiator::MD_ID_BROWSER . "'" .
+            'SELECT ' . $this->db->quote(LOMDictionaryInitiator::MD_ID_BROWSER, \ilDBConstants::T_INTEGER) .
             ' AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
             ', parent_type, parent_id, rbac_id, obj_id, obj_type, ' .
             $this->db->quoteIdentifier($this->IDName('requirement')) .
@@ -285,18 +285,8 @@ class QueryProvider
             ' ORDER BY u.' . $this->db->quoteIdentifier($this->IDName('requirement'));
         $delete =
             'UPDATE ' . $this->db->quoteIdentifier($this->table('requirement')) .
-            ' SET operating_system_name = CASE %s WHEN ' . LOMDictionaryInitiator::MD_ID_OS . " THEN ''" .
-            ' ELSE operating_system_name END, ' .
-            ' os_min_version = CASE %s WHEN ' . LOMDictionaryInitiator::MD_ID_OS . " THEN ''" .
-            ' ELSE os_min_version END, ' .
-            ' os_max_version = CASE %s WHEN ' . LOMDictionaryInitiator::MD_ID_OS . " THEN ''" .
-            ' ELSE os_max_version END, ' .
-            ' browser_name = CASE %s WHEN ' . LOMDictionaryInitiator::MD_ID_BROWSER . " THEN ''" .
-            ' ELSE browser_name END, ' .
-            ' browser_minimum_version = CASE %s WHEN ' . LOMDictionaryInitiator::MD_ID_BROWSER . " THEN ''" .
-            ' ELSE browser_minimum_version END, ' .
-            ' browser_maximum_version = CASE %s WHEN ' . LOMDictionaryInitiator::MD_ID_BROWSER . " THEN ''" .
-            ' ELSE browser_maximum_version END' .
+            " SET operating_system_name = '', os_min_version = '', os_max_version = ''" .
+            " browser_name = '', browser_minimum_version = '', browser_maximum_version = '' " .
             " WHERE parent_type = 'meta_technical' AND " .
             $this->db->quoteIdentifier($this->IDName('requirement')) . ' = %s' .
             ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
@@ -308,12 +298,6 @@ class QueryProvider
             $delete,
             false,
             $this->table('requirement'),
-            ExpectedParameter::MD_ID,
-            ExpectedParameter::MD_ID,
-            ExpectedParameter::MD_ID,
-            ExpectedParameter::MD_ID,
-            ExpectedParameter::MD_ID,
-            ExpectedParameter::MD_ID,
             ExpectedParameter::SUPER_MD_ID,
             ExpectedParameter::SECOND_PARENT_MD_ID,
             ExpectedParameter::RESSOURCE_IDS
@@ -328,7 +312,7 @@ class QueryProvider
     {
         return $this->factory->tag(
             '',
-            'SELECT %s AS ' . ReturnedParameter::MD_ID->value,
+            'SELECT %s AS ' . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value),
             '',
             '',
             false,
@@ -345,11 +329,11 @@ class QueryProvider
     {
         return $this->factory->tag(
             '',
-            "SELECT '%s' AS " . ReturnedParameter::MD_ID->value .
-            ', CASE %s WHEN ' . LOMDictionaryInitiator::MD_ID_OS . ' THEN ' .
+            "SELECT '%s' AS " . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
+            ', CASE %s WHEN ' . $this->db->quote(LOMDictionaryInitiator::MD_ID_OS, \ilDBConstants::T_INTEGER) . ' THEN ' .
             "'operating system'" .
-            ' WHEN ' . LOMDictionaryInitiator::MD_ID_BROWSER . ' THEN ' .
-            "'browser' END AS " . ReturnedParameter::DATA->value,
+            ' WHEN ' . $this->db->quote(LOMDictionaryInitiator::MD_ID_BROWSER, \ilDBConstants::T_INTEGER) . ' THEN ' .
+            "'browser' END AS " . $this->db->quoteIdentifier(ReturnedParameter::DATA->value),
             '',
             '',
             false,
@@ -368,18 +352,22 @@ class QueryProvider
         $read =
             "SELECT '%s' AS " . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
             ' FROM ' . $this->db->quoteIdentifier($this->table('requirement')) .
-            ' WHERE CASE %s WHEN ' . LOMDictionaryInitiator::MD_ID_OS . ' THEN CHAR_LENGTH(operating_system_name)' .
-            ' WHEN ' . LOMDictionaryInitiator::MD_ID_BROWSER . ' THEN CHAR_LENGTH(browser_name) END > 0 ' .
+            ' WHERE CASE %s WHEN ' . $this->db->quote(LOMDictionaryInitiator::MD_ID_OS, \ilDBConstants::T_INTEGER) .
+            ' THEN CHAR_LENGTH(operating_system_name)' .
+            ' WHEN ' . $this->db->quote(LOMDictionaryInitiator::MD_ID_BROWSER, \ilDBConstants::T_INTEGER) .
+            ' THEN CHAR_LENGTH(browser_name) END > 0 ' .
             " AND parent_type = 'meta_technical' AND " .
             $this->db->quoteIdentifier($this->IDName('requirement')) . ' = %s' .
             ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s' .
             ' ORDER BY ' . $this->db->quoteIdentifier($this->IDName('requirement'));
         $delete =
             'UPDATE ' . $this->db->quoteIdentifier($this->table('requirement')) .
-            ' SET operating_system_name = CASE %s WHEN ' . LOMDictionaryInitiator::MD_ID_OS . " THEN ''" .
-            ' ELSE operating_system_name END, ' .
-            ' browser_name = CASE %s WHEN ' . LOMDictionaryInitiator::MD_ID_BROWSER . " THEN ''" .
-            ' ELSE browser_name END' .
+            ' SET operating_system_name = CASE %s WHEN ' .
+            $this->db->quote(LOMDictionaryInitiator::MD_ID_OS, \ilDBConstants::T_INTEGER) . " THEN ''" .
+            " ELSE '' END, " .
+            ' browser_name = CASE %s WHEN ' .
+            $this->db->quote(LOMDictionaryInitiator::MD_ID_BROWSER, \ilDBConstants::T_INTEGER) . " THEN ''" .
+            " ELSE '' END" .
             " WHERE parent_type = 'meta_technical' AND " .
             $this->db->quoteIdentifier($this->IDName('requirement')) . ' = %s' .
             ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
@@ -409,8 +397,10 @@ class QueryProvider
     ): Tag {
         $read =
             "SELECT '%s' AS " . $this->db->quoteIdentifier(ReturnedParameter::MD_ID->value) .
-            ', CASE %s WHEN ' . LOMDictionaryInitiator::MD_ID_OS . ' THEN ' . $this->db->quoteIdentifier($field_os) .
-            ' WHEN ' . LOMDictionaryInitiator::MD_ID_BROWSER . ' THEN  ' . $this->db->quoteIdentifier($field_browser) .
+            ', CASE %s WHEN ' . $this->db->quote(LOMDictionaryInitiator::MD_ID_OS, \ilDBConstants::T_INTEGER) .
+            ' THEN ' . $this->db->quoteIdentifier($field_os) .
+            ' WHEN ' . $this->db->quote(LOMDictionaryInitiator::MD_ID_BROWSER, \ilDBConstants::T_INTEGER) .
+            ' THEN  ' . $this->db->quoteIdentifier($field_browser) .
             ' END AS ' . $this->db->quoteIdentifier(ReturnedParameter::DATA->value) .
             ' FROM ' . $this->db->quoteIdentifier($this->table('requirement')) .
             " WHERE parent_type = 'meta_technical' AND " .
@@ -420,22 +410,22 @@ class QueryProvider
         $create_and_update =
             'UPDATE ' . $this->db->quoteIdentifier($this->table('requirement')) .
             ' SET ' . $this->db->quoteIdentifier($field_os) . ' = CASE %s WHEN ' .
-            LOMDictionaryInitiator::MD_ID_OS . ' THEN %s' .
-            ' ELSE ' . $this->db->quoteIdentifier($field_os) . ' END, ' .
+            $this->db->quote(LOMDictionaryInitiator::MD_ID_OS, \ilDBConstants::T_INTEGER) .
+            " THEN %s ELSE '' END, " .
             $this->db->quoteIdentifier($field_browser) . ' = CASE %s WHEN ' .
-            LOMDictionaryInitiator::MD_ID_BROWSER . ' THEN %s' .
-            ' ELSE ' . $this->db->quoteIdentifier($field_browser) . ' END' .
+            $this->db->quote(LOMDictionaryInitiator::MD_ID_BROWSER, \ilDBConstants::T_INTEGER) .
+            " THEN %s ELSE '' END" .
             " WHERE parent_type = 'meta_technical' AND " .
             $this->db->quoteIdentifier($this->IDName('requirement')) . ' = %s' .
             ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s';
         $delete =
             'UPDATE ' . $this->db->quoteIdentifier($this->table('requirement')) .
             ' SET ' . $this->db->quoteIdentifier($field_os) . ' = CASE %s WHEN ' .
-            LOMDictionaryInitiator::MD_ID_OS . " THEN ''" .
-            ' ELSE ' . $this->db->quoteIdentifier($field_os) . ' END, ' .
+            $this->db->quote(LOMDictionaryInitiator::MD_ID_OS, \ilDBConstants::T_INTEGER) . " THEN ''" .
+            " ELSE '' END, " .
             $this->db->quoteIdentifier($field_browser) . ' = CASE %s WHEN ' .
-            LOMDictionaryInitiator::MD_ID_BROWSER . " THEN ''" .
-            ' ELSE ' . $this->db->quoteIdentifier($field_browser) . ' END' .
+            $this->db->quote(LOMDictionaryInitiator::MD_ID_BROWSER, \ilDBConstants::T_INTEGER) . " THEN ''" .
+            " ELSE '' END" .
             " WHERE parent_type = 'meta_technical' AND " .
             $this->db->quoteIdentifier($this->IDName('requirement')) . ' = %s' .
             ' AND parent_id = %s AND rbac_id = %s AND obj_id = %s AND obj_type = %s';

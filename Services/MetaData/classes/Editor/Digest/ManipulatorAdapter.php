@@ -72,14 +72,14 @@ class ManipulatorAdapter
         $data = $form->getData();
 
         $set = $this->prepareGeneral($set, $data[ContentAssembler::GENERAL]);
-        $set = $this->prepareAuthorsOrTypicalLearningTime($set, $data[ContentAssembler::AUTHORS]);
+        $set = $this->prepareAuthors($set, $data[ContentAssembler::AUTHORS]);
         if (
             $this->copyright_handler->isCPSelectionActive() &&
             isset($data[ContentAssembler::RIGHTS])
         ) {
             $set = $this->prepareRights($set, $data[ContentAssembler::RIGHTS][0]);
         }
-        $set = $this->prepareAuthorsOrTypicalLearningTime($set, $data[ContentAssembler::TYPICAL_LEARNING_TIME]);
+        $set = $this->prepareTypicalLearningTime($set, $data[ContentAssembler::TYPICAL_LEARNING_TIME]);
 
         $this->manipulator->execute($set);
         return true;
@@ -122,20 +122,40 @@ class ManipulatorAdapter
         }
         if (count($values) < $number_of_keywords) {
             $delete_path = $this->path_collection->keywordsBetweenIndices(
-                count($values) + 1,
-                $number_of_keywords
+                count($values),
+                $number_of_keywords - 1
             );
             $set = $this->manipulator->prepareDelete($set, $delete_path);
         }
         return $set;
     }
 
-    protected function prepareAuthorsOrTypicalLearningTime(
+    protected function prepareTypicalLearningTime(
         SetInterface $set,
         array $data
     ): SetInterface {
         foreach ($data as $post_key => $value) {
             $path = $this->path_factory->fromString($post_key);
+            if ($value === null || $value === '') {
+                $set = $this->manipulator->prepareDelete($set, $path);
+                continue;
+            }
+            $set = $this->manipulator->prepareCreateOrUpdate($set, $path, $value);
+        }
+        return $set;
+    }
+
+    protected function prepareAuthors(
+        SetInterface $set,
+        array $data
+    ): SetInterface {
+        $paths = [
+            ContentAssembler::FIRST_AUTHOR => $this->path_collection->firstAuthor(),
+            ContentAssembler::SECOND_AUTHOR => $this->path_collection->secondAuthor(),
+            ContentAssembler::THIRD_AUTHOR => $this->path_collection->thirdAuthor()
+        ];
+        foreach ($data as $post_key => $value) {
+            $path = $paths[$post_key];
             if ($value === null || $value === '') {
                 $set = $this->manipulator->prepareDelete($set, $path);
                 continue;

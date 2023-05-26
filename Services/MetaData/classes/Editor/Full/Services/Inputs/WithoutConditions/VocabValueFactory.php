@@ -18,7 +18,7 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Editor\Full\Services\Inputs;
+namespace ILIAS\MetaData\Editor\Full\Services\Inputs\WithoutConditions;
 
 use ILIAS\UI\Component\Input\Field\FormInput;
 use ILIAS\MetaData\Elements\ElementInterface;
@@ -36,18 +36,15 @@ use ILIAS\MetaData\Paths\FactoryInterface as PathFactory;
 class VocabValueFactory extends BaseFactory
 {
     protected VocabulariesInterface $vocabularies;
-    protected PathFactory $path_factory;
 
     public function __construct(
         UIFactory $ui_factory,
         PresenterInterface $presenter,
         ConstraintDictionary $constraint_dictionary,
-        VocabulariesInterface $vocabularies,
-        PathFactory $path_factory
+        VocabulariesInterface $vocabularies
     ) {
         parent::__construct($ui_factory, $presenter, $constraint_dictionary);
         $this->vocabularies = $vocabularies;
-        $this->path_factory = $path_factory;
     }
 
     protected function rawInput(
@@ -55,47 +52,28 @@ class VocabValueFactory extends BaseFactory
         ElementInterface $context_element,
         string $condition_value = ''
     ): FormInput {
-        if ($element->getDefinition()->dataType() !== Type::VOCAB_VALUE) {
-            throw new \ilMDEditorException('Invalid data type for conditional input.');
+        $data = null;
+        if ($element->getDefinition()->dataType() !== Type::NULL) {
+            $data = $this->dataValueForInput($element->getData());
         }
         $values = [];
+        $use_data_as_value = false;
         foreach ($this->vocabularies->vocabulariesForElement($element) as $vocab) {
             if ($condition_value !== '' && $vocab->condition()?->value() !== $condition_value) {
                 continue;
             }
             foreach ($vocab->values() as $value) {
+                if ($data === $value) {
+                    $use_data_as_value = true;
+                }
                 $values[$value] = $this->presenter->data()->vocabularyValue($value);
             }
         }
-        return $this->ui_factory->select('placeholder', $values);
-    }
-
-    protected function conditionInput(
-        ElementInterface $element,
-        ElementInterface $context_element,
-        ElementInterface $conditional_element
-    ): FormInput {
-        $groups = [];
-        foreach ($this->vocabularies->vocabulariesForElement($element) as $vocab) {
-            foreach ($vocab->values() as $value) {
-                $input = $this->getInput(
-                    $conditional_element,
-                    $context_element,
-                    null,
-                    $value
-                );
-                $path_string = $this->path_factory->toElement($conditional_element, true)
-                                                  ->toString();
-                $groups[$value] = $this->ui_factory->group(
-                    [$path_string => $input],
-                    $this->presenter->data()->vocabularyValue($value)
-                );
-            }
+        $input = $this->ui_factory->select('placeholder', $values);
+        if ($use_data_as_value && isset($data)) {
+            $input = $input->withValue($data);
         }
-        return $this->ui_factory->switchableGroup(
-            $groups,
-            'placeholder'
-        );
+        return $input;
     }
 
     protected function dataValueForInput(DataInterface $data): string

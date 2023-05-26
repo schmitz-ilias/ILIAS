@@ -11675,6 +11675,7 @@ meta#:#meta_copyright_change_info#:#You are about to change the copyright licenc
 meta#:#meta_copyright_change_warning_title#:#Changing a Copyright
 meta#:#meta_copyright_in_use#:#In use
 meta#:#meta_copyright_outdated#:#Outdated / No longer in use
+meta#:#meta_copyright_outdated_error#:#The chosen copyright is outdated and no longer in use.
 meta#:#meta_copyright_show_usages#:#Show Usages
 meta#:#meta_copyright_status#:#Status
 meta#:#meta_copyright_sub_items#:#Sub Items

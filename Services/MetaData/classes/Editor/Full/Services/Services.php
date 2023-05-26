@@ -28,7 +28,6 @@ use ILIAS\MetaData\Paths\Services\Services as PathServices;
 use ILIAS\MetaData\Repository\Services\Services as RepositoryServices;
 use ILIAS\MetaData\Editor\Services\Services as EditorServices;
 use ILIAS\MetaData\Vocabularies\Services\Services as VocabulariesServices;
-use ILIAS\MetaData\Editor\Full\Services\Inputs\FactoryTypesService;
 use ILIAS\MetaData\Editor\Dictionary\DictionaryInterface;
 use ILIAS\MetaData\Editor\Dictionary\LOMDictionaryInitiator;
 use ILIAS\MetaData\Editor\Dictionary\TagFactory;
@@ -36,6 +35,7 @@ use ILIAS\MetaData\Structure\Services\Services as StructureServices;
 use ILIAS\MetaData\Editor\Full\Services\Actions\LinkProvider;
 use ILIAS\MetaData\Editor\Full\Services\Actions\ButtonFactory;
 use ILIAS\MetaData\Editor\Full\Services\Actions\ModalFactory;
+use ILIAS\MetaData\Editor\Full\Services\Inputs\Conditions\FactoryWithConditionTypesService;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -100,7 +100,7 @@ class Services
             $this->dataFinder(),
             $vocabularies,
             $this->repository_services->databaseDictionary(),
-            new FactoryTypesService(
+            new FactoryWithConditionTypesService(
                 $field_factory,
                 $presenter,
                 $this->repository_services->constraintDictionary(),

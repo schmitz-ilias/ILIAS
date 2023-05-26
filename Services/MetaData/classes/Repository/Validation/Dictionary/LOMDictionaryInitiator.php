@@ -65,42 +65,42 @@ class LOMDictionaryInitiator extends BaseDictionaryInitiator
         $this->addTag(
             $general = $structure->getRoot()->getSubElement('general'),
             Restriction::NOT_DELETABLE,
-            1
+            0
         );
         $this->addTag(
             $title = $general->getSubElement('title'),
             Restriction::NOT_DELETABLE,
-            1
+            0
         );
         $this->addTag(
             $title->getSubElement('string'),
             Restriction::NOT_DELETABLE,
-            1
+            0
         );
         $this->addTag(
             $identifier = $general->getSubElement('identifier'),
             Restriction::NOT_DELETABLE,
-            1
+            0
         );
         $this->addTag(
             $identifier->getSubElement('catalog'),
             Restriction::NOT_DELETABLE,
-            1
+            0
         );
         $this->addTag(
             $identifier->getSubElement('catalog'),
             Restriction::NOT_EDITABLE,
-            1
+            0
         );
         $this->addTag(
             $identifier->getSubElement('entry'),
             Restriction::NOT_DELETABLE,
-            1
+            0
         );
         $this->addTag(
             $identifier->getSubElement('entry'),
             Restriction::NOT_EDITABLE,
-            1
+            0
         );
     }
 
@@ -113,12 +113,12 @@ class LOMDictionaryInitiator extends BaseDictionaryInitiator
         $this->addTag(
             $meta_schema,
             Restriction::NOT_EDITABLE,
-            1
+            0
         );
         $this->addPresetValueTag(
             $meta_schema,
             self::MD_SCHEMA,
-            1
+            0
         );
     }
 

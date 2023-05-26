@@ -326,17 +326,30 @@ class LOMDictionaryInitiator extends BaseDictionaryInitiator implements Dictiona
         StructureElementInterface $conditional_on,
         string ...$values
     ): void {
-        $path = $this->path_factory->betweenElements(
-            $element,
+        $source = $element->getSubElement('source');
+        $value = $element->getSubElement('value');
+        $path_source = $this->path_factory->betweenElements(
+            $source,
             $conditional_on,
             true
         );
-        $tag = $this->tag_factory->tag(
+        $path_value = $this->path_factory->betweenElements(
+            $value,
+            $conditional_on,
+            true
+        );
+        $tag_source = $this->tag_factory->tag(
             $this->vocab_factory->vocabulary(self::SOURCE, ...$values)
-                                ->withCondition($condition_value, $path)
+                                ->withCondition($condition_value, $path_source)
                                 ->get()
         );
-        $this->addTagToSourceAndValue($tag, $element);
+        $tag_value = $this->tag_factory->tag(
+            $this->vocab_factory->vocabulary(self::SOURCE, ...$values)
+                                ->withCondition($condition_value, $path_value)
+                                ->get()
+        );
+        $this->addTagToElement($tag_source, $source);
+        $this->addTagToElement($tag_value, $value);
     }
 
     protected function addTagToSourceAndValue(

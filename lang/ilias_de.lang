@@ -11675,6 +11675,7 @@ meta#:#meta_copyright_change_info#:#Beachten Sie unbedingt das Urheberrecht, wen
 meta#:#meta_copyright_change_warning_title#:#Lizenz ändern###Modified as part of gender mainstreaming activities for ILIAS 8
 meta#:#meta_copyright_in_use#:#Aktuell
 meta#:#meta_copyright_outdated#:#Veraltet
+meta#:#meta_copyright_outdated_error#:#Die ausgewählt Lizenz ist veraltet und darf nicht mehr benutzt werden.
 meta#:#meta_copyright_show_usages#:#Verwendung anzeigen
 meta#:#meta_copyright_status#:#Status
 meta#:#meta_copyright_sub_items#:#Sub Items

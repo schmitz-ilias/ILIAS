@@ -84,10 +84,9 @@ class LOMDatabaseRepository implements RepositoryInterface
     /**
      * @return ElementInterface[]
      */
-    public function getScaffoldsForElement(
-        ElementInterface $element
-    ): \Generator {
-        yield from $this->scaffold_provider->getScaffoldsForElement($element);
+    public function scaffolds(): ScaffoldProviderInterface
+    {
+        return $this->scaffold_provider;
     }
 
     public function manipulateMD(SetInterface $set): void

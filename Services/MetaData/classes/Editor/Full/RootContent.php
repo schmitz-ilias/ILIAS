@@ -111,7 +111,7 @@ class RootContent
             }
             $create_modal = $this->services->actions()->getModal()->create(
                 $base_path,
-                $element,
+                $sub,
                 $request
             );
             $buttons[] = $this->services->actions()->getButton()->create(

@@ -89,7 +89,7 @@ class FullEditor
             case self::FORM:
                 yield from $this->form_content->content(
                     $base_path,
-                    $elements->current(),
+                    $elements[0],
                     $request
                 );
                 return;
@@ -105,7 +105,7 @@ class FullEditor
             case self::PANEL:
                 yield from $this->panel_content->content(
                     $base_path,
-                    $elements->current(),
+                    $elements[0],
                     false,
                     $request,
                 );
@@ -114,7 +114,7 @@ class FullEditor
             case self::ROOT:
                 yield from $this->root_content->content(
                     $base_path,
-                    $elements->current(),
+                    $elements[0],
                     $request
                 );
                 return;
@@ -133,23 +133,24 @@ class FullEditor
             return self::ROOT;
         }
         $tag = $this->editor_dictionary->tagForElement($elements[0]);
-        if (!$tag?->isCollected()) {
-            return self::FORM;
+        if (!$tag?->isLastInTree()) {
+            return self::PANEL;
         }
-        if ($tag?->isLastInTree()) {
+        if ($tag?->isCollected()) {
             return self::TABLE;
         }
-        return self::PANEL;
+        return self::FORM;
     }
 
     /**
      * @return ElementInterface[]
      */
-    protected function getElements(SetInterface $set, PathInterface $path): \Generator
+    protected function getElements(SetInterface $set, PathInterface $path): array
     {
-        yield from $this->navigator_factory->navigator(
+        $res = $this->navigator_factory->navigator(
             $path,
             $set->getRoot()
         )->elementsAtFinalStep();
+        return iterator_to_array($res);
     }
 }

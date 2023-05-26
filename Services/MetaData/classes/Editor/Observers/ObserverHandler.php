@@ -51,8 +51,8 @@ class ObserverHandler implements ObserverHandlerInterface
     {
         $categories = [
             'general' => 'General',
-            'lifeCycle' => 'Lifecycle',
-            'metaMetadata' => 'MetaMetaData',
+            'lifecycle' => 'Lifecycle',
+            'metametadata' => 'MetaMetaData',
             'technical' => 'Technical',
             'educational' => 'Educational',
             'rights' => 'Rights',
@@ -60,7 +60,7 @@ class ObserverHandler implements ObserverHandlerInterface
             'annotation' => 'Annotation',
             'classification' => 'Classification'
         ];
-        $category = $path->steps()->current()?->name();
+        $category = strtolower($path->steps()->current()?->name() ?? '');
         if ($path->isRelative() || !isset($category) || !isset($categories[$category])) {
             throw new \ilMDEditorException(
                 'Cannot call observers via relative or invalid path.'

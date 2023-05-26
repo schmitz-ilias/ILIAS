@@ -66,6 +66,7 @@ class ModalFactory
         $this->properties_fetcher = $properties_fetcher;
         $this->form_factory = $form_factory;
         $this->constraint_dictionary = $constraint_dictionary;
+        $this->path_factory = $path_factory;
     }
 
     public function delete(

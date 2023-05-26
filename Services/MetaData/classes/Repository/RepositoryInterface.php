@@ -23,6 +23,7 @@ namespace ILIAS\MetaData\Repository;
 use ILIAS\MetaData\Elements\ElementInterface;
 use ILIAS\MetaData\Elements\SetInterface;
 use ILIAS\MetaData\Paths\PathInterface;
+use ILIAS\MetaData\Repository\Utilities\ScaffoldProviderInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -62,15 +63,7 @@ interface RepositoryInterface
         string $type
     ): SetInterface;
 
-    /**
-     * Returns all elements that could be added as sub-elements
-     * to the given element as scaffolds. Scaffolds are used to
-     * mark where elements could potentially be created.
-     * @return ElementInterface[]
-     */
-    public function getScaffoldsForElement(
-        ElementInterface $element
-    ): \Generator;
+    public function scaffolds(): ScaffoldProviderInterface;
 
     /**
      * Follows a trail of markers from the root element,

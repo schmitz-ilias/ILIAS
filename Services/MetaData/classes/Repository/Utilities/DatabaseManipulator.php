@@ -77,6 +77,12 @@ class DatabaseManipulator implements DatabaseManipulatorInterface
             return;
         }
         $id = $element->getMDID();
+        if ($element->getDefinition()->name() === 'orComposite') {
+            $id = $this->getMDIDForOrComposite($element);
+        }
+        if ($element->getSuperElement()?->getDefinition()?->name() === 'orComposite') {
+            $id = $this->getMDIDForOrComposite($element->getSuperElement());
+        }
         $tag = $this->tag($element);
 
         switch ($marker->action()) {
@@ -236,7 +242,7 @@ class DatabaseManipulator implements DatabaseManipulatorInterface
     protected function marker(
         ElementInterface $element
     ): ?MarkerInterface {
-        if (!($element instanceof MarkableInterface) || $element->isMarked()) {
+        if (!($element instanceof MarkableInterface) || !$element->isMarked()) {
             return null;
         }
         return $element->getMarker();

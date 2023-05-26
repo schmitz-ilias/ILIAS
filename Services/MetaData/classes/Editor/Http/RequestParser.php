@@ -73,7 +73,7 @@ class RequestParser implements RequestParserInterface
                 $parameter->value,
                 $this->refinery->kindlyTo()->string()
             );
-            return $this->path_factory->fromString($path_string);
+            return $this->path_factory->fromString(urldecode($path_string));
         }
         if ($throw_error) {
             throw new \ilMDEditorException('Parameter not found.');

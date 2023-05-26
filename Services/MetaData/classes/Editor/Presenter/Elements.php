@@ -53,28 +53,36 @@ class Elements implements ElementsInterface
     }
 
     public function nameWithRepresentation(
-        bool $force_singular,
+        bool $plural,
         ElementInterface ...$elements
     ): string {
-        $tag = $this->dictionary->tagForElement($elements[0]);
+        if (empty($elements)) {
+            return '';
+        }
         $name = $this->name(
             $elements[0],
-            $tag->isCollected() && !$force_singular
+            $plural
         );
-        if ($tag->hasRepresentation()) {
+        $tag = $this->dictionary->tagForElement($elements[0]);
+        if ($tag?->hasRepresentation()) {
             $values = $this->getDataValueStringByPath(
                 $tag->representation(),
                 ...$elements
             );
-            $name = implode(self::SEPARATOR, [$name, $values]);
+            if ($values !== '') {
+                $name = implode(self::SEPARATOR, [$name, $values]);
+            }
         }
         return $name;
     }
 
     public function preview(ElementInterface ...$elements): string
     {
+        if (empty($elements)) {
+            return '';
+        }
         $tag = $this->dictionary->tagForElement($elements[0]);
-        if (!$tag->hasPreview()) {
+        if (!$tag?->hasPreview()) {
             return '';
         }
         return $this->getDataValueStringByPath($tag->preview(), ...$elements);
@@ -111,7 +119,7 @@ class Elements implements ElementsInterface
         $skip_arr = [Type::VOCAB_VALUE, Type::DURATION, Type::DATETIME, Type::STRING];
         $skip_initial =
             !$never_skip_initial &&
-            !$this->dictionary->tagForElement($element)->isLabelImportant() &&
+            !$this->dictionary->tagForElement($element)?->isLabelImportant() &&
             in_array($el->getDefinition()->dataType(), $skip_arr);
 
         while (!$el->isRoot()) {

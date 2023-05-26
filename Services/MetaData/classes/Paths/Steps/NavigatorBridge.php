@@ -26,6 +26,7 @@ use ILIAS\MetaData\Elements\NoID;
 use ILIAS\MetaData\Elements\ElementInterface;
 use ILIAS\MetaData\Elements\Base\BaseElementInterface;
 use ILIAS\MetaData\Elements\Markers\MarkableInterface;
+use ILIAS\MetaData\Elements\Structure\StructureElement;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -106,6 +107,9 @@ class NavigatorBridge
         foreach ($elements as $element) {
             $id = $element->getMDID();
             $id = is_int($id) ? (string) $id : $id->value;
+            if ($element instanceof StructureElement) {
+                yield $element;
+            }
             if (in_array($id, iterator_to_array($filter->values()), true)) {
                 yield $element;
             }
@@ -121,7 +125,7 @@ class NavigatorBridge
     ): \Generator {
         $index = 0;
         foreach ($elements as $element) {
-            if (in_array($index, iterator_to_array($filter->values()), true)) {
+            if (in_array((string) $index, iterator_to_array($filter->values()), true)) {
                 yield $element;
             }
             $index++;

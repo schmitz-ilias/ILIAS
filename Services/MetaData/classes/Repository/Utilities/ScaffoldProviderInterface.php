@@ -28,6 +28,10 @@ use ILIAS\MetaData\Elements\ElementInterface;
 interface ScaffoldProviderInterface
 {
     /**
+     * Returns all elements that could be added as sub-elements
+     * to the given element as scaffolds. Scaffolds are used to
+     * mark where elements could potentially be created.
+     * Keys are the name of the following element.
      * @return ElementInterface[]
      */
     public function getScaffoldsForElement(

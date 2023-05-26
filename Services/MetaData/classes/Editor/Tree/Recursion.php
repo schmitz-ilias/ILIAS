@@ -76,11 +76,11 @@ class Recursion implements TreeRecursion
         $tag = $this->dictionary->tagForElement(
             is_array($record) ? $record[0] : $record
         );
-        if ($tag->isLastInTree()) {
+        if ($tag?->isLastInTree()) {
             return [];
         }
         if (!is_array($record)) {
-            return $this->getCollectedSubElements($record, $environment);
+            return $this->getCollectedSubElements($record);
         }
         return $record;
     }
@@ -89,16 +89,15 @@ class Recursion implements TreeRecursion
      * @return array{ElementInterface|ElementInterface[]}
      */
     protected function getCollectedSubElements(
-        ElementInterface $element,
-        DictionaryInterface $dictionary
+        ElementInterface $element
     ): array {
         $res = [];
         foreach ($element->getSubElements() as $sub) {
             if ($sub->isScaffold()) {
                 continue;
             }
-            $tag = $dictionary->tagForElement($sub);
-            if ($tag->isCollected()) {
+            $tag = $this->dictionary->tagForElement($sub);
+            if ($tag?->isCollected()) {
                 $res[$sub->getDefinition()->name()][] = $sub;
                 continue;
             }
@@ -117,33 +116,28 @@ class Recursion implements TreeRecursion
          */
         $elements = is_array($record) ? $record : [$record];
         $tag = $this->dictionary->tagForElement($elements[0]);
-        $is_collection_node = $this->isCollectionNode(
-            is_array($record),
-            $tag
-        );
-        $extended_info = $this->hasPreviewAndRepresentation(
-            is_array($record),
-            $elements[0]->getSuperElement()?->isRoot(),
-            $tag
-        );
+        $is_collection = is_array($record);
+        $is_last_in_tree = (bool) $tag?->isLastInTree();
+        $is_root_or_directly_under = $elements[0]->getSuperElement()?->isRoot() ?? true;
 
+        $with_extended_info = !$is_root_or_directly_under || !$is_collection;
         $label = $this->getNameWithRepresentation(
-            $extended_info,
-            $tag,
+            $with_extended_info,
+            $is_collection,
             ...$elements
         );
         $value = $this->getPreview(
-            $extended_info,
-            $tag,
+            $with_extended_info,
             ...$elements
         );
 
+        $is_linked = !$is_collection || $is_last_in_tree;
         $node = $factory
             ->keyValue($label, $value)
             ->withExpanded($this->isExpanded(...$elements))
-            ->withHighlighted($this->isHighlighted($is_collection_node, ...$elements));
+            ->withHighlighted($this->isHighlighted($is_linked, ...$elements));
 
-        if (!$is_collection_node) {
+        if ($is_linked) {
             $node = $node->withLink(
                 $this->getLink(is_array($record), ...$elements)
             );
@@ -168,26 +162,25 @@ class Recursion implements TreeRecursion
     }
 
     protected function isHighlighted(
-        bool $is_collection_node,
+        bool $can_be_highlighted,
         ElementInterface ...$elements
     ): bool {
-        return $is_collection_node &&
-            in_array($this->current_elements[0], $elements, true);
+        return $can_be_highlighted && in_array($this->current_elements[0], $elements, true);
     }
 
     protected function getNameWithRepresentation(
         bool $with_representation,
-        ?TagInterface $tag,
+        bool $plural,
         ElementInterface ...$elements
     ): string {
         if (!$with_representation) {
             $name =  $this->presenter->elements()->name(
                 $elements[0],
-                (bool) $tag?->isCollected()
+                $plural
             );
         } else {
             $name = $this->presenter->elements()->nameWithRepresentation(
-                $this->isCollectedAsNode($tag),
+                $plural,
                 ...$elements
             );
         }
@@ -199,10 +192,9 @@ class Recursion implements TreeRecursion
 
     protected function getPreview(
         bool $with_preview,
-        ?TagInterface $tag,
         ElementInterface ...$elements
     ): string {
-        if (!$with_preview || is_null($tag)) {
+        if (!$with_preview) {
             return '';
         }
         return $this->presenter->utilities()->shortenString(
@@ -217,47 +209,31 @@ class Recursion implements TreeRecursion
     ): URI {
         $builder = $this->path_factory->custom();
         $el = $elements[0];
-        $skip_last_id = $record_is_array;
+        /**
+         * Due to how orComposites are currently persisted, their id might change and so
+         * needs to be excluded here.
+         */
+        $skip_last_id = $record_is_array || $el->getDefinition()->name() === 'orComposite';
         while (!$el->isRoot()) {
             $builder = $builder->withNextStep(
                 $el->getDefinition(),
                 true
             );
-            if ($skip_last_id) {
-                $skip_last_id = false;
-                continue;
+            if (!$skip_last_id) {
+                $builder = $builder->withAdditionalFilterAtCurrentStep(
+                    FilterType::MDID,
+                    (string) $el->getMDID()
+                );
             }
-            $builder->withAdditionalFilterAtCurrentStep(
-                FilterType::MDID,
-                (string) $el->getMDID()
-            );
+            $el = $el->getSuperElement();
+            if (is_null($el)) {
+                throw new \ilMDEditorException('Invalid md set when building tree');
+            }
+            $skip_last_id = false;
         }
         $path_string = $builder->get()->toString();
         return $this->link_factory->custom(Command::SHOW_FULL)
                                   ->withParameter(Parameter::BASE_PATH, $path_string)
                                   ->get();
-    }
-
-    protected function hasPreviewAndRepresentation(
-        bool $record_is_array,
-        bool $root_is_parent,
-        ?TagInterface $tag
-    ): bool {
-        return $this->isCollectionNode($record_is_array, $tag) || $root_is_parent;
-    }
-
-    protected function isCollectionNode(
-        bool $record_is_array,
-        ?TagInterface $tag
-    ): bool {
-        return ($this->isCollectedAsNode($tag) && $record_is_array);
-    }
-
-    protected function isCollectedAsNode(?TagInterface $tag): bool
-    {
-        if (is_null($tag)) {
-            return false;
-        }
-        return !($tag->isCollected() && $tag->isLastInTree());
     }
 }

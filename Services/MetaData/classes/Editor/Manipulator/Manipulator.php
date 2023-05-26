@@ -32,6 +32,7 @@ use ILIAS\MetaData\Elements\Markers\Action;
 use ILIAS\MetaData\Paths\Steps\StepInterface;
 use ILIAS\MetaData\Paths\Filters\FilterType;
 use ILIAS\MetaData\Paths\Steps\StepToken;
+use ILIAS\MetaData\Paths\Navigator\NavigatorInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -70,10 +71,7 @@ class Manipulator implements ManipulatorInterface
                 if (!($element instanceof ScaffoldableInterface)) {
                     continue;
                 }
-                $scaffolds = $this->repository->getScaffoldsForElement($element);
-                foreach ($scaffolds as $scaffold) {
-                    $element->addScaffoldToSubElements($scaffold);
-                }
+                $element->addScaffoldsToSubElements($this->repository->scaffolds());
                 $next = array_merge(
                     $next,
                     iterator_to_array($element->getSubElements())
@@ -90,42 +88,74 @@ class Manipulator implements ManipulatorInterface
         string ...$values
     ): SetInterface {
         $set = clone $set;
-        $current_super = $set->getRoot();
         $navigator = $this->navigator_factory->navigator(
             $path,
-            $current_super
-        )->nextStep();
-        // move along the path except the final step, adding scaffolds where necessary
+            $root = $set->getRoot()
+        );
+
+        $element = $root;
+        $anchor = null;
+        $navigator_at_anchor = null;
+        $backup_anchor = $root;
+        $navigator_at_backup_anchor = $navigator;
+        $stop_adding = false;
+        $final_elements = [];
+        /*
+         * Follow the path the first time adding scaffolds where necessary,
+         * remembering the best elements along the way to add more scaffolds.
+         */
         while ($next = $navigator->nextStep()) {
-            if ($element = $navigator->lastElement()) {
-                $current_super = $element;
-            } else {
-                $current_super = $this->addAndMarkScaffoldByStep(
-                    $current_super,
-                    $navigator->currentStep()
+            if (!($next_element = $next->lastElement())) {
+                if ($stop_adding) {
+                    break;
+                }
+                $next_element = $this->addAndMarkScaffoldByStep(
+                    $element,
+                    $next->currentStep()
                 );
             }
-            if (is_null($current_super)) {
-                throw new \ilMDEditorException('Invalid update path.');
+            if (!isset($next_element)) {
+                throw new \ilMDEditorException('Invalid update path: ' . $path->toString());
+            }
+            if ($next->currentStep()->name() === StepToken::SUPER) {
+                $anchor = $backup_anchor;
+                $navigator_at_anchor = $navigator_at_backup_anchor;
+                $stop_adding = true;
+            }
+            if (!$next_element->getDefinition()->unqiue()) {
+                $backup_anchor = $element;
+                $navigator_at_backup_anchor = $navigator;
             }
             $navigator = $next;
+            $element = $next_element;
         }
-        // add as many scaffolds as necessary to the final step
-        $final_elements = [];
-        foreach ($navigator->elements() as $element) {
-            $final_elements[] = $element;
+        if (!$stop_adding) {
+            $final_elements = iterator_to_array($navigator->elements());
+        }
+
+        /*
+         * If there are not yet enough elements to accomodate all values that
+         * are to be updated/added, add them as scaffolds, starting from the
+         * previously chosen anchor elements.
+         */
+        if (!isset($anchor) || !isset($navigator_at_anchor)) {
+            $anchor = $backup_anchor;
+            $navigator_at_anchor = $navigator_at_backup_anchor;
         }
         while (count($final_elements) < count($values)) {
-            $scaffold = $this->addAndMarkScaffoldByStep(
-                $current_super,
-                $navigator->currentStep()
+            $scaffold = $this->addScaffoldsByNavigator(
+                $anchor,
+                $navigator_at_anchor
             );
             if (is_null($scaffold)) {
-                throw new \ilMDEditorException('Invalid update path.');
+                throw new \ilMDEditorException('Invalid update path: ' . $path->toString());
             }
             $final_elements[] = $scaffold;
         }
-        // mark all final elements
+
+        /*
+         * Mark all final elements to be created/updated with the given values.
+         */
         foreach ($final_elements as $element) {
             if (!($element instanceof MarkableInterface)) {
                 continue;
@@ -133,7 +163,7 @@ class Manipulator implements ManipulatorInterface
             $element->mark(
                 $this->marker_factory,
                 Action::CREATE_OR_UPDATE,
-                array_shift($values)
+                is_array($values) ? array_shift($values) : $values
             );
             if (empty($values)) {
                 break;
@@ -158,6 +188,24 @@ class Manipulator implements ManipulatorInterface
         $this->repository->manipulateMD($set);
     }
 
+    protected function addScaffoldsByNavigator(
+        ElementInterface $start_element,
+        NavigatorInterface $navigator
+    ): ?ElementInterface {
+        $scaffold = null;
+        while ($next = $navigator->nextStep()) {
+            $scaffold = $this->addAndMarkScaffoldByStep(
+                $scaffold ?? $start_element,
+                $next->currentStep()
+            );
+            if (!isset($scaffold)) {
+                return null;
+            }
+            $navigator = $next;
+        }
+        return $scaffold;
+    }
+
     /**
      * also returns the added scaffold, if valid
      */
@@ -168,30 +216,31 @@ class Manipulator implements ManipulatorInterface
         if ($step->name() === StepToken::SUPER) {
             return $element->getSuperElement();
         }
-        foreach ($this->repository->getScaffoldsForElement($element) as $scaffold) {
-            if (
-                strtolower($scaffold->getDefinition()->name()) === strtolower($step->name()) &&
-                $element instanceof ScaffoldableInterface
-            ) {
-                $scaffold_with_name = $scaffold;
-                break;
-            }
-        }
-        if (!isset($scaffold_with_name)) {
+        if (!($element instanceof ScaffoldableInterface)) {
             return null;
         }
+        $scaffold = $element->addScaffoldToSubElements(
+            $this->repository->scaffolds(),
+            $step->name()
+        );
+        if (!isset($scaffold)) {
+            return null;
+        }
+
+        $data = '';
         foreach ($step->filters() as $filter) {
             if ($filter->type() === FilterType::DATA) {
-                $scaffold_with_name->mark(
-                    $this->marker_factory,
-                    Action::CREATE_OR_UPDATE,
-                    $filter->values()->current()
-                );
+                $data = $filter->values()->current();
                 break;
             }
         }
-        $element->addScaffoldToSubElements($scaffold_with_name);
-        return $scaffold_with_name;
+        $scaffold->mark(
+            $this->marker_factory,
+            Action::CREATE_OR_UPDATE,
+            $data
+        );
+
+        return $scaffold;
     }
 
     /**

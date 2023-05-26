@@ -78,7 +78,7 @@ class PanelContent
             }
             $create_modal = $this->services->actions()->getModal()->create(
                 $base_path,
-                $element,
+                $sub,
                 $request
             );
             $buttons[] = $this->services->actions()->getButton()->create(
@@ -92,7 +92,7 @@ class PanelContent
 
         if ($is_subpanel) {
             $panel = $this->ui_factory->panel()->sub(
-                $this->presenter->elements()->nameWithRepresentation(true, $element),
+                $this->presenter->elements()->nameWithRepresentation(false, $element),
                 $this->listing($element) ?? []
             )->withActions($dropdown);
         } else {

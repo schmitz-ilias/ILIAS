@@ -31,6 +31,6 @@ enum Token: string
     case START_AT_CURRENT = '=';
     case LEADS_TO_EXACTLY_ONE = '#';
     case SEPARATOR = ';';
-    case FILTER_SEPARATOR = '|';
+    case FILTER_SEPARATOR = '$';
     case FILTER_VALUE_SEPARATOR = ':';
 }

@@ -51,8 +51,8 @@ class TableContent
     ): \Generator {
         yield from $this->createModalAndButton(
             $base_path,
-            $elements[0],
-            $request
+            $request,
+            ...$elements
         );
         $builder =  $this->services->tableFactory()->table();
         $delete_buttons = [];
@@ -77,7 +77,9 @@ class TableContent
                 $delete_modal?->getFlexibleSignal()
             );
             yield ContentType::MODAL => $update_modal;
-            yield ContentType::MODAL => $delete_modal;
+            if (isset($delete_modal)) {
+                yield ContentType::MODAL => $delete_modal;
+            }
         }
         yield ContentType::MAIN => $builder->get();
     }
@@ -87,19 +89,24 @@ class TableContent
      */
     protected function createModalAndButton(
         PathInterface $base_path,
-        ElementInterface $element,
-        ?RequestForFormInterface $request
+        ?RequestForFormInterface $request,
+        ElementInterface ...$elements
     ): \Generator {
-        $modal = $this->services->actions()->getModal()->create(
-            $base_path,
-            $element,
-            $request
-        );
-        $button = $this->services->actions()->getButton()->create(
-            $modal->getFlexibleSignal(),
-            $element
-        );
-        yield ContentType::MODAL => $modal;
-        yield ContentType::TOOLBAR => $button;
+        foreach ($elements as $element) {
+            if (!$element->isScaffold()) {
+                continue;
+            }
+            $modal = $this->services->actions()->getModal()->create(
+                $base_path,
+                $element,
+                $request
+            );
+            $button = $this->services->actions()->getButton()->create(
+                $modal->getFlexibleSignal(),
+                $element
+            );
+            yield ContentType::MODAL => $modal;
+            yield ContentType::TOOLBAR => $button;
+        }
     }
 }

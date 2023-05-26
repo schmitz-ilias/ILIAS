@@ -84,13 +84,13 @@ class ManipulatorAdapter
          * Make sure the element is created/not deleted, even when the form
          * is left empty.
          */
-        $set = $this->manipulator->prepareCreateOrUpdate($set, $action_path);
+        $set = $this->manipulator->prepareCreateOrUpdate($set, $action_path, '');
 
         $data = $data[0] ?? [];
         foreach ($data as $path_string => $value) {
             $path = $this->path_factory->fromString($path_string);
             if ($value !== '' && $value !== null) {
-                $set = $this->manipulator->prepareCreateOrUpdate($set, $path);
+                $set = $this->manipulator->prepareCreateOrUpdate($set, $path, $value);
             } else {
                 $set = $this->manipulator->prepareDelete($set, $path);
             }

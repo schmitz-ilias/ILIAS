@@ -250,7 +250,6 @@ class QueryExecutor implements QueryExecutorInterface
                     );
             }
         }
-
         switch ($action) {
             case Action::READ:
                 return $this->db->queryF($tag->read(), $param_types, $params);

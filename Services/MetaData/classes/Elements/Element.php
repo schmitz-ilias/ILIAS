@@ -29,6 +29,7 @@ use ILIAS\MetaData\Structure\Definitions\DefinitionInterface;
 use ILIAS\MetaData\Elements\Markers\MarkerInterface;
 use ILIAS\MetaData\Elements\Data\DataInterface;
 use ILIAS\MetaData\Elements\Markers\Action;
+use ILIAS\MetaData\Repository\Utilities\ScaffoldProviderInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -119,12 +120,24 @@ class Element extends BaseElement implements ElementInterface
         $this->marker = $marker;
     }
 
-    public function addScaffoldToSubElements(
-        ElementInterface $scaffold
+    public function addScaffoldsToSubElements(
+        ScaffoldProviderInterface $scaffold_provider
     ): void {
-        if (!$scaffold->isScaffold() || !($scaffold instanceof BaseElement)) {
-            throw new \ilMDElementsException('Invalid scaffold');
+        foreach ($scaffold_provider->getScaffoldsForElement($this) as $insert_before => $scaffold) {
+            $this->addSubElement($scaffold, $insert_before);
         }
-        $this->addSubElement($scaffold);
+    }
+
+    public function addScaffoldToSubElements(
+        ScaffoldProviderInterface $scaffold_provider,
+        string $name
+    ): ?ElementInterface {
+        foreach ($scaffold_provider->getScaffoldsForElement($this) as $insert_before => $scaffold) {
+            if (strtolower($scaffold->getDefinition()->name()) === strtolower($name)) {
+                $this->addSubElement($scaffold, $insert_before);
+                return $scaffold;
+            }
+        }
+        return null;
     }
 }

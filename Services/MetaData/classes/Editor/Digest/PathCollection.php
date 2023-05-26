@@ -69,9 +69,9 @@ class PathCollection
             $general->getSubElement('keyword')->getSubElement('string')
         );
 
-        $this->first_author = $this->authorWithIndex(1);
-        $this->second_author = $this->authorWithIndex(2);
-        $this->third_author = $this->authorWithIndex(3);
+        $this->first_author = $this->authorWithIndex(0);
+        $this->second_author = $this->authorWithIndex(1);
+        $this->third_author = $this->authorWithIndex(2);
 
         $educational = $this->structure->getRoot()->getSubElement('educational');
         $tlt = $educational->getSubElement('typicalLearningTime');
@@ -79,7 +79,7 @@ class PathCollection
         $this->first_typical_learning_time = $this->path_factory
             ->custom()
             ->withNextStep($educational->getDefinition())
-            ->withAdditionalFilterAtCurrentStep(FilterType::INDEX, '1')
+            ->withAdditionalFilterAtCurrentStep(FilterType::INDEX, '0')
             ->withNextStep($tlt->getDefinition())
             ->withNextStep($duration->getDefinition())
             ->get();
@@ -155,6 +155,7 @@ class PathCollection
         $contribute = $lifecycle->getSubElement('contribute');
         $role = $contribute->getSubElement('role');
         $value = $role->getSubElement('value');
+        $source = $role->getSubElement('source');
         $entity = $contribute->getSubElement('entity');
         return $this->path_factory
             ->custom()
@@ -163,6 +164,9 @@ class PathCollection
             ->withNextStep($role->getDefinition())
             ->withNextStep($value->getDefinition())
             ->withAdditionalFilterAtCurrentStep(FilterType::DATA, 'author')
+            ->withNextStepToSuperElement()
+            ->withNextStep($source->getDefinition())
+            ->withAdditionalFilterAtCurrentStep(FilterType::DATA, 'LOMv1.0')
             ->withNextStepToSuperElement()
             ->withNextStepToSuperElement()
             ->withNextStep($entity->getDefinition())

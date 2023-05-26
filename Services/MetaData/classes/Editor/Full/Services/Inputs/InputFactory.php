@@ -33,6 +33,8 @@ use ILIAS\MetaData\Editor\Full\Services\DataFinder;
 use ILIAS\MetaData\Paths\FactoryInterface as PathFactory;
 use ILIAS\MetaData\Vocabularies\VocabulariesInterface;
 use ILIAS\MetaData\Paths\Navigator\NavigatorFactoryInterface;
+use ILIAS\MetaData\Editor\Full\Services\Inputs\Conditions\FactoryWithConditionTypesService;
+use ILIAS\MetaData\Elements\Data\Type;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -46,7 +48,7 @@ class InputFactory
     protected NavigatorFactoryInterface $navigator_factory;
     protected DataFinder $data_finder;
     protected VocabulariesInterface $vocabularies;
-    protected FactoryTypesService $types;
+    protected FactoryWithConditionTypesService $types;
 
     /**
      * This is only here because the
@@ -66,7 +68,7 @@ class InputFactory
         DataFinder $data_finder,
         VocabulariesInterface $vocabularies,
         DatabaseDictionary $db_dictionary,
-        FactoryTypesService $types
+        FactoryWithConditionTypesService $types
     ) {
         $this->ui_factory = $ui_factory;
         $this->refinery = $refinery;
@@ -87,7 +89,15 @@ class InputFactory
         $conditional_elements = [];
         $input_elements = [];
         foreach ($this->data_finder->getDataCarryingElements($element) as $data_carrier) {
-            if ($el = $this->getConditionElement($data_carrier)) {
+            $conditional_element = null;
+            /**
+             * Currently, hidden inputs don't play nice with switchable group inputs,
+             * so for the time being they get pulled out here.
+             */
+            if (
+                $data_carrier->getDefinition()->dataType() !== Type::VOCAB_SOURCE &&
+                $el = $this->getConditionElement($data_carrier)
+            ) {
                 $conditional_element = $data_carrier;
                 $data_carrier = $el;
             }
@@ -95,18 +105,26 @@ class InputFactory
                                               ->toString();
             $input_elements[$path_string] = $data_carrier;
             if (isset($conditional_element)) {
-                $conditional_elements[$path_string] = $conditional_element;
+                $conditional_elements[$path_string][] = $conditional_element;
             }
         }
 
         $inputs = [];
         $exclude_required = [];
         foreach ($input_elements as $path_string => $input_element) {
-            $input = $this->types->factory($input_element->getDefinition()->dataType())->getInput(
-                $input_element,
-                $context_element,
-                $conditional_elements[$path_string] ?? null
-            );
+            $data_type = $input_element->getDefinition()->dataType();
+            if (isset($conditional_elements[$path_string])) {
+                $input = $this->types->conditionFactory($data_type)->getConditionInput(
+                    $input_element,
+                    $context_element,
+                    ...$conditional_elements[$path_string]
+                );
+            } else {
+                $input = $this->types->factory($data_type)->getInput(
+                    $input_element,
+                    $context_element
+                );
+            }
             $inputs[$path_string] = $input;
 
             /**
@@ -129,7 +147,7 @@ class InputFactory
 
         return $this->addNotEmptyConstraintIfNeeded(
             $context_element,
-            $this->flattenOutputs($fields),
+            $this->flattenOutput($fields),
             ...$exclude_required
         );
     }
@@ -146,7 +164,7 @@ class InputFactory
         return null;
     }
 
-    protected function flattenOutputs(
+    protected function flattenOutput(
         Section|Group $fields
     ): Section|Group {
         return $fields->withAdditionalTransformation(
@@ -154,8 +172,8 @@ class InputFactory
                 foreach ($vs as $key => $value) {
                     if (is_array($value)) {
                         $vs[$key] = $value[0];
-                        foreach ($value as $k => $v) {
-                            $vs[$k] = $v;
+                        foreach ($value[1] as $k => $v) {
+                            $vs[$k] = $v[0];
                         }
                     }
                 }

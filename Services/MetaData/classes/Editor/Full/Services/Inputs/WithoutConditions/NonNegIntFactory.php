@@ -18,7 +18,7 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Editor\Full\Services\Inputs;
+namespace ILIAS\MetaData\Editor\Full\Services\Inputs\WithoutConditions;
 
 use ILIAS\Refinery\Factory as Refinery;
 use ILIAS\UI\Component\Input\Field\FormInput;
@@ -26,13 +26,11 @@ use ILIAS\MetaData\Elements\ElementInterface;
 use ILIAS\UI\Component\Input\Field\Factory as UIFactory;
 use ILIAS\MetaData\Repository\Validation\Dictionary\DictionaryInterface as ConstraintDictionary;
 use ILIAS\MetaData\Editor\Presenter\PresenterInterface;
-use ILIAS\MetaData\Elements\Data\DataInterface;
-use ILIAS\MetaData\Repository\Validation\Data\DatetimeValidator;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
-class DatetimeFactory extends BaseFactory
+class NonNegIntFactory extends BaseFactory
 {
     protected Refinery $refinery;
 
@@ -52,30 +50,15 @@ class DatetimeFactory extends BaseFactory
         string $condition_value = ''
     ): FormInput {
         return $this->ui_factory
-            ->dateTime('placeholder')
-            ->withFormat($this->presenter->utilities()->getUserDateFormat())
+            ->numeric('placeholder')
             ->withAdditionalTransformation(
-                $this->refinery->custom()->transformation(
-                    function ($v) {
-                        return (string) $v?->format('Y-m-d');
-                    }
-                )
+                $this->refinery->int()->isGreaterThanOrEqual(0)
+            )
+            ->withAdditionalTransformation(
+                $this->refinery->byTrying([
+                    $this->refinery->kindlyTo()->string(),
+                    $this->refinery->kindlyTo()->null()
+                ])
             );
-    }
-
-    protected function dataValueForInput(DataInterface $data): string
-    {
-        preg_match(
-            DatetimeValidator::DATETIME_REGEX,
-            $data->value(),
-            $matches,
-            PREG_UNMATCHED_AS_NULL
-        );
-        $date = new \DateTimeImmutable(
-            ($matches[1] ?? '0000') . '-' .
-            ($matches[2] ?? '01') . '-' .
-            ($matches[3] ?? '01')
-        );
-        return $this->presenter->utilities()->getUserDateFormat()->applyTo($date);
     }
 }

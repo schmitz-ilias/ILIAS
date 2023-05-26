@@ -38,11 +38,11 @@ class Condition implements ConditionInterface
 
     public function value(): string
     {
-        return $this->value();
+        return $this->value;
     }
 
     public function path(): PathInterface
     {
-        return $this->path();
+        return $this->path;
     }
 }

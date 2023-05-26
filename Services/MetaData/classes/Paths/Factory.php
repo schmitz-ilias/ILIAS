@@ -23,6 +23,7 @@ namespace ILIAS\MetaData\Paths;
 use ILIAS\MetaData\Elements\Base\BaseElementInterface;
 use ILIAS\MetaData\Paths\Filters\FilterType;
 use ILIAS\MetaData\Paths\Steps\StepToken;
+use ILIAS\MetaData\Elements\Structure\StructureElement;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -105,7 +106,8 @@ class Factory implements FactoryInterface
             $builder = $this->addElementAsStep(
                 $builder,
                 $to,
-                $leads_to_exactly_one
+                $leads_to_exactly_one,
+                true
             );
             $to = $to->getSuperElement();
             if (!isset($to)) {
@@ -152,7 +154,8 @@ class Factory implements FactoryInterface
             $builder = $this->addElementAsStep(
                 $builder,
                 $element,
-                $leads_to_exactly_one
+                $leads_to_exactly_one,
+                false
             );
         }
 
@@ -162,14 +165,18 @@ class Factory implements FactoryInterface
     protected function addElementAsStep(
         BuilderInterface $builder,
         BaseElementInterface $element,
-        bool $leads_to_exactly_one
+        bool $leads_to_exactly_one,
+        bool $add_as_first
     ): BuilderInterface {
         $builder = $builder->withNextStep(
             $element->getDefinition(),
-            true
+            $add_as_first
         );
 
         $id = $element->getMDID();
+        if ($element instanceof StructureElement) {
+            return $builder;
+        }
         $id = is_int($id) ? (string) $id : $id->value;
         if ($leads_to_exactly_one) {
             $builder = $builder->withAdditionalFilterAtCurrentStep(

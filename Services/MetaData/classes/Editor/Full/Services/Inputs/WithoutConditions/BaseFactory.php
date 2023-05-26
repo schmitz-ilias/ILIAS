@@ -18,7 +18,7 @@ declare(strict_types=1);
  *
  *********************************************************************/
 
-namespace ILIAS\MetaData\Editor\Full\Services\Inputs;
+namespace ILIAS\MetaData\Editor\Full\Services\Inputs\WithoutConditions;
 
 use ILIAS\UI\Component\Input\Field\Factory as UIFactory;
 use ILIAS\UI\Component\Input\Field\FormInput;
@@ -55,22 +55,6 @@ abstract class BaseFactory
         string $condition_value = ''
     ): FormInput;
 
-    protected function conditionInput(
-        ElementInterface $element,
-        ElementInterface $context_element,
-        ElementInterface $conditional_element
-    ): FormInput {
-        throw new \ilMDEditorException(
-            'Only vocabulary values can serve as conditions.'
-        );
-    }
-
-    public function getConditionElement(
-        ElementInterface $element
-    ): ?ElementInterface {
-        return null;
-    }
-
     /**
      * @return string|string[]
      */
@@ -83,27 +67,57 @@ abstract class BaseFactory
     final public function getInput(
         ElementInterface $element,
         ElementInterface $context_element,
-        ?ElementInterface $conditional_element = null,
-        string $condition_value = ''
     ): FormInput {
-        $label = $this->presenter->elements()->nameWithParents(
+        $input = $this->rawInput(
+            $element,
+            $context_element
+        );
+
+        return $this->finishInput($element, $context_element, $input);
+    }
+
+    final public function getInputInCondition(
+        ElementInterface $element,
+        ElementInterface $context_element,
+        string $condition_value
+    ): FormInput {
+        $input = $this->rawInput(
             $element,
             $context_element,
-            false
+            $condition_value
         );
-        $input = isset($conditional_element) ?
-            $this->conditionInput($element, $context_element, $conditional_element) :
-            $this->rawInput($element, $context_element);
-        $input = $input->withLabel($label);
 
+        return $this->finishInputIgnoreValue($element, $context_element, $input);
+    }
+
+    public function finishInput(
+        ElementInterface $element,
+        ElementInterface $context_element,
+        FormInput $input
+    ): FormInput {
         if (($data = $element->getData())->type() !== Type::NULL) {
             $input = $input->withValue(
                 $this->dataValueForInput($data)
             );
         }
 
+        return $this->finishInputIgnoreValue($element, $context_element, $input);
+    }
+
+    protected function finishInputIgnoreValue(
+        ElementInterface $element,
+        ElementInterface $context_element,
+        FormInput $input
+    ): FormInput {
+        $label = $this->presenter->elements()->nameWithParents(
+            $element,
+            $context_element,
+            false
+        );
+        $input = $input->withLabel($label);
+
         foreach ($this->constraint_dictionary->tagsForElement($element) as $tag) {
-            $this->addConstraintFromTag($input, $tag);
+            $input = $this->addConstraintFromTag($input, $tag);
         }
 
         return $input;

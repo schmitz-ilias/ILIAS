@@ -73,7 +73,7 @@ abstract class BaseNavigator implements BaseNavigatorInterface
         $this->leads_to_one = $leads_to_one;
     }
 
-    public function currentStep(): StepInterface
+    public function currentStep(): ?StepInterface
     {
         return $this->current_step;
     }

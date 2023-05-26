@@ -29,7 +29,7 @@ use ILIAS\MetaData\Elements\ElementInterface;
 interface ElementsInterface
 {
     public function nameWithRepresentation(
-        bool $force_singular,
+        bool $plural,
         ElementInterface ...$elements
     ): string;
 

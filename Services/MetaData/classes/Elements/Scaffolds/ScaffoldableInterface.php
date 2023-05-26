@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace ILIAS\MetaData\Elements\Scaffolds;
 
 use ILIAS\MetaData\Elements\ElementInterface;
+use ILIAS\MetaData\Repository\Utilities\ScaffoldProviderInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -29,8 +30,19 @@ interface ScaffoldableInterface
 {
     /**
      * Scaffolds are used to mark where elements could potentially be created.
+     * Adds all possible scaffolds to this element's sub-elements.
+     */
+    public function addScaffoldsToSubElements(
+        ScaffoldProviderInterface $scaffold_provider
+    ): void;
+
+    /**
+     * If possible, adds a scaffold with the given name to this element's sub-elements,
+     * and returns it.
+     * @return ElementInterface[]
      */
     public function addScaffoldToSubElements(
-        ElementInterface $scaffold
-    ): void;
+        ScaffoldProviderInterface $scaffold_provider,
+        string $name
+    ): ?ElementInterface;
 }
