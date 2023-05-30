@@ -55,20 +55,15 @@ class PropertiesFetcher
                 continue;
             }
             $tag = $this->dictionary->tagForElement($sub);
-            if ($tag?->isCollected() && $tag?->isLastInTree()) {
-                $sub_els[$sub->getDefinition()->name()][] = $sub;
-                continue;
-            }
-            $sub_els[] = $sub;
-        }
-        foreach ($sub_els as $el) {
-            $el_array = is_array($el) ? $el : [$el];
             $label = $this->presenter->elements()->nameWithRepresentation(
-                is_array($el),
-                ...$el_array
+                $tag?->isCollected() && $tag?->isLastInTree(),
+                $sub
             );
+            $sub_els[$label][] = $sub;
+        }
+        foreach ($sub_els as $label => $els) {
             $value = $this->presenter->elements()->preview(
-                ...$el_array
+                ...$els
             );
             yield $label => $value;
         }

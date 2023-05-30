@@ -410,6 +410,9 @@ class ilMDEditorGUI
 
     protected function checkAccess(): void
     {
+        if ($this->obj_id === 0) {
+            return;
+        }
         $ref_ids = ilObject::_getAllReferences($this->obj_id);
         foreach ($ref_ids as $ref_id) {
             if ($this->access->checkAccess(

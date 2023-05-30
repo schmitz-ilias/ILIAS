@@ -92,7 +92,7 @@ class Cleaner implements CleanerInterface
             if ($sub->isScaffold()) {
                 continue;
             }
-            if ($sub->getDefinition()->unqiue() && in_array($name, $sub_names)) {
+            if ($sub->getDefinition()->unique() && in_array($name, $sub_names)) {
                 $this->throwErrorOrLog($sub, 'duplicate of unique element.');
                 continue;
             }

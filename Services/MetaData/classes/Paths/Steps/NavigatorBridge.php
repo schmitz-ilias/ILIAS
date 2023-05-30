@@ -37,13 +37,16 @@ class NavigatorBridge
      * @return BaseElementInterface[]
      */
     public function getNextElementsByStep(
-        BaseElementInterface $element,
-        StepInterface $step
+        StepInterface $step,
+        BaseElementInterface ...$elements
     ): \Generator {
-        $next_elements = $this->getNextElementsByName(
-            $element,
-            $step->name()
-        );
+        $next_elements = [];
+        foreach ($elements as $element) {
+            $next_elements = array_merge(
+                $next_elements,
+                iterator_to_array($this->getNextElementsByName($element, $step->name()))
+            );
+        }
 
         foreach ($step->filters() as $filter) {
             switch ($filter->type()) {

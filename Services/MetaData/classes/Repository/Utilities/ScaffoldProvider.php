@@ -70,7 +70,7 @@ class ScaffoldProvider implements ScaffoldProviderInterface
             $sub = $sub->getDefinition();
             if (
                 isset($previous_sub) &&
-                (!$previous_sub->unqiue() || !in_array($previous_sub->name(), $sub_names))
+                (!$previous_sub->unique() || !in_array($previous_sub->name(), $sub_names))
             ) {
                 yield $sub->name() => $this->scaffold_factory->scaffold($previous_sub);
             }
@@ -78,7 +78,7 @@ class ScaffoldProvider implements ScaffoldProviderInterface
         }
         if (
             isset($previous_sub) &&
-            (!$previous_sub->unqiue() || !in_array($previous_sub->name(), $sub_names))
+            (!$previous_sub->unique() || !in_array($previous_sub->name(), $sub_names))
         ) {
             yield '' => $this->scaffold_factory->scaffold($previous_sub);
         }

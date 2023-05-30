@@ -129,8 +129,9 @@ class PathCollection
             ->custom()
             ->withNextStep($general->getDefinition())
             ->withNextStep($keyword->getDefinition())
-            ->withAdditionalFilterAtCurrentStep(FilterType::INDEX, ...$indices)
             ->withNextStep($string->getDefinition())
+            ->withNextStepToSuperElement()
+            ->withAdditionalFilterAtCurrentStep(FilterType::INDEX, ...$indices)
             ->get();
     }
 

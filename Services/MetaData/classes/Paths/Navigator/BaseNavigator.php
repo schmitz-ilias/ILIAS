@@ -85,21 +85,12 @@ abstract class BaseNavigator implements BaseNavigatorInterface
         }
         $clone = clone $this;
 
-        $new_elements = [];
-        foreach ($clone->elements as $element) {
-            $filtered_sub_elements = $clone->bridge->getNextElementsByStep(
-                $element,
-                $clone->remaining_steps[0]
-            );
-            $new_elements = array_merge(
-                $new_elements,
-                iterator_to_array($filtered_sub_elements)
-            );
-        }
-
+        $clone->elements = iterator_to_array($clone->bridge->getNextElementsByStep(
+            $clone->remaining_steps[0],
+            ...$clone->elements
+        ));
         $clone->current_step = $clone->remaining_steps[0];
         array_shift($clone->remaining_steps);
-        $clone->elements = $new_elements;
         return $clone;
     }
 

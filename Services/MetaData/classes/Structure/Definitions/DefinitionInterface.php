@@ -39,7 +39,7 @@ interface DefinitionInterface
      * in the metadata set. Note that elements with the same
      * name can still appear at other positions.
      */
-    public function unqiue(): bool;
+    public function unique(): bool;
 
     /**
      * Type of data this element can carry.

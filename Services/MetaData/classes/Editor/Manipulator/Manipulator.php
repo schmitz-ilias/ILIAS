@@ -90,67 +90,98 @@ class Manipulator implements ManipulatorInterface
         $set = clone $set;
         $navigator = $this->navigator_factory->navigator(
             $path,
-            $root = $set->getRoot()
+            $element = $set->getRoot()
         );
 
-        $element = $root;
-        $anchor = null;
-        $navigator_at_anchor = null;
-        $backup_anchor = $root;
-        $navigator_at_backup_anchor = $navigator;
-        $stop_adding = false;
-        $final_elements = [];
         /*
          * Follow the path the first time adding scaffolds where necessary,
          * remembering the best elements along the way to add more scaffolds.
          */
+        $first_anchor = null;
+        $under_first_anchor = null;
+        $navigator_at_first_anchor = null;
+        $anchor = $element;
+        $under_anchor = null;
+        $navigator_at_anchor = $navigator;
+        $reached_end = true;
         while ($next = $navigator->nextStep()) {
             if (!($next_element = $next->lastElement())) {
-                if ($stop_adding) {
-                    break;
-                }
                 $next_element = $this->addAndMarkScaffoldByStep(
                     $element,
                     $next->currentStep()
                 );
             }
             if (!isset($next_element)) {
-                throw new \ilMDEditorException('Invalid update path: ' . $path->toString());
+                if (!isset($first_anchor) || !isset($navigator_at_first_anchor)) {
+                    throw new \ilMDEditorException('Invalid update path: ' . $path->toString());
+                }
+                $anchor = $first_anchor;
+                $under_anchor = $under_first_anchor;
+                $navigator_at_anchor = $navigator_at_first_anchor;
+                $reached_end = false;
+                break;
             }
-            if ($next->currentStep()->name() === StepToken::SUPER) {
-                $anchor = $backup_anchor;
-                $navigator_at_anchor = $navigator_at_backup_anchor;
-                $stop_adding = true;
-            }
-            if (!$next_element->getDefinition()->unqiue()) {
-                $backup_anchor = $element;
-                $navigator_at_backup_anchor = $navigator;
+            if (!$next_element->getDefinition()->unique()) {
+                $anchor = $element;
+                $under_anchor = $next_element;
+                $navigator_at_anchor = $navigator;
+                if (!isset($first_anchor) || !isset($navigator_at_first_anchor)) {
+                    $first_anchor = $anchor;
+                    $under_first_anchor = $under_anchor;
+                    $navigator_at_first_anchor = $navigator_at_anchor;
+                }
             }
             $navigator = $next;
             $element = $next_element;
-        }
-        if (!$stop_adding) {
-            $final_elements = iterator_to_array($navigator->elements());
         }
 
         /*
          * If there are not yet enough elements to accomodate all values that
          * are to be updated/added, add them as scaffolds, starting from the
-         * previously chosen anchor elements.
+         * previously chosen anchor element.
          */
-        if (!isset($anchor) || !isset($navigator_at_anchor)) {
-            $anchor = $backup_anchor;
-            $navigator_at_anchor = $navigator_at_backup_anchor;
+        $navigator = $navigator_at_anchor->nextStep();
+        $anchor_subs = $reached_end ? iterator_to_array($navigator->elements()) : [];
+        if (isset($under_anchor) && !in_array($under_anchor, $anchor_subs, true)) {
+            $anchor_subs[] = $under_anchor;
         }
-        while (count($final_elements) < count($values)) {
-            $scaffold = $this->addScaffoldsByNavigator(
+        while (count($anchor_subs) < count($values)) {
+            $scaffold = $this->addAndMarkScaffoldByStep(
                 $anchor,
-                $navigator_at_anchor
+                $navigator->currentStep()
             );
-            if (is_null($scaffold)) {
+            if (!isset($scaffold)) {
                 throw new \ilMDEditorException('Invalid update path: ' . $path->toString());
             }
-            $final_elements[] = $scaffold;
+            $anchor_subs[] = $scaffold;
+        }
+        $final_elements = [];
+        $add_scaffolds = false;
+        foreach ($anchor_subs as $el) {
+            $element = $el;
+            $nav = $navigator;
+            while ($next = $nav->nextStep()) {
+                $next_element = null;
+                foreach ($next->elements() as $potential_next_el) {
+                    if ($potential_next_el->getSuperElement() === $element) {
+                        $next_element = $potential_next_el;
+                    }
+                }
+                if ($add_scaffolds || !isset($next_element)) {
+                    $next_element = $this->addAndMarkScaffoldByStep(
+                        $element,
+                        $next->currentStep()
+                    );
+                    $add_scaffolds = true;
+                }
+                if (!isset($next_element)) {
+                    throw new \ilMDEditorException('Invalid update path: ' . $path->toString());
+                }
+                $nav = $next;
+                $element = $next_element;
+            }
+            $final_elements[] = $element;
+            $add_scaffolds = false;
         }
 
         /*
@@ -186,24 +217,6 @@ class Manipulator implements ManipulatorInterface
     public function execute(SetInterface $set): void
     {
         $this->repository->manipulateMD($set);
-    }
-
-    protected function addScaffoldsByNavigator(
-        ElementInterface $start_element,
-        NavigatorInterface $navigator
-    ): ?ElementInterface {
-        $scaffold = null;
-        while ($next = $navigator->nextStep()) {
-            $scaffold = $this->addAndMarkScaffoldByStep(
-                $scaffold ?? $start_element,
-                $next->currentStep()
-            );
-            if (!isset($scaffold)) {
-                return null;
-            }
-            $navigator = $next;
-        }
-        return $scaffold;
     }
 
     /**

@@ -46,7 +46,7 @@ class Definition implements DefinitionInterface
         return $this->name;
     }
 
-    public function unqiue(): bool
+    public function unique(): bool
     {
         return $this->unique;
     }

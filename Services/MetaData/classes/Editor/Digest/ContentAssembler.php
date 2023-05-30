@@ -140,6 +140,7 @@ class ContentAssembler
         $empty_descr = true;
         foreach ($descr_els as $el) {
             $empty_descr = false;
+            $label_with_lang = $label;
             foreach ($el->getSuperElement()->getSubElements() as $sub) {
                 if (
                     $sub->getDefinition()->name() !== 'language' ||
@@ -147,10 +148,10 @@ class ContentAssembler
                 ) {
                     continue;
                 }
-                $label .= ' (' . $this->presenter->data()->language($value) . ')';
+                $label_with_lang .= ' (' . $this->presenter->data()->language($value) . ')';
             }
             $inputs[$this->path_factory->toElement($el, true)->toString()] = $ff
-                ->textarea($label)
+                ->textarea($label_with_lang)
                 ->withValue($el->getData()->value());
         }
         if ($empty_descr) {
