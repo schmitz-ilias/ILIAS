@@ -19,6 +19,7 @@ declare(strict_types=1);
  *********************************************************************/
 
 use PHPUnit\Framework\TestSuite;
+use PHPUnit\Framework\TestCase;
 
 class ilServicesMetaDataSuite extends TestSuite
 {
@@ -26,14 +27,27 @@ class ilServicesMetaDataSuite extends TestSuite
     {
         $suite = new ilServicesMetaDataSuite();
 
-        include_once("./Services/MetaData/test/ilMDBuildingBlocksTest.php");
-        $suite->addTestSuite(ilMDBuildingBlocksTest::class);
-        include_once("./Services/MetaData/test/ilMDLOMDataFactoryTest.php");
-        $suite->addTestSuite(ilMDLOMDataFactoryTest::class);
-        include_once("./Services/MetaData/test/ilMDLOMStructureTest.php");
-        $suite->addTestSuite(ilMDLOMStructureTest::class);
-        include_once("./Services/MetaData/test/ilMDPathTest.php");
-        $suite->addTestSuite(ilMDPathTest::class);
+        $dir = new RecursiveDirectoryIterator(__DIR__);
+        $iterator = new RecursiveIteratorIterator($dir);
+        $test_files = new RegexIterator($iterator, '/Test\.php$/');
+
+        foreach ($test_files as $test_file) {
+            /** @var SplFileInfo $test_file */
+            require_once $test_file->getPathname();
+
+            $className = preg_replace('/(.*?)(\.php)/', '$1', $test_file->getBasename());
+
+            if (class_exists($className)) {
+                $reflection = new ReflectionClass($className);
+                if (
+                    !$reflection->isAbstract() &&
+                    !$reflection->isInterface() &&
+                    $reflection->isSubclassOf(TestCase::class)
+                ) {
+                    $suite->addTestSuite($className);
+                }
+            }
+        }
 
         return $suite;
     }

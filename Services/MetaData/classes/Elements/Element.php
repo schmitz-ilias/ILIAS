@@ -124,6 +124,9 @@ class Element extends BaseElement implements ElementInterface
         ScaffoldProviderInterface $scaffold_provider
     ): void {
         foreach ($scaffold_provider->getScaffoldsForElement($this) as $insert_before => $scaffold) {
+            if ($scaffold->getSubElements()->current() !== null) {
+                throw new \ilMDElementsException('Can only add scaffolds with no sub-elements.');
+            }
             $this->addSubElement($scaffold, $insert_before);
         }
     }
@@ -134,6 +137,9 @@ class Element extends BaseElement implements ElementInterface
     ): ?ElementInterface {
         foreach ($scaffold_provider->getScaffoldsForElement($this) as $insert_before => $scaffold) {
             if (strtolower($scaffold->getDefinition()->name()) === strtolower($name)) {
+                if ($scaffold->getSubElements()->current() !== null) {
+                    throw new \ilMDElementsException('Can only add scaffolds with no sub-elements.');
+                }
                 $this->addSubElement($scaffold, $insert_before);
                 return $scaffold;
             }
