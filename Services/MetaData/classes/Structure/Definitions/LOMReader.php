@@ -34,7 +34,7 @@ class LOMReader implements ReaderInterface
         int $depth = 0,
         ?array $definition_array = null
     ) {
-        if ($this->depth > 10) {
+        if ($this->depth > 20) {
             throw new \ilMDStructureException('LOM Structure is nested to deep.');
         }
         if (!is_null($definition_array)) {

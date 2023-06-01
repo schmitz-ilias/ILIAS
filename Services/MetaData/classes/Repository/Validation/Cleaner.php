@@ -76,7 +76,7 @@ class Cleaner implements CleanerInterface
         }
         return $this->element_factory->root(
             $root->getDefinition(),
-            ...$this->getCleanSubElements($root)
+            ...$this->getCleanSubElements($root, 0)
         );
     }
 
@@ -84,8 +84,12 @@ class Cleaner implements CleanerInterface
      * @return Element[]
      */
     protected function getCleanSubElements(
-        ElementInterface $element
+        ElementInterface $element,
+        int $depth
     ): \Generator {
+        if ($depth > 20) {
+            throw new \ilMDStructureException('LOM Structure is nested to deep.');
+        }
         $sub_names = [];
         foreach ($element->getSubElements() as $sub) {
             $name = $sub->getDefinition()->name();
@@ -102,7 +106,7 @@ class Cleaner implements CleanerInterface
                     $sub->getMDID(),
                     $sub->getDefinition(),
                     $sub->getData()->value(),
-                    ...$this->getCleanSubElements($sub)
+                    ...$this->getCleanSubElements($sub, $depth + 1)
                 );
                 continue;
             }
@@ -114,12 +118,16 @@ class Cleaner implements CleanerInterface
 
     public function checkMarkers(SetInterface $set): void
     {
-        $this->checkMarkerOnElement($set->getRoot());
+        $this->checkMarkerOnElement($set->getRoot(), 0);
     }
 
     protected function checkMarkerOnElement(
-        ElementInterface $element
+        ElementInterface $element,
+        int $depth
     ): void {
+        if ($depth > 20) {
+            throw new \ilMDStructureException('LOM Structure is nested to deep.');
+        }
         if (!($element instanceof MarkableInterface) || !$element->isMarked()) {
             return;
         }
@@ -136,7 +144,7 @@ class Cleaner implements CleanerInterface
             $this->checkMarkerAgainstTag($tag, $element, $marker);
         }
         foreach ($element->getSubElements() as $sub) {
-            $this->checkMarkerOnElement($sub);
+            $this->checkMarkerOnElement($sub, $depth + 1);
         }
     }
 

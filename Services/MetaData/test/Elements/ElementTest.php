@@ -28,20 +28,63 @@ use ILIAS\MetaData\Elements\Markers\MarkerInterface;
 use ILIAS\MetaData\Repository\Utilities\ScaffoldProviderInterface;
 use ILIAS\MetaData\Structure\Definitions\DefinitionInterface;
 use ILIAS\MetaData\Elements\Data\Type;
+use ILIAS\MetaData\Elements\Data\DataInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 class ElementTest extends TestCase
 {
+    protected function getMockData(): DataInterface
+    {
+        return new class () implements DataInterface {
+            public function type(): Type
+            {
+                return Type::STRING;
+            }
+
+            public function value(): string
+            {
+                return 'value';
+            }
+        };
+    }
+
+    protected function getMockDefition(string $name): DefinitionInterface
+    {
+        return new class ($name) implements DefinitionInterface {
+            protected string $name;
+
+            public function __construct(string $name)
+            {
+                $this->name = $name;
+            }
+
+            public function name(): string
+            {
+                return $this->name;
+            }
+
+            public function unique(): bool
+            {
+                return false;
+            }
+
+            public function dataType(): Type
+            {
+                return Type::NULL;
+            }
+        };
+    }
+
     protected function getElement(
         int|NoID $id,
         Element ...$elements
     ): Element {
         return new Element(
             $id,
-            new MockDefinition(),
-            new MockData(),
+            $this->getMockDefition('name'),
+            $this->getMockData(),
             ...$elements
         );
     }
@@ -53,8 +96,8 @@ class ElementTest extends TestCase
     ): Element {
         return new Element(
             $id,
-            new MockDefinitionWithName($name),
-            new MockData(),
+            $this->getMockDefition($name),
+            $this->getMockData(),
             ...$elements
         );
     }
@@ -79,10 +122,10 @@ class ElementTest extends TestCase
 
     public function testGetData(): void
     {
-        $data = new MockData();
+        $data = $this->getMockData();
         $el = new Element(
             7,
-            new MockDefinition(),
+            $this->getMockDefition('name'),
             $data
         );
 
@@ -256,14 +299,52 @@ class MockMarker implements MarkerInterface
 
 class MockScaffoldProvider implements ScaffoldProviderInterface
 {
-    protected function getScaffold(string $name): ElementInterface
+    protected function getScaffold(string $name, ElementInterface ...$elements): ElementInterface
     {
+        $definition = new class ($name) implements DefinitionInterface {
+            protected string $name;
+
+            public function __construct(string $name)
+            {
+                $this->name = $name;
+            }
+
+            public function name(): string
+            {
+                return $this->name;
+            }
+
+            public function unique(): bool
+            {
+                return false;
+            }
+
+            public function dataType(): Type
+            {
+                return Type::NULL;
+            }
+        };
+
+        $data = new class () implements DataInterface {
+            public function type(): Type
+            {
+                return Type::STRING;
+            }
+
+            public function value(): string
+            {
+                return 'value';
+            }
+        };
+
         return new Element(
             NoID::SCAFFOLD,
-            new MockDefinitionWithName($name),
-            new MockData()
+            $definition,
+            $data,
+            ...$elements
         );
     }
+
     public function getScaffoldsForElement(ElementInterface $element): \Generator
     {
         $first = $this->getScaffold('first');
@@ -276,47 +357,13 @@ class MockScaffoldProvider implements ScaffoldProviderInterface
     }
 }
 
-class MockBrokenScaffoldProvider implements ScaffoldProviderInterface
+class MockBrokenScaffoldProvider extends MockScaffoldProvider
 {
-    protected function getScaffold(string $name, ElementInterface ...$elements): ElementInterface
-    {
-        return new Element(
-            NoID::SCAFFOLD,
-            new MockDefinitionWithName($name),
-            new MockData(),
-            ...$elements
-        );
-    }
     public function getScaffoldsForElement(ElementInterface $element): \Generator
     {
         $sub = $this->getScaffold('name');
         $with_sub = $this->getScaffold('with sub', $sub);
 
         yield '' => $with_sub;
-    }
-}
-
-class MockDefinitionWithName implements DefinitionInterface
-{
-    protected string $name;
-
-    public function __construct(string $name)
-    {
-        $this->name = $name;
-    }
-
-    public function name(): string
-    {
-        return $this->name;
-    }
-
-    public function unique(): bool
-    {
-        return false;
-    }
-
-    public function dataType(): Type
-    {
-        return Type::NULL;
     }
 }

@@ -29,6 +29,7 @@ use ILIAS\MetaData\Paths\Navigator\NavigatorFactoryInterface;
 use ILIAS\MetaData\Elements\Structure\StructureSetInterface;
 use ILIAS\MetaData\Structure\Definitions\ReaderFactoryInterface;
 use ILIAS\MetaData\Structure\Definitions\ReaderInterface;
+use ILIAS\MetaData\Elements\Structure\StructureElementInterface;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -53,24 +54,29 @@ class LOMStructureInitiator
         );
     }
 
-    protected function getStructureRoot(): StructureElement
+    protected function getStructureRoot(): StructureElementInterface
     {
         $reader = $this->reader_factory->reader();
         return $this->structure_factory->root(
             $reader->definition(),
-            ...$this->getSubElements(...$reader->subDefinitions())
+            ...$this->getSubElements(0, ...$reader->subDefinitions())
         );
     }
 
     /**
      * @return StructureElement[]
      */
-    protected function getSubElements(ReaderInterface ...$readers): \Generator
-    {
+    protected function getSubElements(
+        int $depth,
+        ReaderInterface ...$readers
+    ): \Generator {
+        if ($depth > 20) {
+            throw new \ilMDStructureException('LOM Structure is nested to deep.');
+        }
         foreach ($readers as $reader) {
             yield $this->structure_factory->structure(
                 $reader->definition(),
-                ...$this->getSubElements(...$reader->subDefinitions())
+                ...$this->getSubElements($depth + 1, ...$reader->subDefinitions())
             );
         }
     }

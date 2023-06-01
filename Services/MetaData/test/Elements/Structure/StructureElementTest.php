@@ -30,6 +30,33 @@ use ILIAS\MetaData\Elements\NoID;
  */
 class StructureElementTest extends TestCase
 {
+    protected function getMockDefinition(string $name): DefinitionInterface
+    {
+        return new class ($name) implements DefinitionInterface {
+            protected string $name;
+
+            public function __construct(string $name)
+            {
+                $this->name = $name;
+            }
+
+            public function name(): string
+            {
+                return $this->name;
+            }
+
+            public function unique(): bool
+            {
+                return false;
+            }
+
+            public function dataType(): Type
+            {
+                return Type::NULL;
+            }
+        };
+    }
+
     protected function getStructureElement(
         bool $is_root,
         string $name,
@@ -37,7 +64,7 @@ class StructureElementTest extends TestCase
     ): StructureElement {
         return new StructureElement(
             $is_root,
-            new MockDefinition($name),
+            $this->getMockDefinition($name),
             ...$elements
         );
     }
@@ -83,30 +110,5 @@ class StructureElementTest extends TestCase
         $this->assertSame($sub3, $el->getSubElement('sub 3'));
         $this->assertSame($sub1, $el->getSubElement('sub 1'));
         $this->assertNull($el->getSubElement('something else'));
-    }
-}
-
-class MockDefinition implements DefinitionInterface
-{
-    protected string $name;
-
-    public function __construct(string $name)
-    {
-        $this->name = $name;
-    }
-
-    public function name(): string
-    {
-        return $this->name;
-    }
-
-    public function unique(): bool
-    {
-        return false;
-    }
-
-    public function dataType(): Type
-    {
-        return Type::NULL;
     }
 }

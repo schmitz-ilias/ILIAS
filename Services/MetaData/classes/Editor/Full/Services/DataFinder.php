@@ -37,7 +37,8 @@ class DataFinder
     ): \Generator {
         $elements = $this->getDataElementsInSubElements(
             $start_element,
-            $skip_vocab_source
+            $skip_vocab_source,
+            0
         );
         yield from $elements;
     }
@@ -47,8 +48,12 @@ class DataFinder
      */
     protected function getDataElementsInSubElements(
         ElementInterface $current_element,
-        bool $skip_vocab_source
+        bool $skip_vocab_source,
+        int $depth
     ): array {
+        if ($depth > 20) {
+            throw new \ilMDEditorException('LOM Structure is nested to deep.');
+        }
         $elements = [];
         $type = $current_element->getDefinition()->dataType();
         if (
@@ -62,7 +67,8 @@ class DataFinder
                 $elements,
                 $this->getDataElementsInSubElements(
                     $sub,
-                    $skip_vocab_source
+                    $skip_vocab_source,
+                    $depth + 1
                 )
             );
         }

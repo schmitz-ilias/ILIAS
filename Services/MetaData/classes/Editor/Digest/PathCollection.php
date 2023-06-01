@@ -24,6 +24,7 @@ use ILIAS\MetaData\Paths\FactoryInterface as PathFactory;
 use ILIAS\MetaData\Paths\PathInterface;
 use ILIAS\MetaData\Elements\Structure\StructureSetInterface;
 use ILIAS\MetaData\Paths\Filters\FilterType;
+use ILIAS\MetaData\Paths\Path;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
@@ -43,6 +44,7 @@ class PathCollection
     protected PathInterface $first_typical_learning_time;
     protected PathInterface $copyright;
     protected PathInterface $has_copyright;
+    protected PathInterface $has_copyright_source;
 
     public function __construct(
         PathFactory $path_factory,
@@ -88,8 +90,12 @@ class PathCollection
         $this->copyright = $this->path_factory->toElement(
             $rights->getSubElement('description')->getSubElement('string')
         );
+        $cor = $rights->getSubElement('copyrightAndOtherRestrictions');
         $this->has_copyright = $this->path_factory->toElement(
-            $rights->getSubElement('copyrightAndOtherRestrictions')->getSubElement('value')
+            $cor->getSubElement('value')
+        );
+        $this->has_copyright_source = $this->path_factory->toElement(
+            $cor->getSubElement('source')
         );
     }
 
@@ -188,5 +194,10 @@ class PathCollection
     public function hasCopyright(): PathInterface
     {
         return $this->has_copyright;
+    }
+
+    public function sourceForHasCopyright(): PathInterface
+    {
+        return $this->has_copyright_source;
     }
 }

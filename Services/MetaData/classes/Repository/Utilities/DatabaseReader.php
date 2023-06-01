@@ -67,6 +67,7 @@ class DatabaseReader implements DatabaseReaderInterface
         return $this->getSetWithRoot(
             $ressource_id,
             ...$this->readSubElements(
+                0,
                 $this->structure->getRoot(),
                 $ressource_id,
                 0
@@ -85,6 +86,7 @@ class DatabaseReader implements DatabaseReaderInterface
         return $this->getSetWithRoot(
             $ressource_id,
             ...$this->readSubElements(
+                0,
                 $navigator,
                 $ressource_id,
                 0
@@ -96,11 +98,15 @@ class DatabaseReader implements DatabaseReaderInterface
      * @return Element[]
      */
     protected function readSubElements(
+        int $depth,
         StructureElementInterface|StructureNavigatorInterface $struct,
         RessourceIDInterface $ressource_id,
         int $super_id,
         int ...$parent_ids
     ): \Generator {
+        if ($depth > 20) {
+            throw new \ilMDStructureException('LOM Structure is nested to deep.');
+        }
         foreach ($this->subElements($struct) as $sub) {
             $tag = $this->tag($sub);
             $result = $this->executor->read($tag, $ressource_id, $super_id, ...$parent_ids);
@@ -121,6 +127,7 @@ class DatabaseReader implements DatabaseReaderInterface
                     $definition,
                     $data,
                     ...$this->readSubElements(
+                        $depth + 1,
                         $sub,
                         $ressource_id,
                         $id,

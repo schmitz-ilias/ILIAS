@@ -35,13 +35,30 @@ use ILIAS\MetaData\Elements\Markers\MarkerInterface;
  */
 class SetTest extends TestCase
 {
+    protected function getMockRessourceID(): RessourceIDInterface
+    {
+        return new class () implements RessourceIDInterface {
+            public function type(): string
+            {
+                return 'type';
+            }
+
+            public function objID(): int
+            {
+                return 0;
+            }
+
+            public function subID(): int
+            {
+                return 0;
+            }
+        };
+    }
+
     public function testGetRoot(): void
     {
         $root = new MockRoot();
-        $set = new Set(
-            new MockRessourceID(),
-            $root
-        );
+        $set = new Set($this->getMockRessourceID(), $root);
 
         $this->assertSame($root, $set->getRoot());
     }
@@ -49,28 +66,10 @@ class SetTest extends TestCase
     public function testGetRessourceID(): void
     {
         $root = new MockRoot();
-        $id = new MockRessourceID();
+        $id = $this->getMockRessourceID();
         $set = new Set($id, $root);
 
         $this->assertSame($id, $set->getRessourceID());
-    }
-}
-
-class MockRessourceID implements RessourceIDInterface
-{
-    public function type(): string
-    {
-        return 'type';
-    }
-
-    public function objID(): int
-    {
-        return 0;
-    }
-
-    public function subID(): int
-    {
-        return 0;
     }
 }
 

@@ -59,6 +59,7 @@ class DatabaseManipulator implements DatabaseManipulatorInterface
     ): void {
         foreach ($set->getRoot()->getSubElements() as $sub) {
             $this->manipulateElementAndSubElements(
+                0,
                 $sub,
                 $set->getRessourceID(),
                 0
@@ -67,11 +68,15 @@ class DatabaseManipulator implements DatabaseManipulatorInterface
     }
 
     protected function manipulateElementAndSubElements(
+        int $depth,
         ElementInterface $element,
         RessourceIDInterface $ressource_id,
         int $super_id,
         int ...$parent_ids
     ): void {
+        if ($depth > 20) {
+            throw new \ilMDStructureException('LOM Structure is nested to deep.');
+        }
         $marker = $this->marker($element);
         if (!isset($marker)) {
             return;
@@ -119,6 +124,7 @@ class DatabaseManipulator implements DatabaseManipulatorInterface
         }
         foreach ($element->getSubElements() as $sub) {
             $this->manipulateElementAndSubElements(
+                $depth + 1,
                 $sub,
                 $ressource_id,
                 $id,

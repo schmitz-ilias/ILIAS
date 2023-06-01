@@ -21,16 +21,38 @@ declare(strict_types=1);
 namespace ILIAS\MetaData\Elements\Structure;
 
 use PHPUnit\Framework\TestCase;
+use ILIAS\MetaData\Structure\Definitions\DefinitionInterface;
+use ILIAS\MetaData\Elements\Data\Type;
 
 /**
  * @author Tim Schmitz <schmitz@leifos.de>
  */
 class StructureFactoryTest extends TestCase
 {
+    protected function getMockDefinition(): DefinitionInterface
+    {
+        return new class () implements DefinitionInterface {
+            public function name(): string
+            {
+                return 'name';
+            }
+
+            public function unique(): bool
+            {
+                return false;
+            }
+
+            public function dataType(): Type
+            {
+                return Type::NULL;
+            }
+        };
+    }
+
     public function testCreateElement(): void
     {
         $factory = new StructureFactory();
-        $struct = $factory->structure(new MockDefinition('name'));
+        $struct = $factory->structure($this->getMockDefinition());
 
         $this->assertInstanceOf(StructureElement::class, $struct);
         $this->assertFalse($struct->isRoot());
@@ -39,7 +61,7 @@ class StructureFactoryTest extends TestCase
     public function testCreateRoot(): void
     {
         $factory = new StructureFactory();
-        $struct = $factory->root(new MockDefinition('name'));
+        $struct = $factory->root($this->getMockDefinition());
 
         $this->assertInstanceOf(StructureElementInterface::class, $struct);
         $this->assertTrue($struct->isRoot());
@@ -48,7 +70,7 @@ class StructureFactoryTest extends TestCase
     public function testCreateSet(): void
     {
         $factory = new StructureFactory();
-        $root = $factory->root(new MockDefinition('name'));
+        $root = $factory->root($this->getMockDefinition());
         $set = $factory->set($root);
 
         $this->assertInstanceOf(StructureSetInterface::class, $set);
