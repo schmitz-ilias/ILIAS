@@ -32,7 +32,7 @@ LOM with the title and description from the settings of the object
 object.
 
 These methods are not used out of the box in `ilObject`, so you have
-to call them as appropriate in your object's `doCreate`, `doUpdate`,
+to call them as appropriate in your object's `create`, `update`,
 etc.
 
 Note that the implementation of the methods assumes that your object
