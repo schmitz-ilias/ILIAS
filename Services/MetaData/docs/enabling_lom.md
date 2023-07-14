@@ -4,21 +4,35 @@ This documentation does not warrant completeness or correctness. Please report a
 missing or wrong information using the [ILIAS issue tracker](https://mantis.ilias.de)
 or contribute a fix via [Pull Request](docs/development/contributing.md#pull-request-to-the-repositories).
 
-In this documentation, we will outline briefly how support for LOM
-can be added to an ILIAS object. 
+In this documentation, we will outline briefly how support for 
+Learning Object Metadata (LOM) can be added to an ILIAS object. 
 
 ### Identifying Your Object
 
 In `Services/MetaData`, objects in ILIAS are generally identified by
 three parameters:
 
-- The `obj_id` of the object if it is a repository object, else the
-  `obj_id` of its parent repository object. If the object does not have
-  a fixed parent  (e.g. MediaObject), then this parameter is 0.
-- The `obj_id` of the object. If the object is a repository object by
-  itself and not a sub-object, then you can set this parameter to 0, but
-  we recommend passing the `obj_id` again.
-- The type of the object (and not its parent's), e.g. `'crs'` or `'lm'`.
+1. The `obj_id` of the object if it is a repository object, else the
+   `obj_id` of its parent repository object. If the object does not have
+   a fixed parent  (e.g. MediaObject), then this parameter is 0.
+2. The `obj_id` of the object. If the object is a repository object by
+   itself and not a sub-object, then you can set this parameter to 0, but
+   we recommend passing the `obj_id` again.
+3. The type of the object (and not its parent's), e.g. `'crs'` or `'lm'`.
+
+For example, consider three different objects:
+
+- a Group with `obj_id` 123,
+- a Page with `obj_id` 54 in an ILIAS Learning Module with `obj_id` 456,
+- and a MediaObject with `obj_id` 789.
+
+The corresponding ID-triples would then be
+
+|             | 1   | 2   | 3
+|-------------|-----|-----|-----
+| Group       | 123 | 123 | grp
+| Page in LM  | 456 | 54  | pg
+| MediaObject | 0   | 789 | mob
 
 ### Object: Creation, Changing Settings, Deletion
 
@@ -52,18 +66,18 @@ when it does. In addition, add your object's type to the array in
 If your object is a repository object, you can just pass the object
 itself to the constructor of `ilObjectMetadataGUI`, and it will extract
 the ID-triple explained above. However, if your object is a sub-object of
-a parent repository obect, you have to  pass that parent to the constructor
+a parent repository object, you have to  pass that parent to the constructor
 instead, along with the type and `obj_id` of your object.  In this case,
 a combination of the parent's type and your object's type in the form
-`'{type of parent}:{type}'` has to be added to the array in
+`'{type of parent}:{type}'` (e.g. `'lm:pg'`) has to be added to the array in
 `ilObjectMetadataGUI::isLOMAvailable`. 
 
 If your object is not a repository object, and also does not have a
 fixed parent, then you have to pass `null` as the object in the constructor
-of `ilObjectMetadataGUI`, and `':{type}'` has to be added to the
+of `ilObjectMetadataGUI`, and `':{type}'` (e.g. `':mob'`) has to be added to the
 array in `ilObjectMetadataGUI::isLOMAvailable`.
 
-### Listening to Changes in LOM
+#### Listening to Changes in LOM
 
 The `ilObjectMetadataGUI` (and `Services\Object` in general) already
 takes care of changing the title and description of your object when
@@ -82,6 +96,31 @@ your object as an observer of LOM. In this case, in order for title
 and description to be updated along with LOM, you have to register
 by hand, again via `ilObjectMetaDataGUI::addMDObserver` for the section
 `'General'`.
+
+#### Examples
+
+In `ilObjGroupGUI::executeCommand`:
+
+    switch ($next_class) {
+        ...
+        case 'ilobjectmetadatagui':
+            if (!$this->access->checkAccess('write', '', $this->object->getRefId())) {
+                $this->error->raiseError($this->lng->txt('permission_denied'), $this->error->WARNING);
+            }
+            $this->tabs_gui->activateTab('meta_data');
+            $this->ctrl->forwardCommand(new ilObjectMetaDataGUI($this->object));
+            break;
+
+In `ilObjMediaObjectGUI::executeCommand`:
+
+    switch ($next_class) {
+        case 'ilobjectmetadatagui':
+            $md_gui = new ilObjectMetaDataGUI(null, $this->object->getType(), $this->object->getId());
+            // object is subtype, so we have to do it ourselves
+            $md_gui->addMDObserver($this->object, 'MDUpdateListener', 'General');
+            ...
+            $this->ctrl->forwardCommand($md_gui);
+            break;
 
 ### Show LOM on Info Screen
 
@@ -105,7 +144,8 @@ following entry to the array returned there:
 
 `$ids` is an array of the IDs of the to be exported objects. Each ID
 is composed of the familiar ID-triple, joined into one colon-separated
-string: `{obj_id of repository object}:{obj_id}:{type}`.
+string: `{obj_id of repository object}:{obj_id}:{type}`, e.g. `456:54:pg`
+for the Page in a LM from above.
 
 In addition, in `importRecord` of your object's `ilDataSet`, you need
 to add a mapping for the exported LOM from the exported object to the
