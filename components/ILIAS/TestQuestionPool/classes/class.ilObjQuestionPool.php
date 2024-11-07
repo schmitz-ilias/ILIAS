@@ -58,7 +58,7 @@ class ilObjQuestionPool extends ilObject
 
         $this->type = 'qpl';
 
-        parent::__construct($a_id, $a_call_by_reference);
+        parent::__construct((int) $a_id, $a_call_by_reference);
 
         $this->skill_service_enabled = false;
     }
@@ -401,11 +401,10 @@ class ilObjQuestionPool extends ilObject
         $skillQuestionAssignmentExporter->export();
     }
 
-    public function exportTitleAndDescription(&$a_xml_writer): void
+    public function exportTitleAndDescription(ilXmlWriter &$a_xml_writer): void
     {
-        $title_xml = '<Title>' . $this->getTitle() . '</Title>';
-        $description_xml = '<Description>' . $this->getDescription() . '</Description>';
-        $a_xml_writer->appendXML($title_xml . $description_xml);
+        $a_xml_writer->xmlElement('Title', null, $this->getTitle());
+        $a_xml_writer->xmlElement('Description', null, $this->getDescription());
     }
 
     public function modifyExportIdentifier($a_tag, $a_param, $a_value)
