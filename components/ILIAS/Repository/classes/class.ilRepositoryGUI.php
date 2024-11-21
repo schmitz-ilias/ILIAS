@@ -184,6 +184,11 @@ class ilRepositoryGUI implements ilCtrlBaseClassInterface
                 $this->ctrl->redirectByClass($next_class, "");
             }
 
+            if ($this->ctrl->getCmd() === 'redirectLocToTest') {
+                $this->ctrl->saveParameterByClass($next_class, 'tid');
+                $this->ctrl->redirectByClass($next_class, $this->ctrl->getCmd());
+            }
+
             if ($this->ctrl->getCmd() !== "showRepTree") {
                 $this->ctrl->redirectByClass($next_class, $this->ctrl->getCmd());
             }
