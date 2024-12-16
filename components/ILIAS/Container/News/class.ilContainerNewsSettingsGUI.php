@@ -199,7 +199,7 @@ class ilContainerNewsSettingsGUI
                     "public_feed" => $form->getInput("notifications_public_feed") ?? "",
                     "default_visibility" => $form->getInput("default_visibility"),
                     "hide_news_per_date" => $form->getInput("hide_news_per_date"),
-                    "hide_news_date" => $form->getInput("hide_news_date")
+                    "hide_news_date" => ilCalendarUtil::parseIncomingDate($form->getInput("hide_news_date"))->get(IL_CAL_DATETIME),
                 ];
                 if ($this->has_public_notification) {
                     $context_block_settings["public_notifications"] =
