@@ -207,6 +207,7 @@ JS;
             $contact_btn_html = ilBuddySystemLinkButton::getInstanceByUserId($user->getId())->getHtml();
         }
 
+        $this->user_action_gui->init();
         $list_html = $this->user_action_gui->renderDropDown($user->getId());
 
         if ($contact_btn_html || $list_html) {
