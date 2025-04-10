@@ -578,17 +578,15 @@ class ilObjCourse extends ilContainer implements ilMembershipRegistrationCodes
         $this->__readSettings();
     }
 
-    public function create($a_upload = false): int
+    public function create(): int
     {
         global $DIC;
 
         $ilAppEventHandler = $DIC['ilAppEventHandler'];
 
-        $id = parent::create($a_upload);
+        $id = parent::create();
 
-        if (!$a_upload) {
-            $this->createMetaData();
-        }
+        $this->createMetaData();
         $this->__createDefaultSettings();
         $this->app_event_handler->raise(
             'components/ILIAS/Course',

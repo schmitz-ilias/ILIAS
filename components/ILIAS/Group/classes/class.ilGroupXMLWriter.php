@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=1);
-
 /**
  * This file is part of ILIAS, a powerful learning management system
  * published by ILIAS open source e-Learning e.V.
@@ -17,6 +15,8 @@ declare(strict_types=1);
  * https://github.com/ILIAS-eLearning
  *
  *********************************************************************/
+
+declare(strict_types=1);
 
 /**
 * XML writer class
@@ -69,7 +69,6 @@ declare(strict_types=1);
             $this->logger->debug('Using soap mode');
             $this->__buildHeader();
             $this->__buildGroup();
-            $this->__buildMetaData();
             $this->__buildAdvancedMetaData();
             $this->__buildTitleDescription();
             $this->__buildRegistration();
@@ -124,14 +123,6 @@ declare(strict_types=1);
                 break;
         }
         $this->xmlStartTag("group", $attrs);
-    }
-
-    protected function __buildMetaData(): bool
-    {
-        $md2xml = new ilMD2XML($this->group_obj->getId(), $this->group_obj->getId(), 'grp');
-        $md2xml->startExport();
-        $this->appendXML($md2xml->getXML());
-        return true;
     }
 
     private function __buildAdvancedMetaData(): void

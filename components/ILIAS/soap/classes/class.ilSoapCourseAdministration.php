@@ -1,4 +1,5 @@
 <?php
+
 /*
  +-----------------------------------------------------------------------------+
  | ILIAS open source                                                           |
@@ -369,11 +370,6 @@ class ilSoapCourseAdministration extends ilSoapAdministration
         if (!$rbacsystem->checkAccess('write', $course_id)) {
             return $this->raiseError('Check access failed. No permission to write course', 'Server');
         }
-
-        // First delete old meta data
-
-        $md = new ilMD($tmp_course->getId(), 0, 'crs');
-        $md->deleteAll();
 
         ilCourseParticipants::_deleteAllEntries($tmp_course->getId());
 

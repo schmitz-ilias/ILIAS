@@ -1,7 +1,5 @@
 <?php
 
-declare(strict_types=0);
-
 /**
  * This file is part of ILIAS, a powerful learning management system
  * published by ILIAS open source e-Learning e.V.
@@ -17,6 +15,8 @@ declare(strict_types=0);
  * https://github.com/ILIAS-eLearning
  *
  *********************************************************************/
+
+declare(strict_types=0);
 
 /**
  * XML writer class
@@ -70,8 +70,8 @@ class ilCourseXMLWriter extends ilXmlWriter
         if ($this->getMode() == self::MODE_SOAP) {
             $this->__buildHeader();
             $this->__buildCourseStart();
-            $this->__buildMetaData();
             $this->__buildAdvancedMetaData();
+            $this->__buildTitleDescription();
             if ($this->attach_users) {
                 $this->__buildAdmin();
                 $this->__buildTutor();
@@ -114,19 +114,21 @@ class ilCourseXMLWriter extends ilXmlWriter
         $this->xmlHeader();
     }
 
+    public function __buildTitleDescription(): void
+    {
+        $this->xmlElement('Title', null, $this->course_obj->getTitle());
+
+        if ($desc = $this->course_obj->getDescription()) {
+            $this->xmlElement('Description', null, $desc);
+        }
+    }
+
     public function __buildCourseStart(): void
     {
         $attrs["exportVersion"] = self::EXPORT_VERSION;
         $attrs["id"] = "il_" . $this->setting->get('inst_id') . '_crs_' . $this->course_obj->getId();
         $attrs['showMembers'] = ($this->course_obj->getShowMembers() ? 'Yes' : 'No');
         $this->xmlStartTag("Course", $attrs);
-    }
-
-    public function __buildMetaData(): void
-    {
-        $md2xml = new ilMD2XML($this->course_obj->getId(), $this->course_obj->getId(), 'crs');
-        $md2xml->startExport();
-        $this->appendXML($md2xml->getXML());
     }
 
     private function __buildAdvancedMetaData(): void

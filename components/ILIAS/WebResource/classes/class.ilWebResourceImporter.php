@@ -60,7 +60,7 @@ class ilWebResourceImporter extends ilXmlImporter
         } else {
             $this->link = new ilObjLinkResource();
             $this->link->setType('webr');
-            $this->link->create(true);
+            $this->link->create();
         }
 
         try {
